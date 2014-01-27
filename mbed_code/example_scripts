@@ -1,0 +1,140 @@
+
+callback portin(1) down
+	do 
+		portout(1) = flip
+		portout(2) = flip
+	end
+end;
+
+
+
+
+
+updates off
+int a = 20
+callback portin(1) down
+     if a == 20 do
+	a = 0
+	serial buffer
+	while a < 20 do every 1		
+		a = a+1
+		disp(a)
+		portout(1)  = flip		
+		if a == 20 do
+			serial send	
+		end	
+	end
+    end
+end;
+
+
+
+
+
+
+int a = 10
+int vol = 50
+callback portin(1) down
+	if a == 10 do
+		a = 0
+		vol = 50
+		while a < 10 do every 500 
+			a = a+1
+			vol = vol+20
+			volume(vol)
+			sound('sound1')
+		end
+	end
+end;
+
+
+
+
+
+sound(reset)
+volume(100)
+int soundpick = 0
+callback portin(1) down
+	soundpick = random(1)
+	if soundpick == 0 do
+		sound('sound1')
+	else if soundpick == 1 do
+		sound('sound2')
+	end	
+end
+callback portin(1) up
+	sound(stop)
+end;
+
+
+
+int a = 0
+int rewardProb = 50
+callback portin(2) down
+	a = random(99)
+	if a < rewardProb do		
+		portout(1) = 1
+		do in 200
+			portout(1) = 0
+		end
+		disp(a)
+		disp('Rewarded!')
+	else do
+		disp(a)
+	end
+end;
+
+
+
+
+
+int a = 0
+int blink = 0
+int numblinks = 1000
+callback portin(1) down
+	
+	if  blink == 0 do
+		blink = 1
+		a = 0		
+	else do
+		blink = 0
+	end
+	
+	
+	while blink == 1 && a < numblinks do every 30
+		a = a+1
+		portout(1) = 1
+		do in 10
+			portout(1) = 0
+		end
+		if a == numblinks do
+			blink = 0
+			a = 0
+			disp('Done')
+		end
+		
+	end
+	
+end;
+
+
+
+
+
+
+int a = 0
+callback portin(2) down
+  
+        a = a+1
+        if a == 5 do
+                portout(1) = 1
+	    a = 0
+	    do in 1000
+		portout(1) = 0
+	    end
+        end
+
+end;
+
+
+

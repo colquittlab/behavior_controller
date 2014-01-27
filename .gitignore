@@ -1,0 +1,15 @@
+path_localsettings.m
+pathdef.m
+.DS_Store
+*.mat
+*.fig
+*.jpg
+*.gif
+*.png
+*.raw
+*.wav
+*.tiff
+*.tif
+*.pyc
+*.mex*
+

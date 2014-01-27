@@ -1,0 +1,14 @@
+% notes
+
+connection -> data rate = 115200
+modem preferences -> serieal port to ~usbmodem...
+
+
+Port 1: out (LED), in (12)
+Port 2: out (13), in (14)
+Port 3: out (15), in (16)
+Port 4: out (17), in (18)
+Port 5: out (21), in (22)
+Port 6: out (23), in (24)
+Port 7: out (25), in (26)
+Port 8: out (29), in (30)
