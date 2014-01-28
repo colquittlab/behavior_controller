@@ -25,6 +25,9 @@ require([
   var prepInputs = function() {
     return $('input').val();
   };
+
+
+
   var populate = function(data) {
     var n_trials_var = new Backbone.Model({rate: 0});
     var n_rewards_var = new Backbone.Model({rate: 0});
@@ -45,11 +48,11 @@ require([
     },5000);
   };
 
-
   var start_site = function() {
     var data = prepInputs();
     populate(data);
   };
+
   var start_box = function() {
     var req = $.ajax({
         url: 'http://localhost:5000/go',
@@ -64,6 +67,13 @@ require([
         data: 'stop'
       });
   };
+    var reset_box = function() {
+    var req = $.ajax({
+        url: 'http://localhost:5000/reset',
+        type: 'POST',
+        data: 'reset'
+      });
+  };
 
 
   //kicks everything off once dom is ready 
@@ -73,5 +83,6 @@ require([
 
   $('#gobutton').click(start_box)
   $('#stopbutton').click(stop_box)
+  $('#resetbutton').click(reset_box)
 
 });

@@ -18,23 +18,22 @@ debug = True
 ## Settings (temporary as these will be queried from GUI)
 stimuli_dir = '/data/doupe_lab/stimuli/'
 data_dir = '/data/temp/'
-birdname = 'testbird'
 
 class BehaviorController(object):
     def __init__(self):
-        self.birdname = birdname 
-
+        self.birdname = None
         # save the date and time 
         self.initial_date = datetime.datetime.now()
-
         # file names ext
         self.base_filename = None
-        self.generate_file_name()
+        self.has_run = False
+
         self.log_fid = None
         self.trial_fid = None
 
         # initialize the state variables
         self.task_state = None
+        self.box_state = 'stop'
         # initialize the task variables
         self.mode = None
         self.stimset_names = []
@@ -55,6 +54,11 @@ class BehaviorController(object):
         # to add: self.trial_block = []
         self.random_stimuli = True
 
+    def set_bird_name(self,birdname):
+        if not self.has_run:
+            self.birdname = birdname
+        self.generate_file_name()
+
     def generate_file_name(self):
         if self.base_filename is not None:
             return self.filename
@@ -66,9 +70,20 @@ class BehaviorController(object):
         self.base_filename = name
         pass
 
+    def ready_to_run(self):
+        if self.birdname is None:
+            return (False, 'birdname not set')
+        if self.base_filename is None:
+            return (False, 'filename not set')
+        if len(self.stimsets) < 2:
+            return (False, 'stimsets not loaded')
+        if self.mode is None:
+            return (False, 'mode not set')
+        return (True, 'ready_to_run')
+
     @property
     def n_trials(self):
-        return len(self.completed_trials) + 1
+        return len(self.completed_trials)
 
     def load_stimsets(self):
         if len(self.stimset_names) < 2:
@@ -101,6 +116,7 @@ class BehaviorController(object):
         trial['stimset_idx'] = stim_list[idx][0]
         trial['stimset'] = self.stimset_names[trial['stimset_idx']]
         trial['correct_answer'] = self.expected_responses[stim_list[idx][0]]
+        trial['stim_length'] = float(self.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/self.stimsets[stim_list[idx][0]]['samprate']
         self.current_trial = trial
         pass
 
@@ -139,42 +155,57 @@ class BehaviorBox(object):
 
         self.box_zero_time = 0
         self.serial_port = None
-        self.serial_connection = None
+        self.serial_c = None
         self.serial_io = None
-        self.select_serial_port()
-        self.connect_to_serial_port()
 
-        # 
         self.sc_idx = None
-        #self.sc_object = None
-        self.select_sound_card()
-        
 
+    def ready_to_run(self):
+        if not self.serial_status:
+            return (False, 'serial not connected')
+        if self.sc_idx is None:
+            return (False, 'soundcard not set')
+        return (True, 'ready_to_run')
+
+    @property
+    def serial_status(self):
+        if self.serial_c != None:
+            return self.sync()
+        else: return False
 
     @property
     def current_time(self):
         return time.time()
 
-    def select_serial_port(self):
-        list_of_ports = return_list_of_usb_serial_ports()
-        print 'Select desired port from list below:'
-        for k,port in enumerate(list_of_ports):
-            print '[%d] %s' % (k,port)
-        x = input('Enter Number: ')
-        self.serial_port = list_of_ports[x]
+    def select_serial_port(self, port = None):
+        if port == None:
+            list_of_ports = return_list_of_usb_serial_ports()
+            print 'Select desired port from list below:'
+            for k,port in enumerate(list_of_ports):
+                print '[%d] %s' % (k,port)
+            x = input('Enter Number: ')
+            self.serial_port = list_of_ports[x]
+        else:
+            self.serial_port = port;
+        self.connect_to_serial_port()
+
 
     def connect_to_serial_port(self):
         self.serial_c = serial.Serial(self.serial_port, 115200, parity = serial.PARITY_NONE, xonxoff = True, rtscts = True, dsrdtr = True, timeout = False)
         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 1), line_buffering = False)  
         time.sleep(2)
-        self.sync()
+        return self.sync()
 
-    def select_sound_card(self):
-        list_of_cards = alsaaudio.cards()
-        print 'Select desired card from list below:'
-        for k,card in enumerate(list_of_cards):
-            print '[%d] %s' % (k,card)
-        idx = input('Enter Number: ')
+    def return_list_of_sound_cards(self):
+        return alsaaudio.cards()
+
+    def select_sound_card(self, idx = None):
+        if idx == None:
+            list_of_cards = self.return_list_of_sound_cards()
+            print 'Select desired card from list below:'
+            for k,card in enumerate(list_of_cards):
+                print '[%d] %s' % (k,card)
+            idx = input('Enter Number: ')
         self.sc_idx = idx
 
     # def connect_to_sound_card(self, cardidx):
@@ -231,6 +262,7 @@ class BehaviorBox(object):
         self.write_command(command)
 
     def sync(self):
+        # try:
         send_time = self.current_time
         self.write_command('<sync>')
         events = []
@@ -240,16 +272,24 @@ class BehaviorBox(object):
             if len(event) > 1 and event[1]=='sync':
                 sync_time = float(event[0])
         self.box_zero_time = send_time - float(sync_time)/1000
+        return True
+        # except Exception as e:
+        #     print e
+        #     return False
 
-    def load_song(self, dir, file_name):
-        fid = open('%s%s/%s'%(stimuli_dir,dir,file_name))
-        ipdb.set_trace()
+    # def load_song(self, dir, file_name):
+    #     fid = open('%s%s/%s'%(stimuli_dir,dir,file_name))
+    #     ipdb.set_trace()
 
-    def play_song(self, stimulus):
+    def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
-        # song_data = self.load_song(stimset['name'],'%s%s'%(stimulus,stimset['stims'][0]['file_type']))
-        so.sendwave(self.sc_idx, '/home/jknowles/wf_with_spikes.wav')
+        filename =  '%s%s/%s%s'%(stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
+        so.sendwf(self.sc_idx, filename, stimset['stims'][0]['file_type'],stimset['samprate'])
         pass  
+    def play_sound(self, filename):
+        filetype = filename[-4:]
+        so.sendwf(self.sc_idx, filename, filetype, 44100)
+        pass
 
 
 
@@ -257,6 +297,10 @@ class BehaviorBox(object):
 
 ##
 def run_box(controller, box):
+    # if not controller.ready_to_run:
+    #     pass
+    # if not box.ready_to_run:
+    #     pass
     # initialize controller
     controller.box_state = 'go'
     # initialize box
@@ -270,63 +314,17 @@ def main_loop(controller, box):
     # generate the first trial and set that as the state
     controller.generate_next_trial()
     controller.task_state = 'waiting_for_trial'
+    controller.has_run = True
 
     # enter the loop
     while controller.box_state == 'go':
-
-        # record any events that have happened on the box
-        events_since_last = box.query_events()
-        events_since_last_names = [event[1] for event in events_since_last]
-        trial_ended = False
-        # examine what events have happened and trigger new ones, depending on box state
-        if controller.task_state == 'waiting_for_trial':
-            if 'song_trigger' in events_since_last_names:
-                box.play_song(controller.current_trial['stimulus'])
-                controller.current_trial['start_time'] = box.current_time
-                events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
-                controller.task_state = 'waiting_for_response'
-
-        # if a trial is ongoing then look for responses
-        elif controller.task_state == 'waiting_for_response':
-            # if there is a response
-            if 'response_trigger' in events_since_last_names:
-                event_idx = events_since_last_names.index('response_trigger')
-                controller.current_trial['response_time'] = box.current_time
-                ## if anwser is correct
-                if  events_since_last[event_idx][2] == controller.current_trial['correct_answer']:
-                    controller.current_trial['result'] = 'correct'
-                    controller.task_state = 'reward'
-                    events_since_last.append((box.current_time, 'reward_start'))
-                    box.feeder_on()
-                ## otherwise anwser is incorrect 
-                else:
-                    controller.current_trial['result'] = 'incorrect'
-                    controller.task_state = 'time_out'
-                    events_since_last.append((box.current_time, 'timeout_start'))
-
-            # if no response and trial has timed out
-            elif box.current_time > controller.current_trial['start_time'] + controller.max_trial_length:
-                controller.current_trial['result'] = 'no_response'
-                events_since_last.append((box.current_time, 'no_response'))
-                trial_ended = True
-
-        # if the box is in time_out state (after an incorrect trial) 
-        elif controller.task_state == 'time_out':
-            if box.current_time > controller.current_trial['response_time'] + controller.timeout_period:
-                events_since_last.append((box.current_time, 'timout_end'))
-                trial_ended = True
-        # if the reward period is over
-        elif controller.task_state == 'reward':
-            if box.current_time > controller.current_trial['response_time'] + controller.feed_time:
-                box.feeder_off()
-                events_since_last.append((box.current_time, 'reward_end'))
-                trial_ended = True
+        # run loop
+        events_since_last, trial_ended = loop_dict[controller.mode](controller, box)
 
         # save all the events that have happened in this loop to file
         controller.save_events_to_log_file(events_since_last)
-        if debug:
-            for event in events_since_last:
-                print event
+        for event in events_since_last:
+            print event
 
         # if a trial eneded in this loop then store event, save events, generate new trial
         if trial_ended:
@@ -342,6 +340,99 @@ def main_loop(controller, box):
         # get any feeder variables
 
         # 
+
+# the loop iterations for each mode are loded into th loop dict.  
+loop_dict = {}
+def discrimination_iteration(controller, box):
+    # record any events that have happened on the box     
+    events_since_last = box.query_events()
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # examine what events have happened and trigger new ones, depending on box state
+    if controller.task_state == 'waiting_for_trial':
+        if 'song_trigger' in events_since_last_names:
+            box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
+            controller.current_trial['start_time'] = box.current_time
+            events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+            controller.task_state = 'waiting_for_response'
+
+    # if a trial is ongoing then look for responses
+    elif controller.task_state == 'waiting_for_response':
+        # if there is a response
+        if 'response_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('response_trigger')
+            controller.current_trial['response_time'] = box.current_time
+            ## if anwser is correct
+            if  events_since_last[event_idx][2] == controller.current_trial['correct_answer']:
+                controller.current_trial['result'] = 'correct'
+                controller.task_state = 'reward'
+                events_since_last.append((box.current_time, 'reward_start'))
+                box.feeder_on()
+            ## otherwise anwser is incorrect 
+            else:
+                controller.current_trial['result'] = 'incorrect'
+                controller.task_state = 'time_out'
+                events_since_last.append((box.current_time, 'timeout_start'))
+
+        # if no response and trial has timed out
+        elif box.current_time > controller.current_trial['start_time'] + controller.max_trial_length:
+            controller.current_trial['result'] = 'no_response'
+            events_since_last.append((box.current_time, 'no_response'))
+            trial_ended = True
+
+    # if the box is in time_out state (after an incorrect trial) 
+    elif controller.task_state == 'time_out':
+        if box.current_time > controller.current_trial['response_time'] + controller.timeout_period:
+            events_since_last.append((box.current_time, 'timout_end'))
+            trial_ended = True
+    # if the reward period is over
+    elif controller.task_state == 'reward':
+        if box.current_time > controller.current_trial['response_time'] + controller.feed_time:
+            box.feeder_off()
+            events_since_last.append((box.current_time, 'reward_end'))
+            trial_ended = True
+    return events_since_last, trial_ended
+loop_dict['discrimination'] = discrimination_iteration
+
+def song_only_iteration(controller, box):
+    # record any events that have happened on the box     
+    events_since_last = box.query_events()
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # examine what events have happened and trigger new ones, depending on box state
+    if controller.task_state == 'waiting_for_trial':
+        if 'song_trigger' in events_since_last_names:
+            box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
+            controller.current_trial['start_time'] = box.current_time
+            events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+            controller.task_state = 'playing_song'
+    elif controller.task_state == 'playing_song':
+        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
+            events_since_last.append((box.current_time,'playback_ended'))
+            trial_ended = True
+    return events_since_last, trial_ended
+loop_dict['song_only'] = song_only_iteration
+
+def song_plus_food_iteration(controller, box):
+    # record any events that have happened on the box     
+    events_since_last = box.query_events()
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # examine what events have happened and trigger new ones, depending on box state
+    if controller.task_state == 'waiting_for_trial':
+        if 'song_trigger' in events_since_last_names:
+            box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
+            controller.current_trial['start_time'] = box.current_time
+            events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+            controller.task_state = 'playing_song'
+    elif controller.task_state == 'playing_song':
+        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
+            events_since_last.append((box.current_time,'playback_ended'))
+            trial_ended = True
+    return events_since_last, trial_ended
+loop_dict['song_only'] = song_only_iteration
+
+
 
 def load_and_verify_stimset(stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that
@@ -402,7 +493,7 @@ def return_list_of_usb_serial_ports():
     else:
         # unix
         list_of_ports = [port[0] for port in list_ports.comports()]
-    for port in list_of_ports: print port
+    # for port in list_of_ports: print port
     return filter(lambda x: 'ACM' in x, list_of_ports)
 
 
@@ -410,12 +501,17 @@ def return_list_of_usb_serial_ports():
 
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
-    stimset_a = 'syl_discrim_v1_stimset_a'
-    stimset_b = 'syl_discrim_v1_stimset_b_6'
-    # # initialize controller
     controller = BehaviorController()
-    controller.stimset_names.apepend(stimset_a)
-    controller.stimset_names.apepend(stimset_b)
+    controller.set_bird_name('test')
+    controller.mode = 'song_only'
+    controller.stimset_names = []
+    controller.stimset_names.append('syl_discrim_v1_stimset_a')
+    controller.stimset_names.append('syl_discrim_v1_stimset_b_2')
     controller.load_stimsets()
+
     box = BehaviorBox()
+    box.select_sound_card()
+    #box.play_sound('/home/jknowles/wf_with_spikes.wav')
+    box.select_serial_port()
+
     run_box(controller, box)
