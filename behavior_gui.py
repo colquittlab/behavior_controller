@@ -9,13 +9,25 @@ import datetime
 import random 
 import io
 import alsaaudio
+import json
 
 import soundout_tools as so
 
 # from pyfirmata import Arduino, util
 debug = True
 
-## Settings (temporary as these will be queried from GUI)
+## Settings 
+
+# port settings
+
+mode_definitions = ['song_only', 'song_plus_food', 'sequence', 'discrimination']
+input_definitions = {2: ['song_trigger'], 
+                          3: ['response_trigger', 'response_a'],
+                          4: ['response_trigger', 'response_b']}
+output_definitions = {'reward_port': 12}
+trigger_value = 1
+
+
 stimuli_dir = '/data/doupe_lab/stimuli/'
 data_dir = '/data/temp/'
 
@@ -137,7 +149,8 @@ class BehaviorController(object):
 
     def save_trials_to_file(self):
         fid = self.return_events_fid()
-
+        json.dump(self.completed_trials, fid)
+        fid.flush()
         pass
 
 class BehaviorBox(object):
@@ -145,13 +158,6 @@ class BehaviorBox(object):
     and contains the methods to change the pins of the box"""
     def __init__(self):
         # 
-
-        # port settings
-        self.input_definitions = {2: ['song_trigger'], 
-                                  3: ['response_trigger', 'response_a'],
-                                  4: ['response_trigger', 'response_b']}
-        self.output_definitions = {'reward_port': 12}
-        self.trigger_value = 1
 
         self.box_zero_time = 0
         self.serial_port = None
@@ -225,9 +231,9 @@ class BehaviorBox(object):
                 return (line_parts[0],line_parts[1],self.current_time)
             else: return None
         else: return None
-        if port in self.input_definitions.keys():
-            if state == self.trigger_value:
-                event = [box_time] + self.input_definitions[port]
+        if port in input_definitions.keys():
+            if state == trigger_value:
+                event = [box_time] + input_definitions[port]
             else: return None
         else: return None
         return tuple(event)
@@ -254,11 +260,11 @@ class BehaviorBox(object):
         self.serial_io.flush()
 
     def feeder_on(self):
-        command = '<o%d=1>'%self.output_definitions['reward_port']
+        command = '<o%d=1>'%output_definitions['reward_port']
         self.write_command(command)
 
     def feeder_off(self):
-        command = '<o%d=0>'%self.output_definitions['reward_port']
+        command = '<o%d=0>'%output_definitions['reward_port']
         self.write_command(command)
 
     def sync(self):
@@ -425,13 +431,68 @@ def song_plus_food_iteration(controller, box):
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
             controller.task_state = 'playing_song'
+        elif 'response_trigger' in events_since_last_names:
+            controller.task_state = 'reward'
+            events_since_last.append((box.current_time, 'reward_start'))
+            controller.current_trial['start_time'] = box.current_time
+            controller.current_trial['response_time'] = box.current_time
+            box.feeder_on()
     elif controller.task_state == 'playing_song':
         if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             events_since_last.append((box.current_time,'playback_ended'))
             trial_ended = True
+        if 'response_trigger' in events_since_last_names:
+            controller.task_state = 'reward'
+            events_since_last.append((box.current_time, 'reward_start'))
+            controller.current_trial['response_time'] = box.current_time
+            box.feeder_on()
+    # if the reward period is over
+    elif controller.task_state == 'reward':
+        if box.current_time > controller.current_trial['response_time'] + controller.feed_time:
+            box.feeder_off()
+            events_since_last.append((box.current_time, 'reward_end'))
+            trial_ended = True
     return events_since_last, trial_ended
-loop_dict['song_only'] = song_only_iteration
+loop_dict['song_plus_food'] = song_plus_food_iteration
 
+def sequence_iteration(controller, box):
+    # record any events that have happened on the box     
+    events_since_last = box.query_events()
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # examine what events have happened and trigger new ones, depending on box state
+    if controller.task_state == 'waiting_for_trial':
+        if 'song_trigger' in events_since_last_names:
+            box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
+            controller.current_trial['start_time'] = box.current_time
+            events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+            controller.task_state = 'waiting_for_response'
+
+    # if a trial is ongoing then look for responses
+    elif controller.task_state == 'waiting_for_response':
+        # if there is a response
+        if 'response_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('response_trigger')
+            controller.current_trial['response_time'] = box.current_time
+            ## if anwser is correct
+            controller.current_trial['result'] = 'correct'
+            controller.task_state = 'reward'
+            events_since_last.append((box.current_time, 'reward_start'))
+            box.feeder_on()
+            ## otherwise anwser is incorrect 
+        # if no response and trial has timed out
+        elif box.current_time > controller.current_trial['start_time'] + controller.max_trial_length:
+            controller.current_trial['result'] = 'no_response'
+            events_since_last.append((box.current_time, 'no_response'))
+            trial_ended = True
+    # if the reward period is over
+    elif controller.task_state == 'reward':
+        if box.current_time > controller.current_trial['response_time'] + controller.feed_time:
+            box.feeder_off()
+            events_since_last.append((box.current_time, 'reward_end'))
+            trial_ended = True
+    return events_since_last, trial_ended
+loop_dict['sequence'] = sequence_iteration
 
 
 def load_and_verify_stimset(stim_name):
@@ -478,7 +539,6 @@ def load_and_verify_stimset(stim_name):
         raise e 
     return stimset_out 
 
-
 def return_list_of_usb_serial_ports():
     if os.name == 'nt':
         list_of_ports = []
@@ -496,14 +556,11 @@ def return_list_of_usb_serial_ports():
     # for port in list_of_ports: print port
     return filter(lambda x: 'ACM' in x, list_of_ports)
 
-
-
-
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
     controller = BehaviorController()
     controller.set_bird_name('test')
-    controller.mode = 'song_only'
+    controller.mode = 'discrimination'
     controller.stimset_names = []
     controller.stimset_names.append('syl_discrim_v1_stimset_a')
     controller.stimset_names.append('syl_discrim_v1_stimset_b_2')

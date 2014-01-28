@@ -29,21 +29,21 @@ def data():
             'n_trials': controller.n_trials,
             'n_reward': 0    
         }
-
-    
     return jsonify(output)
 
 @app.route("/list_sound_cards", methods = ["GET", "POST"])
 def list_sound_cards():
-    result = {}
-    result['sound_cards'] = box.return_list_of_sound_cards()
-    return jsonify(result)
+    result = box.return_list_of_sound_cards()
+    return json.dumps(result)
 
 @app.route("/list_serial_ports", methods = ["GET", "POST"])
 def list_serial_ports():
-    result = {}
-    result['serial_ports'] = behavior.return_list_of_usb_serial_ports()
+    result = behavior.return_list_of_usb_serial_ports()
     return json.dumps(result)
+
+@app.route("/list_modes", methods = ["GET", "POST"])
+def list_modes():
+    return json.dumps(behavior.mode_definitions)
 
 @app.route("/set_sound_card", methods = ["GET", "POST"])
 def set_sound_card():
@@ -100,7 +100,6 @@ def go():
     # behavior_gui.run_box()
     return json.dumps(['sucess','running']), 200
 
-
 @app.route("/stop",methods=['GET','POST'])
 def stop():
     global controller
@@ -133,8 +132,6 @@ def reset():
 
 if __name__ == "__main__":
     controller = behavior.BehaviorController()
-    box = behavior.BehaviorBox()
-    
-    # 
+    box = behavior.BehaviorBox()  
     app.debug = True
     app.run()
