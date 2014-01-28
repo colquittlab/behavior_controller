@@ -105,7 +105,7 @@ class BehaviorController(object):
             self.stimsets.append(load_and_verify_stimset(name))
         pass
 
-    def store_current_trial(self):
+    def save_current_trial(self):
         self.completed_trials.append(self.current_trial)
         self.current_trial = None
         pass
@@ -147,9 +147,9 @@ class BehaviorController(object):
         fid.flush()
         pass
 
-    def save_trials_to_file(self):
+    def save_trial_to_file(self, trial):
         fid = self.return_events_fid()
-        json.dump(self.completed_trials, fid)
+        json.dump(trial, fid)
         fid.flush()
         pass
 
@@ -335,8 +335,7 @@ def main_loop(controller, box):
         # if a trial eneded in this loop then store event, save events, generate new trial
         if trial_ended:
             controller.task_state = 'waiting_for_trial'
-            controller.store_current_trial()
-            controller.save_trials_to_file()
+            controller.save_current_trial()
             controller.generate_next_trial()
 
 
