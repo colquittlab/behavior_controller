@@ -25,6 +25,7 @@ void setup() {
   }
   for (int i = 0; i < sizeof(output_pins); i++) {
     pinMode(output_pins[i], OUTPUT);
+    digitalWrite(output_pins[i], 0);
   }
 }
 

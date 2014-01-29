@@ -10,6 +10,7 @@ import numpy as np
 def playwf(cardidx, filename, filetype, rate):
 	pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='hw:%d,0'%cardidx)
 
+	frame_size = 320
 	if filetype == '.wav':
 		song=wave.open(filename)
 		"""takes a wave file object and plays it"""
@@ -30,23 +31,26 @@ def playwf(cardidx, filename, filetype, rate):
 			raise ValueError('Unsupported format')
 		pcm.setchannels(nchannels)
 		pcm.setrate(rate)
-		pcm.setperiodsize(320)
-		data=song.readframes(320)
+		pcm.setperiodsize(frame_size)
+		data=song.readframes(frame_size)
 		while data:
 			pcm.write(data)
-			data=song.readframes(320)
+			data=song.readframes(frame_size)
 	elif filetype == '.sng':
 		fid= open(filename, 'r')
 		nchannels=1
 		pcm.setformat(aa.PCM_FORMAT_S32_LE)
 		pcm.setchannels(nchannels)
-		pcm.setperiodsize(320)
-		data = np.fromfile(fid, dtype = np.dtype('d'), count = 320)
-		while len(data)>0:
+		pcm.setperiodsize(frame_size)
+		data = np.fromfile(fid, dtype = np.dtype('d'), count = frame_size)
+		while len(data) > 0:
+			if len(data) < frame_size:
+				data = np.append(data, np.zeros((frame_size-len(data), 1)))
+			
 			data = np.array(data*2**15, dtype = np.dtype('i4'))
 			pcm.write(data.tostring())
-			data = np.fromfile(fid, dtype = np.dtype('d'), count = 320)
-		pass
+			data = np.fromfile(fid, dtype = np.dtype('d'), count = frame_size)
+	pass
 	pcm.close()
 
 def sendwf(pcm, wavefile, filetype, rate):
@@ -54,9 +58,4 @@ def sendwf(pcm, wavefile, filetype, rate):
 	p.start()
 
 if __name__=="__main__":
-	count=0
-	while count<100:
-		count += 1
-		print count
-		if count == 1:
-			sendwave(pcm, '/home/jknowles/wf_with_spikes.wav')
+	sendwf(1, '/home/jknowles/wf_with_spikes.wav','.wav',44100)

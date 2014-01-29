@@ -105,10 +105,6 @@ class BehaviorController(object):
             self.stimsets.append(load_and_verify_stimset(name))
         pass
 
-    def save_current_trial(self):
-        self.completed_trials.append(self.current_trial)
-        self.current_trial = None
-        pass
 
     def list_all_stimuli(self):
         stimuli = []
@@ -132,6 +128,12 @@ class BehaviorController(object):
         self.current_trial = trial
         pass
 
+    def store_current_trial(self):
+        self.completed_trials.append(self.current_trial)
+        self.save_trial_to_file(self.current_trial)
+        self.current_trial = None
+        pass
+
     def return_log_fid(self):
         if self.log_fid == None:
             self.log_fid = open('%s%s.log'% (data_dir,self.base_filename), 'w')
@@ -149,7 +151,7 @@ class BehaviorController(object):
 
     def save_trial_to_file(self, trial):
         fid = self.return_events_fid()
-        json.dump(trial, fid)
+        fid.write('%s\n' % json.dumps(trial))
         fid.flush()
         pass
 
@@ -321,21 +323,23 @@ def main_loop(controller, box):
     controller.generate_next_trial()
     controller.task_state = 'waiting_for_trial'
     controller.has_run = True
-
+    evcount=0
     # enter the loop
     while controller.box_state == 'go':
         # run loop
+        # raw_input('pause')
         events_since_last, trial_ended = loop_dict[controller.mode](controller, box)
-
         # save all the events that have happened in this loop to file
         controller.save_events_to_log_file(events_since_last)
-        for event in events_since_last:
-            print event
+        if debug:
+            for event in events_since_last:
+                evcount += 1
+                print evcount, event
 
         # if a trial eneded in this loop then store event, save events, generate new trial
         if trial_ended:
             controller.task_state = 'waiting_for_trial'
-            controller.save_current_trial()
+            controller.store_current_trial()
             controller.generate_next_trial()
 
 

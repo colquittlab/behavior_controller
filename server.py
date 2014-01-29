@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, render_template, request
 from random import randint
 import json
-# from multiprocessing import Manager, Process
+from multiprocessing import Manager, Process
 import threading
 import behavior_gui as behavior
 
@@ -51,6 +51,7 @@ def set_sound_card():
 
 @app.route("/set_serial_port")
 def set_serial_port():
+    raw_input('pause!')
     pass
 
 @app.route("/go",methods=['GET','POST'])
@@ -94,7 +95,9 @@ def go():
         return json.dumps(['failure', 'box: %s ' % box_ready[1]]), 400
 
     # send thread
-    thread = threading.Thread(target = behavior.run_box, args = (controller, box))
+    # thread = threading.Thread(target = behavior.run_box, args = (controller, box))
+    # thread.start()
+    thread = Process(target = behavior.run_box, args = (controller, box))
     thread.start()
 
     # behavior_gui.run_box()

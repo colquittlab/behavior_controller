@@ -45,7 +45,7 @@ require([
         n_trials_var.set('rate', resp.n_trials)
         n_rewards_var.set('rate', resp.n_reward)
       });
-    },5000);
+    },1000);
   };
 
   var start_site = function() {
