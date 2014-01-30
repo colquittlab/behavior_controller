@@ -15,22 +15,17 @@ import soundout_tools as so
 
 # from pyfirmata import Arduino, util
 debug = True
-
 ## Settings 
-
-# port settings
-
 mode_definitions = ['song_only', 'song_plus_food', 'sequence', 'discrimination']
+
 input_definitions = {2: ['song_trigger'], 
-                          3: ['response_trigger', 'response_a'],
-                          4: ['response_trigger', 'response_b']}
+                     3: ['response_trigger', 'response_a'],
+                     4: ['response_trigger', 'response_b']}
+
 output_definitions = {'reward_port': 12}
 trigger_value = 1
-
-
 stimuli_dir = '/data/doupe_lab/stimuli/'
 data_dir = '/data/temp/'
-
 class BehaviorController(object):
     def __init__(self):
         self.birdname = None
@@ -39,10 +34,8 @@ class BehaviorController(object):
         # file names ext
         self.base_filename = None
         self.has_run = False
-
         self.log_fid = None
         self.trial_fid = None
-
         # initialize the state variables
         self.task_state = None
         self.box_state = 'stop'
@@ -51,18 +44,13 @@ class BehaviorController(object):
         self.stimset_names = []
         self.stimsets = []
         self.expected_responses = ['response_a', 'response_b']
-
-
         # initialize the task parameters 
         self.timeout_period = 5; # timeout (punishment) time in seconds
         self.max_trial_length = 10; # maximum trial time in seconds
         self.feed_time = 5;
-
-
         # initializethe trial variables
         self.current_trial = None
         self.completed_trials = []
-
         # to add: self.trial_block = []
         self.random_stimuli = True
 
@@ -104,7 +92,6 @@ class BehaviorController(object):
         for name in self.stimset_names:
             self.stimsets.append(load_and_verify_stimset(name))
         pass
-
 
     def list_all_stimuli(self):
         stimuli = []
@@ -299,10 +286,6 @@ class BehaviorBox(object):
         so.sendwf(self.sc_idx, filename, filetype, 44100)
         pass
 
-
-
-
-
 ##
 def run_box(controller, box):
     # if not controller.ready_to_run:
@@ -318,33 +301,30 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
-    # try:
-    # generate the first trial and set that as the state
-    controller.generate_next_trial()
-    controller.task_state = 'waiting_for_trial'
-    controller.has_run = True
-    evcount=0
-    # enter the loop
-    while controller.box_state == 'go':
-        # run loop
-        # raw_input('pause')
-        events_since_last, trial_ended = loop_dict[controller.mode](controller, box)
-        # save all the events that have happened in this loop to file
-        controller.save_events_to_log_file(events_since_last)
-        if debug:
-            for event in events_since_last:
-                evcount += 1
-                print evcount, event
-
-        # if a trial eneded in this loop then store event, save events, generate new trial
-        if trial_ended:
-            controller.task_state = 'waiting_for_trial'
-            controller.store_current_trial()
-            controller.generate_next_trial()
-
-
-    # except Exception as e:
-    #     raise e
+    try:
+        # generate the first trial and set that as the state
+        controller.generate_next_trial()
+        controller.task_state = 'waiting_for_trial'
+        controller.has_run = True
+        evcount=0
+        # enter the loop
+        while controller.box_state == 'go':
+            # run loop
+            # raw_input('pause')
+            events_since_last, trial_ended = loop_dict[controller.mode](controller, box)
+            # save all the events that have happened in this loop to file
+            controller.save_events_to_log_file(events_since_last)
+            if debug:
+                for event in events_since_last:
+                    evcount += 1
+                    print evcount, event
+            # if a trial eneded in this loop then store event, save events, generate new trial
+            if trial_ended:
+                controller.task_state = 'waiting_for_trial'
+                controller.store_current_trial()
+                controller.generate_next_trial()
+    except Exception as e:
+         raise e
 
         # get any feeder variables
 
@@ -353,6 +333,8 @@ def main_loop(controller, box):
 # the loop iterations for each mode are loded into th loop dict.  
 loop_dict = {}
 def discrimination_iteration(controller, box):
+    """ This function runs int the main loop in discrimination mode"""
+
     # record any events that have happened on the box     
     events_since_last = box.query_events()
     events_since_last_names = [event[1] for event in events_since_last]
@@ -497,7 +479,6 @@ def sequence_iteration(controller, box):
     return events_since_last, trial_ended
 loop_dict['sequence'] = sequence_iteration
 
-
 def load_and_verify_stimset(stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that
     the stimset is properly formatted, that all stimuli exist, ext"""
@@ -573,5 +554,4 @@ if __name__=='__main__':
     box.select_sound_card()
     #box.play_sound('/home/jknowles/wf_with_spikes.wav')
     box.select_serial_port()
-
     run_box(controller, box)

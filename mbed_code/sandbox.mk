@@ -7,7 +7,6 @@ int feeder_port = 2
 int feed_time = 2000
 volume(255)
 
-
 int box_state = 0
 int random_pick = 0
 int correct_ans = 0
@@ -46,7 +45,6 @@ callback portin(2) up
 		end
 	end
 end;
-
 
 int wait_pi3 = 0
 callback portin(3) up
