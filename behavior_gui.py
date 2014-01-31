@@ -178,7 +178,8 @@ class BehaviorBox(object):
             print 'Select desired port from list below:'
             for k,port in enumerate(list_of_ports):
                 print '[%d] %s' % (k,port)
-            x = input('Enter Number: ')
+            # x = input('Enter Number: ')
+            x = 0
             self.serial_port = list_of_ports[x]
         else:
             self.serial_port = port;
@@ -200,7 +201,8 @@ class BehaviorBox(object):
             print 'Select desired card from list below:'
             for k,card in enumerate(list_of_cards):
                 print '[%d] %s' % (k,card)
-            idx = input('Enter Number: ')
+            # idx = input('Enter Number: ')
+                idx = len(list_of_cards)
         self.sc_idx = idx
 
     # def connect_to_sound_card(self, cardidx):
