@@ -22,36 +22,71 @@ require([
   'backbone',
   'widgets/select',
   'widgets/rate',
-  'inputs'
+  'inputs',
   ], function(Backbone, Select, Rate, Inputs) {
-  var prepInputs = function() {
-    return $('input').val();
+  var getInputs= function() {
+    //returns an array of strings of inputs
+    return _.map($('select'), function(item) {
+      var output = {};
+      output[$(item).attr('id')] = $(item).find("option:selected")[0].innerHTML;
+      return output
+    });
+  };
+    //setting up event listeners for clicking
+  var start_box = function() {
+    console.log('asdfasdfasfasdfasdfa');
+    var data = getInputs();
+    var req = $.ajax({
+      url: '/go',
+      type: 'POST',
+      data: 'go'
+    }).done(function() {
+      Backbone.trigger('start_test');
+    });
+  };
+  var stop_box = function() {
+    var req = $.ajax({
+      url: '/stop',
+      type: 'POST',
+      data: 'stop'
+    });
+  };
+  var reset_box = function() {
+    var req = $.ajax({
+      url: '/reset',
+      type: 'POST',
+      data: 'reset'
+    });
   };
 
 
 
   var populate = function(data) {
+    var interval;
     var n_trials_var = new Backbone.Model({rate: 0});
     var n_rewards_var = new Backbone.Model({rate: 0});
     var n_trials_h = new Rate({model: n_trials_var}, {title: 'N Trials', period: ''});
     var n_reward_h = new Rate({model: n_rewards_var}, {title: 'N Reward', period: ''});
     $('#rates').append(n_trials_h.el);
     $('#rates').append(n_reward_h.el);
-    setInterval(function() {
-      var req = $.ajax({
-        url: 'http://localhost:5000/data',
-        type: 'POST',
-        data: data
-      });
-      req.done(function(resp) {
-        n_trials_var.set('rate', resp.n_trials)
-        n_rewards_var.set('rate', resp.n_reward)
-      });
-    },1000);
+    Backbone.on('start_test', function() {
+      console.log('test starting');
+      setInterval(function() {
+        var req = $.ajax({
+          url: 'http://localhost:5000/data',
+          type: 'POST',
+          data: data
+        });
+        req.done(function(resp) {
+          n_trials_var.set('rate', resp.n_trials)
+          n_rewards_var.set('rate', resp.n_reward)
+        });
+      },1000);
+    });
   };
 
   var start_site = function() {
-    var data = prepInputs();
+    var data = getInputs();
     populate(data);
   };
 
@@ -59,7 +94,13 @@ require([
 
   //kicks everything off once dom is ready 
   $(document).ready(function() {
-    $(start_site);
+    Inputs.createInputs();
+    //$(start_site);
+    //$('#gobutton').click(start_box)
+    //$('#gobutton').click(function() {alert('asdfsdf')})
+    //console.log($('#gobutton'));
+    ////$('#stopbutton').click(stop_box)
+    //$('#resetbutton').click(reset_box)
   });
 
 

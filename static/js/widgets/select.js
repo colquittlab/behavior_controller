@@ -16,12 +16,8 @@ define([
       var i = this.collection.map(function(item){
         return '<option value="' + item.get('foo')+ '">'+ item.get('foo') +'</option>';
       });
-      this.$el.prepend('<h1>ererere</h1>');
       this.$el.html(i.join(' '));
     },
-    getSelectedOption: function() {
-      return this.$el.find("option:selected")[0].innerHTML;                   
-    }
   
   });
   var SelectCollection = Backbone.Collection.extend({
