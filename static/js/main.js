@@ -21,8 +21,9 @@ require.config({
 require([
   'backbone',
   'widgets/select',
-  'widgets/rate'
-  ], function(Backbone, Select, Rate) {
+  'widgets/rate',
+  'inputs'
+  ], function(Backbone, Select, Rate, Inputs) {
   var prepInputs = function() {
     return $('input').val();
   };
@@ -54,43 +55,12 @@ require([
     populate(data);
   };
 
-  var start_box = function() {
-    var req = $.ajax({
-        url: 'http://localhost:5000/go',
-        type: 'POST',
-        data: 'go'
-      }).done(function() {alert('success')});
-  };
-  var stop_box = function() {
-        var req = $.ajax({
-        url: 'http://localhost:5000/stop',
-        type: 'POST',
-        data: 'stop'
-      });
-  };
-    var reset_box = function() {
-    var req = $.ajax({
-        url: 'http://localhost:5000/reset',
-        type: 'POST',
-        data: 'reset'
-      });
-  };
 
 
   //kicks everything off once dom is ready 
   $(document).ready(function() {
     $(start_site);
-    var i = new Select.SelectCollection([]);
-    var s = new Select.SelectOption({collection: i});
-    $('body').append(s.el);
-    s.$el.change(function() {
-      console.log(s.getSelectedOption());
-    });
-    i.fetch({url:'http://localhost:5000/list_serial_ports', success: function(resp) {console.log('asdfasdf');console.log(resp)}} )
   });
 
-  $('#gobutton').click(start_box)
-  $('#stopbutton').click(stop_box)
-  $('#resetbutton').click(reset_box)
 
 });

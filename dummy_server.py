@@ -117,6 +117,7 @@ def stop():
 
 @app.route("/reset",methods=['GET','POST'])
 def reset():
+    print 'ASDFASDFASDFASDFASDFSA'
     global controller
     global box
     global thread
