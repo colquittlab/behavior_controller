@@ -75,8 +75,8 @@ def go():
         controller.set_bird_name('test')
         controller.mode = 'discrimination'
         controller.stimset_names = []
-        controller.stimset_names.append('syl_discrim_v1_stimset_a')
-        controller.stimset_names.append('syl_discrim_v1_stimset_b_2')
+        controller.stimset_names.append('boc_syl_discrim_v1_stimset_a')
+        controller.stimset_names.append('boc_syl_discrim_v1_stimset_b_2')
         controller.load_stimsets()
 
     box_ready = box.ready_to_run()

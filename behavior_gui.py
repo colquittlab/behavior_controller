@@ -15,6 +15,7 @@ import soundout_tools as so
 
 # from pyfirmata import Arduino, util
 debug = True
+beep = False
 ## Settings 
 mode_definitions = ['song_only', 'song_plus_food', 'sequence', 'discrimination']
 
@@ -202,7 +203,7 @@ class BehaviorBox(object):
             for k,card in enumerate(list_of_cards):
                 print '[%d] %s' % (k,card)
             # idx = input('Enter Number: ')
-                idx = len(list_of_cards)
+                idx = len(list_of_cards)-1
         self.sc_idx = idx
 
     # def connect_to_sound_card(self, cardidx):
@@ -281,7 +282,7 @@ class BehaviorBox(object):
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
         filename =  '%s%s/%s%s'%(stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
-        so.sendwf(self.sc_idx, filename, stimset['stims'][0]['file_type'],stimset['samprate'])
+        so.sendwf(self.sc_idx, filename, stimset['stims'][0]['file_type'], 44100)
         pass  
     def play_sound(self, filename):
         filetype = filename[-4:]
@@ -320,6 +321,10 @@ def main_loop(controller, box):
                 for event in events_since_last:
                     evcount += 1
                     print evcount, event
+                    if beep:
+                        so.beep()
+    
+
             # if a trial eneded in this loop then store event, save events, generate new trial
             if trial_ended:
                 controller.task_state = 'waiting_for_trial'
@@ -548,8 +553,8 @@ if __name__=='__main__':
     controller.set_bird_name('test')
     controller.mode = 'discrimination'
     controller.stimset_names = []
-    controller.stimset_names.append('syl_discrim_v1_stimset_a')
-    controller.stimset_names.append('syl_discrim_v1_stimset_b_2')
+    controller.stimset_names.append('boc_syl_discrim_v1_stimset_a')
+    controller.stimset_names.append('boc_syl_discrim_v1_stimset_b_2')
     controller.load_stimsets()
 
     box = BehaviorBox()

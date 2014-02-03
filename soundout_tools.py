@@ -2,22 +2,24 @@ import alsaaudio as aa
 import wave
 from multiprocessing import Process
 import numpy as np
-
+import os
 
 # pcm=aa.PCM(aa.PCM_PLAYBACK,aa.PCM_NORMAL,card='hw:1,0')
 
 #functions
 def playwf(cardidx, filename, filetype, rate):
-	pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='hw:%d,0'%cardidx)
-
+	# pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='hw:%d,0'%cardidx)
+	pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='plughw:%d,0'%cardidx)
 	frame_size = 320
 	if filetype == '.wav':
 		song=wave.open(filename)
 		"""takes a wave file object and plays it"""
-		rate = song.getframerate()
+		# rate = song.getframerate()
 		nchannels=song.getnchannels()
 		length=song.getnframes()
 		# 8bit is unsigned in wav files
+		pcm.setchannels(nchannels)
+		pcm.setrate(rate)
 		if song.getsampwidth() == 1:
 			pcm.setformat(aa.PCM_FORMAT_U8)
 		# Otherwise we assume signed data, little endian
@@ -29,8 +31,6 @@ def playwf(cardidx, filename, filetype, rate):
 			pcm.setformat(aa.PCM_FORMAT_S32_LE)
 		else:
 			raise ValueError('Unsupported format')
-		pcm.setchannels(nchannels)
-		pcm.setrate(rate)
 		pcm.setperiodsize(frame_size)
 		data=song.readframes(frame_size)
 		while data:
@@ -41,6 +41,7 @@ def playwf(cardidx, filename, filetype, rate):
 		nchannels=1
 		pcm.setformat(aa.PCM_FORMAT_S32_LE)
 		pcm.setchannels(nchannels)
+		pcm.setrate(rate)
 		pcm.setperiodsize(frame_size)
 		data = np.fromfile(fid, dtype = np.dtype('d'), count = frame_size)
 		while len(data) > 0:
@@ -57,5 +58,9 @@ def sendwf(pcm, wavefile, filetype, rate):
 	p=Process(target = playwf, args = (pcm, wavefile, filetype, rate))
 	p.start()
 
+def beep(a=.01, b=500):
+	os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % ( a, b))
+
 if __name__=="__main__":
-	sendwf(1, '/home/jknowles/wf_with_spikes.wav','.wav',44100)
+	# sendwf(1, '/data/doupe_lab/stimuli/boc_syl_discrim_v1_stimset_a/song_a_1.wav','.wav',44100)
+	beep()
