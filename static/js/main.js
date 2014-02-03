@@ -24,18 +24,10 @@ require([
   'widgets/rate',
   'inputs',
   ], function(Backbone, Select, Rate, Inputs) {
-  var getInputs= function() {
-    //returns an array of strings of inputs
-    return _.map($('select'), function(item) {
-      var output = {};
-      output[$(item).attr('id')] = $(item).find("option:selected")[0].innerHTML;
-      return output
-    });
-  };
     //setting up event listeners for clicking
   var start_box = function() {
     console.log('asdfasdfasfasdfasdfa');
-    var data = getInputs();
+    var data = Inputs.getInputs();
     var req = $.ajax({
       url: '/go',
       type: 'POST',
@@ -45,6 +37,7 @@ require([
     });
   };
   var stop_box = function() {
+    Backbone.trigger('stop_test');
     var req = $.ajax({
       url: '/stop',
       type: 'POST',
@@ -70,8 +63,7 @@ require([
     $('#rates').append(n_trials_h.el);
     $('#rates').append(n_reward_h.el);
     Backbone.on('start_test', function() {
-      console.log('test starting');
-      setInterval(function() {
+      interval = setInterval(function() {
         var req = $.ajax({
           url: 'http://localhost:5000/data',
           type: 'POST',
@@ -83,10 +75,13 @@ require([
         });
       },1000);
     });
+    Backbone.on('stop_test', function() {
+       clearInterval(interval);
+    });
   };
 
   var start_site = function() {
-    var data = getInputs();
+    var data = Inputs.getInputs();
     populate(data);
   };
 
@@ -95,12 +90,12 @@ require([
   //kicks everything off once dom is ready 
   $(document).ready(function() {
     Inputs.createInputs();
-    //$(start_site);
-    //$('#gobutton').click(start_box)
+    $(start_site);
+    $('#gobutton').click(start_box)
     //$('#gobutton').click(function() {alert('asdfsdf')})
     //console.log($('#gobutton'));
-    ////$('#stopbutton').click(stop_box)
-    //$('#resetbutton').click(reset_box)
+    $('#stopbutton').click(stop_box)
+    $('#resetbutton').click(reset_box)
   });
 
 
