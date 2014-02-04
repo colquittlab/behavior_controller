@@ -20,9 +20,26 @@ define([
   var soundInput = function() {
     //a selection widget
     var i = new Select.SelectCollection([]);
-    var s = new Select.SelectOption({collection: i, id: 'Sound Card'});
+    var s = new Select.SelectOption({collection: i, id: 'soundcard'});
     var fer = $('<div></div>');
-    fer.append('Sound Card');
+    fer.append('Sound Card: ');
+    fer.append(s.el);
+    $('#inputs').append(fer);
+    s.$el.change(function() {
+      console.log(getInputs());
+    });
+    i.fetch({
+      url:'http://localhost:5000/list_sound_cards',
+      success: function(resp) {console.log('asdfasdf');console.log(resp)}
+    });
+  
+  };
+  var serialInput = function() {
+    //a selection widget
+    var i = new Select.SelectCollection([]);
+    var s = new Select.SelectOption({collection: i, id: 'serialport'});
+    var fer = $('<div></div>');
+    fer.append('Serial Port: ');
     fer.append(s.el);
     $('#inputs').append(fer);
     s.$el.change(function() {
@@ -32,7 +49,23 @@ define([
       url:'http://localhost:5000/list_serial_ports',
       success: function(resp) {console.log('asdfasdf');console.log(resp)}
     });
-  
+  };
+
+  var birdnameInput = function() {
+    //a selection widget
+    var i = new Input.InputCollection([]);
+    var s = new Select.SelectOption({collection: i, id: 'birdname'});
+    var fer = $('</br><div></div>');
+    fer.append('Bird Name: ');
+    fer.append(s.el);
+    $('#inputs').append(fer);
+    s.$el.change(function() {
+      console.log(getInputs());
+    });
+    i.fetch({
+      url:'http://localhost:5000/list_serial_ports',
+      success: function(resp) {console.log('asdfasdf');console.log(resp)}
+    });
   };
 
   var prepButtons = function() {
@@ -55,6 +88,8 @@ define([
   //kicks everything off once dom is ready 
   var createInputs = function() {
     soundInput(); 
+    serialInput(); 
+    // birdnameInput();
     prepButtons(); 
   };
   return {createInputs: createInputs, getInputs: getInputs};

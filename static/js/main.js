@@ -1,5 +1,6 @@
 //configuration crap
 require.config({
+  urlArgs: "bust="+new Date().getTime(),
   paths: {
     'underscore': 'vendor/underscore/underscore',
     'backbone': 'vendor/backbone/backbone',
@@ -26,15 +27,13 @@ require([
   ], function(Backbone, Select, Rate, Inputs) {
     //setting up event listeners for clicking
   var start_box = function() {
-    console.log('asdfasdfasfasdfasdfa');
+    console.log('go');
     var data = Inputs.getInputs();
     var req = $.ajax({
       url: '/go',
       type: 'POST',
       data: 'go'
-    }).done(function() {
-      Backbone.trigger('start_test');
-    });
+    })
   };
   var stop_box = function() {
     Backbone.trigger('stop_test');
@@ -83,7 +82,8 @@ require([
   var start_site = function() {
     var data = Inputs.getInputs();
     populate(data);
-  };
+    Backbone.trigger('start_test')
+    }
 
 
 
