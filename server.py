@@ -3,7 +3,7 @@ from random import randint
 import json
 from multiprocessing import Manager, Process
 import threading
-import behavior_gui as behavior
+import behavior_controller as behavior
 
 app = Flask(__name__)
 
