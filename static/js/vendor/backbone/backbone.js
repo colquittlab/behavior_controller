@@ -429,9 +429,13 @@
       var model = this;
       var success = options.success;
       options.success = function(resp) {
+        console.log('backbone success');
         if (!model.set(model.parse(resp, options), options)) return false;
+        console.log('backbone success 2');
         if (success) success(model, resp, options);
+        console.log('backbone success 3');
         model.trigger('sync', model, resp, options);
+        console.log('backbone success 4');
       };
       wrapError(this, options);
       return this.sync('read', this, options);
