@@ -17,7 +17,7 @@ import loop_iterations as loop
 debug = True
 beep = False
 ## Settings 
-mode_definitions = ['song_only', 'song_plus_food', 'sequence', 'discrimination']
+mode_definitions = loop.iterations.keys()
 
 input_definitions = {2: ['song_trigger'], 
                      3: ['response_trigger', 'response_a'],
