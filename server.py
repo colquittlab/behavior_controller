@@ -17,6 +17,7 @@ def runner():
 
 def rand():
     return randint(2, 100)
+
 @app.route("/data", methods=['GET', 'POST'])
 def data():
     global controller
@@ -33,21 +34,41 @@ def data():
 
 @app.route("/list_sound_cards", methods = ["GET", "POST"])
 def list_sound_cards():
-    result = box.return_list_of_sound_cards()
+    result = {}
+    result['list'] = box.return_list_of_sound_cards()
+    if box.sc_idx is None:
+        result['current'] = None
+    else: 
+        if box.sc_idx < len(result['list']):
+            result['current'] = result['list'][box.sc_idx]
+        else:
+            box.sc_idx = None
+            result['current'] = None
     return json.dumps(result)
 
 @app.route("/list_serial_ports", methods = ["GET", "POST"])
 def list_serial_ports():
-    result = behavior.return_list_of_usb_serial_ports()
+    result = {}
+    result['list'] = behavior.return_list_of_usb_serial_ports()
+    # if box.serial_port == 
     return json.dumps(result)
 
 @app.route("/list_modes", methods = ["GET", "POST"])
 def list_modes():
-    return json.dumps(behavior.mode_definitions)
+    result = {}
+    result['list'] = behavior.mode_definitions
+    return json.dumps(result), 200
 
 @app.route("/set_sound_card", methods = ["GET", "POST"])
 def set_sound_card():
-    pass
+    if 'sound_card' in request.args.keys():
+        sound_card = request.args['sound_card']
+    else: return json.dumps('No soundcard provided'), 400
+    global box
+    box.return_list_of_sound_cards()
+    idx = 
+    result = {}
+    return json.dumps(result), 200
 
 @app.route("/set_serial_port")
 def set_serial_port():
@@ -59,7 +80,7 @@ def go():
     global controller
     global box
     global thread
-
+    
     # check that controllers are initialized 
     if controller == None:
         return json.dumps(('failure', 'controller not initialized')), 400

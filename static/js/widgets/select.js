@@ -7,9 +7,7 @@ define([
     initialize: function(attributes, options) {
       //re-render necessary parts on model change
       var self = this;
-      this.collection.on('reset', function() {
-        self.render()
-      });
+      this.collection.on('reset', function() {self.render()});
       this.render();
     },
     render: function() {
@@ -28,7 +26,7 @@ define([
           type: 'GET'
       }).done(function(resp) {
         var parsed = JSON.parse(resp);
-        self.reset(_.map(parsed, function(i) { return {foo: i}})); 
+        self.reset(_.map(parsed.list, function(i) { return {foo: i}})); 
         if (options.success) options.success(parsed);
       });
     },

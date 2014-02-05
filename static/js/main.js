@@ -22,8 +22,9 @@ require.config({
 require([
   'backbone',
   'widgets/select',
+  // 'widgets/input',
   'widgets/rate',
-  'inputs',
+  'controls',
   ], function(Backbone, Select, Rate, Inputs) {
     //setting up event listeners for clicking
   var start_box = function() {
@@ -32,7 +33,7 @@ require([
     var req = $.ajax({
       url: '/go',
       type: 'POST',
-      data: 'go'
+      data: data
     })
   };
   var stop_box = function() {
@@ -51,6 +52,29 @@ require([
     });
   };
 
+  var set_serial = function() {
+    var data = Inputs.getInputs();
+    console.log('connecting to serial');
+    var data = Inputs.getInputs();
+    var req = $.ajax({
+      url: '/set_serial',
+      type: 'POST',
+      data: data,
+      success: function (evt) {alert(evt.data)}
+    });
+};
+
+  var set_soundcard = function() {
+    var data = Inputs.getInputs();
+    console.log('connecting to soundcard');
+    var data = Inputs.getInputs();
+    var req = $.ajax({
+      url: '/set_sound_card',
+      type: 'POST',
+      data: data,
+      success: function (evt) {alert(evt.data)}
+    });
+};
 
 
   var populate = function(data) {
@@ -72,7 +96,7 @@ require([
           n_trials_var.set('rate', resp.n_trials)
           n_rewards_var.set('rate', resp.n_reward)
         });
-      },1000);
+      },5000);
     });
     Backbone.on('stop_test', function() {
        clearInterval(interval);
@@ -96,6 +120,8 @@ require([
     //console.log($('#gobutton'));
     $('#stopbutton').click(stop_box)
     $('#resetbutton').click(reset_box)
+    $('#mode').change(stop_box)
+    $('#soundcard_select').click(set_soundcard)
   });
 
 

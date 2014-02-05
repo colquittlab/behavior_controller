@@ -25,8 +25,8 @@ input_definitions = {2: ['song_trigger'],
 
 output_definitions = {'reward_port': 12}
 trigger_value = 1
-stimuli_dir = '/data/doupe_lab/stimuli/'
-data_dir = '/data/temp/'
+stimuli_dir = '/home/jknowles/data/doupe_lab/stimuli/'
+data_dir = '/home/jknowles/data/doupe_lab/behavior/'
 class BehaviorController(object):
     def __init__(self):
         self.birdname = None
@@ -196,14 +196,16 @@ class BehaviorBox(object):
     def return_list_of_sound_cards(self):
         return alsaaudio.cards()
 
-    def select_sound_card(self, idx = None):
-        if idx == None:
-            list_of_cards = self.return_list_of_sound_cards()
+    def select_sound_card(self, cardname = None):
+        list_of_cards = self.return_list_of_sound_cards()
+        if cardname == None:
             print 'Select desired card from list below:'
             for k,card in enumerate(list_of_cards):
                 print '[%d] %s' % (k,card)
             # idx = input('Enter Number: ')
                 idx = len(list_of_cards)-1
+        else:
+            idx = list_of_cards.index(cardname)
         self.sc_idx = idx
 
     # def connect_to_sound_card(self, cardidx):
@@ -403,11 +405,11 @@ def return_list_of_usb_serial_ports():
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
     controller = BehaviorController()
-    controller.set_bird_name('test')
-    controller.mode = 'discrimination'
+    controller.set_bird_name('orange4white29')
+    controller.mode = 'song_only'
     controller.stimset_names = []
-    controller.stimset_names.append('boc_syl_discrim_v1_stimset_a')
-    controller.stimset_names.append('boc_syl_discrim_v1_stimset_b_2')
+    controller.stimset_names.append('pretraining_motifs')
+    controller.stimset_names.append('pretraining_motifs')
     controller.load_stimsets()
 
     box = BehaviorBox()
