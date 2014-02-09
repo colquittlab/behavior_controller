@@ -65,10 +65,13 @@ def set_sound_card():
         sound_card = request.args['sound_card']
     else: return json.dumps('No soundcard provided'), 400
     global box
-    box.return_list_of_sound_cards()
-    idx = 
+    cardlist = box.return_list_of_sound_cards()
+    if sound_card in cardlist:
+        idx = cardlist.index(sound_card)
+    else:
+        return 'failure: card not in list', 400
     result = {}
-    return json.dumps(result), 200
+    return json.dumps('sound card set to %s' % sound_card), 200
 
 @app.route("/set_serial_port")
 def set_serial_port():

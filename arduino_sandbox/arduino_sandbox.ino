@@ -1,13 +1,21 @@
 //#include <SoftwareSerial.h>
 
 // config output pins (digital)
-byte output_pins[2] = {12, 13};
+byte output_pins[3] = {12, 13};
 // config input pins (digital)
 byte input_pins[3] = {2, 3, 4};
 bool current_values[sizeof(input_pins)];
 long last_input_change[sizeof(input_pins)];
 long bounce_time = 100;
 String local_buffer;
+
+bool pulse_active = 1;
+bool pulse_on = 0;
+byte pulse_trigger_pin = 10; //
+byte pulse_output_pin = 11; // pulse output pin
+long pulse_period = 100; // pulse period in ms (1000/f)
+long pulse_width = 50; // pulse width in ms
+
 
 // configure software serial ports
 //SoftwareSerial mySerial(10, 11); // RX, TX
@@ -27,6 +35,9 @@ void setup() {
     pinMode(output_pins[i], OUTPUT);
     digitalWrite(output_pins[i], 0);
   }
+  pinMode(pulse_output_pin, OUTPUT);
+  digitalWrite(pulse_output_pin, 0);
+  pinMode(pulse_trigger_pin, INPUT_PULLUP);
 }
 
 //
@@ -108,6 +119,53 @@ void loop() {
   //  if (millis() >= lastmillis + 1000) {
   //    Serial.println(millis());
   //  lastmillis = millis();}
+  if (pulse_active) {
+    check_pulse_input();
+  }
 }
 
 
+// run flicker
+bool pulse_trigger_value = 0;
+void check_pulse_input() {
+  pulse_trigger_value = digitalRead(pulse_trigger_pin);
+  if (pulse_on) {
+    if (pulse_trigger_value==0){stop_pulse();}
+    else {run_pulse();}
+  }
+  else {
+    if (pulse_trigger_value==1){start_pulse();}
+  }
+}
+
+bool pulseout_state = 0;
+long last_up = 0;
+void start_pulse() {
+  pulse_on = 1;
+  last_up = micros();
+  digitalWrite(pulse_output_pin, 1);
+  pulseout_state = 1;
+}
+void stop_pulse(){
+  pulse_on = 0;
+  digitalWrite(pulse_output_pin, 0);
+  pulseout_state = 0;
+}
+void run_pulse() {
+  long current_time = micros();
+  if (pulseout_state==1) {
+     if (current_time >= last_up + pulse_width) {
+       digitalWrite(pulse_output_pin, 0);
+       pulseout_state = 0;
+     }
+  }
+  else {
+    if (current_time >= last_up + pulse_period) {
+      digitalWrite(pulse_output_pin, 1); 
+      pulseout_state = 1;
+      //last_up = last_up + pulse_period; 
+      last_up = current_time;
+    }
+  }
+}
+  

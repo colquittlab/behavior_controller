@@ -12,4 +12,5 @@ pathdef.m
 *.tif
 *.pyc
 *.mex*
+*.m~
 
