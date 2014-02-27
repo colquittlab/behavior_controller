@@ -46,8 +46,8 @@ class BehaviorController(object):
         self.stimsets = []
         self.expected_responses = ['response_a', 'response_b']
         # initialize the task parameters 
-        self.timeout_period = 5; # timeout (punishment) time in seconds
-        self.max_trial_length = 10; # maximum trial time in seconds
+        self.timeout_period = 30; # timeout (punishment) time in seconds
+        self.max_trial_length = 5; # maximum trial time in seconds
         self.feed_time = 5;
         # initializethe trial variables
         self.current_trial = None
@@ -406,10 +406,10 @@ if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
     controller = BehaviorController()
     controller.set_bird_name('orange4white29')
-    controller.mode = 'song_only'
+    controller.mode = 'discrimination'
     controller.stimset_names = []
-    controller.stimset_names.append('pretraining_motifs')
-    controller.stimset_names.append('pretraining_motifs')
+    controller.stimset_names.append('boc_syl_discrim_v1_stimset_a')
+    controller.stimset_names.append('boc_syl_discrim_v1_stimset_b_6')
     controller.load_stimsets()
 
     box = BehaviorBox()
