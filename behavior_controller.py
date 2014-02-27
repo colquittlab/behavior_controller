@@ -126,6 +126,7 @@ class BehaviorController(object):
         if self.log_fid == None:
             self.log_fid = open('%s%s.log'% (data_dir,self.base_filename), 'w')
         return self.log_fid
+
     def return_events_fid(self):
         if self.trial_fid == None:
             self.trial_fid = open('%s%s.trial'% (data_dir,self.base_filename), 'w')
@@ -202,8 +203,8 @@ class BehaviorBox(object):
             print 'Select desired card from list below:'
             for k,card in enumerate(list_of_cards):
                 print '[%d] %s' % (k,card)
-            # idx = input('Enter Number: ')
-                idx = len(list_of_cards)-1
+            idx = input('Enter Number: ')
+            #idx = len(list_of_cards)-1
         else:
             idx = list_of_cards.index(cardname)
         self.sc_idx = idx
@@ -299,6 +300,9 @@ def run_box(controller, box):
     #     pass
     # initialize controller
     controller.box_state = 'go'
+    controller.has_run = True
+    controller.generate_file_name()
+
     # initialize box
     box.query_events()
     # send loop
