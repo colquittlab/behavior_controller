@@ -8,7 +8,6 @@ import time
 import datetime
 import random 
 import io
-import alsaaudio
 import json
 
 import soundout_tools as so
@@ -323,6 +322,8 @@ def main_loop(controller, box):
             events_since_last, trial_ended = loop.iterations[controller.mode](controller, box)
             # save all the events that have happened in this loop to file
             controller.save_events_to_log_file(events_since_last)
+            check_state
+            
             if debug:
                 for event in events_since_last:
                     evcount += 1
@@ -336,6 +337,9 @@ def main_loop(controller, box):
                 controller.task_state = 'waiting_for_trial'
                 controller.store_current_trial()
                 controller.generate_next_trial()
+
+        # exit routine:
+
     except Exception as e:
          raise e
 
