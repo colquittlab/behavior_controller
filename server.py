@@ -134,8 +134,10 @@ def stop():
     global thread
     # # initialize controller
     if controller != None and thread != None:
-        controller.box_state = "stop"
-        thread.join()
+        # controller.box_state = "stop"
+        # thread.join()
+        # update redis var state='stop'
+        pass
     # behavior_gui.run_box()
     return json.dumps(('sucsess'))
 

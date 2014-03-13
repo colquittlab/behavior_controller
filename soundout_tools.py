@@ -1,10 +1,13 @@
-import alsaaudio as aa
+import os
 import wave
 from multiprocessing import Process
 import numpy as np
-import os
 
-# pcm=aa.PCM(aa.PCM_PLAYBACK,aa.PCM_NORMAL,card='hw:1,0')
+if os.uname() is 'Linux': # this allows for development on non-linux systems 
+	import alsaaudio as aa
+else:
+	pass
+
 
 #functions
 def playwf(cardidx, filename, filetype, rate):
