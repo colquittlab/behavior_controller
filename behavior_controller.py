@@ -61,7 +61,7 @@ class BehaviorController(object):
 
     def generate_file_name(self):
         if self.base_filename is not None:
-            return self.filename
+            return self.base_filename
         basename = '%s_%04d%02d%02d' %(self.birdname,self.initial_date.year,self.initial_date.month,self.initial_date.day) 
         idx = 0
         while os.path.exists('%s%s_%d.log'%(data_dir,basename,idx)):
