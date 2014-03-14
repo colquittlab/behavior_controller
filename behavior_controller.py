@@ -194,7 +194,7 @@ class BehaviorBox(object):
         return self.sync()
 
     def return_list_of_sound_cards(self):
-        return alsaaudio.cards()
+        return so.list_sound_cards()
 
     def select_sound_card(self, cardname = None):
         list_of_cards = self.return_list_of_sound_cards()
@@ -413,7 +413,7 @@ def return_list_of_usb_serial_ports():
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
     controller = BehaviorController()
-    controller.set_bird_name('orange4white29')
+    controller.set_bird_name('test')
     controller.mode = 'discrimination'
     controller.stimset_names = []
     controller.stimset_names.append('boc_syl_discrim_v1_stimset_a')

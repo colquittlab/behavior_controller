@@ -3,7 +3,7 @@ import wave
 from multiprocessing import Process
 import numpy as np
 
-if os.uname() is 'Linux': # this allows for development on non-linux systems 
+if os.uname()[0]=='Linux': # this allows for development on non-linux systems 
 	import alsaaudio as aa
 else:
 	pass
@@ -63,6 +63,9 @@ def sendwf(pcm, wavefile, filetype, rate):
 
 def beep(a=.01, b=500):
 	os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % ( a, b))
+
+def list_sound_cards():
+	return aa.cards()
 
 if __name__=="__main__":
 	# sendwf(1, '/data/doupe_lab/stimuli/boc_syl_discrim_v1_stimset_a/song_a_1.wav','.wav',44100)
