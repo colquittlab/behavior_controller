@@ -69,4 +69,4 @@ def list_sound_cards():
 
 if __name__=="__main__":
 	# sendwf(1, '/data/doupe_lab/stimuli/boc_syl_discrim_v1_stimset_a/song_a_1.wav','.wav',44100)
-	beep()
+	print list_sound_cards()

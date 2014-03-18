@@ -12,6 +12,7 @@ import json
 
 import soundout_tools as so
 import loop_iterations as loop
+import serial_tools as st
 # from pyfirmata import Arduino, util
 debug = True
 beep = False
@@ -151,9 +152,9 @@ class BehaviorBox(object):
 
         self.box_zero_time = 0
         self.serial_port = None
+        self.serial_device_id = None
         self.serial_c = None
         self.serial_io = None
-
         self.sc_idx = None
 
     def ready_to_run(self):
@@ -175,13 +176,14 @@ class BehaviorBox(object):
 
     def select_serial_port(self, port = None):
         if port == None:
-            list_of_ports = return_list_of_usb_serial_ports()
+            list_of_ports = st.return_list_of_usb_serial_ports()
             print 'Select desired port from list below:'
             for k,port in enumerate(list_of_ports):
-                print '[%d] %s' % (k,port)
+                print '[%d] port: %s serial# %s' % (k,port[0], port[1])
             # x = input('Enter Number: ')
             x = 0
-            self.serial_port = list_of_ports[x]
+            self.serial_port = list_of_ports[x][0]
+            self.serial_device_id = list_of_ports[x][1]
         else:
             self.serial_port = port;
         self.connect_to_serial_port()
@@ -322,7 +324,7 @@ def main_loop(controller, box):
             events_since_last, trial_ended = loop.iterations[controller.mode](controller, box)
             # save all the events that have happened in this loop to file
             controller.save_events_to_log_file(events_since_last)
-            check_state
+
             
             if debug:
                 for event in events_since_last:
@@ -393,22 +395,22 @@ def load_and_verify_stimset(stim_name):
         raise e 
     return stimset_out 
 
-def return_list_of_usb_serial_ports():
-    if os.name == 'nt':
-        list_of_ports = []
-        # windows
-        for i in range(256):
-            try:
-                s = serial.Serial(i)
-                s.close()
-                list_of_ports.append('COM' + str(i + 1))
-            except serial.SerialException:
-                pass
-    else:
-        # unix
-        list_of_ports = [port[0] for port in list_ports.comports()]
-    # for port in list_of_ports: print port
-    return filter(lambda x: 'ACM' in x, list_of_ports)
+# def return_list_of_usb_serial_ports():
+#     if os.name == 'nt':
+#         list_of_ports = []
+#         # windows
+#         for i in range(256):
+#             try:
+#                 s = serial.Serial(i)
+#                 s.close()
+#                 list_of_ports.append('COM' + str(i + 1))
+#             except serial.SerialException:
+#                 pass
+#     else:
+#         # unix
+#         list_of_ports = [port[0] for port in list_ports.comports()]
+#     # for port in list_of_ports: print port
+#     return filter(lambda x: 'ACM' in x, list_of_ports)
 
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
