@@ -22,7 +22,7 @@ require.config({
 require([
   'backbone',
   'widgets/select',
-  // 'widgets/input',
+  // 'widgets/textinput',
   'widgets/rate',
   'controls',
   ], function(Backbone, Select, Rate, Inputs) {
@@ -55,23 +55,21 @@ require([
   var set_serial = function() {
     var data = Inputs.getInputs();
     console.log('connecting to serial');
-    var data = Inputs.getInputs();
     var req = $.ajax({
       url: '/set_serial',
       type: 'POST',
-      data: data,
+      data: 'poopinyourface', //data,
       success: function (evt) {alert(evt.data)}
     });
 };
 
   var set_soundcard = function() {
-    var data = Inputs.getInputs();
     console.log('connecting to soundcard');
     var data = Inputs.getInputs();
     var req = $.ajax({
       url: '/set_sound_card',
       type: 'POST',
-      data: data,
+      data: 'poopinyourface',
       success: function (evt) {alert(evt.data)}
     });
 };
@@ -121,7 +119,8 @@ require([
     $('#stopbutton').click(stop_box)
     $('#resetbutton').click(reset_box)
     $('#mode').change(stop_box)
-    $('#soundcard_select').click(set_soundcard)
+    $('#sound_select').change(set_soundcard)
+    $('#serial_select').change(set_soundcard)
   });
 
 
