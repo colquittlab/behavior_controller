@@ -143,6 +143,7 @@ def stop():
     global controller
     global box
     global thread
+    import ipdb; ipdb.set_trace()
     # # initialize controller
     if controller != None and thread != None:
         # controller.box_state = "stop"

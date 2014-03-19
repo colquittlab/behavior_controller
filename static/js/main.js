@@ -22,10 +22,10 @@ require.config({
 require([
   'backbone',
   'widgets/select',
-  // 'widgets/textinput',
+  'widgets/textinput',
   'widgets/rate',
   'controls',
-  ], function(Backbone, Select, Rate, Inputs) {
+  ], function(Backbone, Select, Text, Rate, Inputs) {
     //setting up event listeners for clicking
   var start_box = function() {
     console.log('go');
@@ -58,7 +58,7 @@ require([
     var req = $.ajax({
       url: '/set_serial',
       type: 'POST',
-      data: 'poopinyourface', //data,
+      data: data,
       success: function (evt) {alert(evt.data)}
     });
 };
@@ -66,10 +66,11 @@ require([
   var set_soundcard = function() {
     console.log('connecting to soundcard');
     var data = Inputs.getInputs();
+    console.log(data);
     var req = $.ajax({
       url: '/set_sound_card',
       type: 'POST',
-      data: 'poopinyourface',
+      data: Inputs.getInputs(),
       success: function (evt) {alert(evt.data)}
     });
 };
