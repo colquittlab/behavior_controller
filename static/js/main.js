@@ -27,6 +27,16 @@ require([
   'controls',
   ], function(Backbone, Select, Text, Rate, Inputs) {
     //setting up event listeners for clicking
+
+  var make_new_box = function() {
+    var data = Inputs.getInputs();
+    var req = $.ajax({
+      url: '/new_box',
+      type: 'POST',
+      data: data
+    })
+  };
+
   var start_box = function() {
     console.log('go');
     var data = Inputs.getInputs();
@@ -36,6 +46,7 @@ require([
       data: data
     })
   };
+
   var stop_box = function() {
     Backbone.trigger('stop_test');
     var req = $.ajax({
@@ -52,14 +63,35 @@ require([
     });
   };
 
-  var set_serial = function() {
+  var beep = function() {
+    console.log('beep');
+    var data = Inputs.getInputs();
+    var req = $.ajax({
+      url: '/beep',
+      type: 'POST',
+      data: data
+    })
+  };
+  var raise_feeder = function() {
+    console.log('raise_feeder');
+    var data = Inputs.getInputs();
+    var req = $.ajax({
+      url: '/raise_feeder',
+      type: 'POST',
+      data: data
+    })
+  };
+  
+
+
+  var set_serialport = function() {
     var data = Inputs.getInputs();
     console.log('connecting to serial');
     var req = $.ajax({
-      url: '/set_serial',
+      url: '/set_serial_port',
       type: 'POST',
       data: data,
-      success: function (evt) {alert(evt.data)}
+      success: function (evt) {alert(evt)}
     });
 };
 
@@ -71,7 +103,7 @@ require([
       url: '/set_sound_card',
       type: 'POST',
       data: Inputs.getInputs(),
-      success: function (evt) {alert(evt.data)}
+      success: function (evt) {alert(evt)}
     });
 };
 
@@ -114,14 +146,18 @@ require([
   $(document).ready(function() {
     Inputs.createInputs();
     $(start_site);
+
+    $('#soundbox_select').change(make_new_box)
+    $('#newboxbutton').click(make_new_box)
     $('#gobutton').click(start_box)
-    //$('#gobutton').click(function() {alert('asdfsdf')})
     //console.log($('#gobutton'));
     $('#stopbutton').click(stop_box)
     $('#resetbutton').click(reset_box)
+    $('#beepbutton').click(beep)
+    $('#feederbutton').click(raise_feeder)
     $('#mode').change(stop_box)
-    $('#sound_select').change(set_soundcard)
-    $('#serial_select').change(set_soundcard)
+    $('#soundcard_select').click(set_soundcard)
+    $('#serialport_select').click(set_serialport)
   });
 
 

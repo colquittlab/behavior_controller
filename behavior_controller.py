@@ -186,7 +186,8 @@ class BehaviorBox(object):
             self.serial_device_id = list_of_ports[x][1]
         else:
             self.serial_port = port;
-        self.connect_to_serial_port()
+        result = self.connect_to_serial_port()
+        return result
 
 
     def connect_to_serial_port(self):
@@ -209,6 +210,7 @@ class BehaviorBox(object):
         else:
             idx = list_of_cards.index(cardname)
         self.sc_idx = idx
+        self.beep()
 
     # def connect_to_sound_card(self, cardidx):
     #     self.sc_object = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK, mode=alsaaudio.PCM_NORMAL, card='hw:%d,0'%cardidx)
@@ -291,6 +293,9 @@ class BehaviorBox(object):
     def play_sound(self, filename):
         filetype = filename[-4:]
         so.sendwf(self.sc_idx, filename, filetype, 44100)
+        pass
+    def beep(self):
+        self.play_sound('sounds/beep.wav')
         pass
 
 ##

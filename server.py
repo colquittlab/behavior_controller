@@ -3,6 +3,7 @@ from random import randint
 import json
 from multiprocessing import Manager, Process
 import threading
+import time
 
 import serial_tools as st
 import soundout_tools as so
@@ -12,36 +13,43 @@ app = Flask(__name__)
 
 # container for all data pertaining to each box
 box_dict = {}
-count = 0;
-def initiate_box(box_name):
+def initiate_box(box_name=None):
     global box_dict
+    if box_name==None:
+        box_name = "box_%d" % (len(box_dict) + 1)
     box_dict[box_name] = {}
     box_dict[box_name]['controller'] = behavior.BehaviorController()
     box_dict[box_name]['box'] = behavior.BehaviorBox()  
     box_dict[box_name]['thread'] = None
+    pass
 
-
+## webapp starts here
 @app.route("/")
 def runner():
     return render_template('index.html')
 
-def rand():
-    return randint(2, 100)
-
 @app.route("/data", methods=['GET', 'POST'])
 def data():
-    global controller, count
-    count += 1
+    global box_dict
+    # box_id = response.values['sound']
     # if request.method == 'POST':
     #     print request.for
     output = {'n_trials': 0, 'n_reward': 0}
-    if controller is not None:
-        output = { 
-            'box_state': controller.box_state,
-            'n_trials': controller.n_trials,
-            'n_reward': count    
-        }
+
     return jsonify(output)
+
+@app.route("/new_box", methods=['GET', 'POST'])
+def make_new_box():
+    initiate_box()
+    return 'sucess',200
+
+@app.route("/list_boxes",methods=['GET', 'POST'])
+def list_boxes():
+    global box_dict
+    result = {}
+    result['list']=box_dict.keys()
+    result['list'].sort(key=lambda item: int(item.split('_')[1]))
+    return json.dumps(result),200
 
 @app.route("/list_sound_cards", methods = ["GET", "POST"])
 def list_sound_cards():
@@ -72,24 +80,44 @@ def list_modes():
 
 @app.route("/set_sound_card", methods = ["GET", "POST"])
 def set_sound_card():
-    print request.args.keys()
-    import ipdb; ipdb.set_trace()
-    if 'sound_card' in request.args.keys():
-        sound_card = request.args['sound_card']
+    if 'soundcard_select' in request.values.keys():
+        sound_card = request.values['soundcard_select']
     else: return json.dumps('No soundcard provided'), 400
+
     global box
     cardlist = box.return_list_of_sound_cards()
+    # filter card list
     if sound_card in cardlist:
-        idx = cardlist.index(sound_card)
+        box.select_sound_card(sound_card)
     else:
         return 'failure: card not in list', 400
-    result = {}
     return json.dumps('sound card set to %s' % sound_card), 200
 
-@app.route("/set_serial_port")
+@app.route("/set_serial_port", methods = ["GET", "POST"])
 def set_serial_port():
-    raw_input('pause!')
-    pass
+    if 'serialport_select' in request.values.keys():
+        serial_port = request.values['serialport_select']
+    else: return json.dumps('No soundcard provided'), 400
+    serial_port = serial_port.split(',')[0]
+    result = box.select_serial_port(serial_port)
+    if result:
+        return 'sucesss: connected to %s'%serial_port, 200
+    else:
+        return 'failure: could not connect to %s'%serial_port, 400 
+
+@app.route("/beep", methods = ["GET", "POST"])
+def beep():
+    global box
+    box.beep()
+    return 'beep', 200
+
+@app.route("/raise_feeder", methods = ["GET", "POST"])
+def raise_feeder():
+    global box
+    box.feeder_on()
+    time.sleep(1)
+    box.feeder_off()
+    return 'feed test', 200
 
 @app.route("/go",methods=['GET','POST'])
 def go():
@@ -143,7 +171,6 @@ def stop():
     global controller
     global box
     global thread
-    import ipdb; ipdb.set_trace()
     # # initialize controller
     if controller != None and thread != None:
         # controller.box_state = "stop"
@@ -172,8 +199,7 @@ def reset():
 
 
 if __name__ == "__main__":
-    controller = behavior.BehaviorController()
-    box = behavior.BehaviorBox()  
+    initiate_box()
     thread = None
     app.debug = True
     app.run()
