@@ -3,13 +3,23 @@ from random import randint
 import json
 from multiprocessing import Manager, Process
 import threading
+
+import serial_tools as st
+import soundout_tools as so
 import behavior_controller as behavior
 
 app = Flask(__name__)
 
-controller = None
-box = None
-thread = None
+# container for all data pertaining to each box
+box_dict = {}
+count = 0;
+def initiate_box(box_name):
+    global box_dict
+    box_dict[box_name] = {}
+    box_dict[box_name]['controller'] = behavior.BehaviorController()
+    box_dict[box_name]['box'] = behavior.BehaviorBox()  
+    box_dict[box_name]['thread'] = None
+
 
 @app.route("/")
 def runner():
@@ -20,7 +30,8 @@ def rand():
 
 @app.route("/data", methods=['GET', 'POST'])
 def data():
-    global controller
+    global controller, count
+    count += 1
     # if request.method == 'POST':
     #     print request.for
     output = {'n_trials': 0, 'n_reward': 0}
@@ -28,7 +39,7 @@ def data():
         output = { 
             'box_state': controller.box_state,
             'n_trials': controller.n_trials,
-            'n_reward': 0    
+            'n_reward': count    
         }
     return jsonify(output)
 
@@ -49,7 +60,7 @@ def list_sound_cards():
 @app.route("/list_serial_ports", methods = ["GET", "POST"])
 def list_serial_ports():
     result = {}
-    result['list'] = behavior.return_list_of_usb_serial_ports()
+    result['list'] = st.return_list_of_usb_serial_ports()
     # if box.serial_port == 
     return json.dumps(result)
 
@@ -61,6 +72,8 @@ def list_modes():
 
 @app.route("/set_sound_card", methods = ["GET", "POST"])
 def set_sound_card():
+    print request.args.keys()
+    import ipdb; ipdb.set_trace()
     if 'sound_card' in request.args.keys():
         sound_card = request.args['sound_card']
     else: return json.dumps('No soundcard provided'), 400
@@ -92,7 +105,7 @@ def go():
     if controller.box_state == "go":
         return json.dumps(['failure', 'already_running']), 400
 
-
+    import ipdb; ipdb.set_trace()
     ##### temporary code to configure birdname, stimsets, ext
     controller_ready = controller.ready_to_run()
     if not controller_ready[0]:
@@ -108,11 +121,9 @@ def go():
         box.select_sound_card()
         box.select_serial_port()
 
-
     # check ready state
     controller_ready = controller.ready_to_run()
     if not controller_ready[0]:
-        import ipdb; ipdb.set_trace()
         return json.dumps(['failure', 'controller: %s ' % controller_ready[1]]), 400#])
     box_ready = box.ready_to_run()
     if not box_ready[0]:
@@ -132,6 +143,7 @@ def stop():
     global controller
     global box
     global thread
+    import ipdb; ipdb.set_trace()
     # # initialize controller
     if controller != None and thread != None:
         # controller.box_state = "stop"
@@ -162,5 +174,6 @@ def reset():
 if __name__ == "__main__":
     controller = behavior.BehaviorController()
     box = behavior.BehaviorBox()  
+    thread = None
     app.debug = True
     app.run()

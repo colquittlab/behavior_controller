@@ -7,17 +7,15 @@ define([
     initialize: function(attributes, options) {
       //re-render necessary parts on model change
       var self = this;
-      this.collection.on('reset', function() {
-        self.render()
-      });
+      this.collection.on('reset', function() {self.render()});
       this.render();
     },
-    // render: function() {
-    //   var i = this.collection.map(function(item){
-    //     return '<option value="' + item.get('foo')+ '">'+ item.get('foo') +'</option>';
-    //   });
-    //   this.$el.html(i.join(' '));
-    // },
+    render: function() {
+      var i = this.collection.map(function(item){
+        return '<option value="' + item.get('foo')+ '">'+ item.get('foo') +'</option>';
+      });
+      this.$el.html(i.join(' '));
+    },
   
   });
   var TextInputCollection = Backbone.Collection.extend({
@@ -38,8 +36,8 @@ define([
     className: 'select-widget',
   });
   var output = {
-    SelectOption: SelectOption,
-    SelectCollection: SelectCollection,
+    TextInputOption: TextInputOption,
+    TextInputCollection: TextInputCollection,
   };
 
 
