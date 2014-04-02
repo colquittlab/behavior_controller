@@ -6,13 +6,14 @@ import serial
 from serial.tools import list_ports
 import time
 import datetime
-import random 
 import io
 import json
 
-import soundout_tools as so
+import lib.soundout_tools as so
+import lib.serial_tools as st
 import loop_iterations as loop
-import serial_tools as st
+import trial_generators as trial
+
 # from pyfirmata import Arduino, util
 debug = True
 beep = False
@@ -51,7 +52,7 @@ class BehaviorController(object):
         self.feed_time = 5;
 
         # initializethe trial variables
-        self.trial_generator = None
+        self.trial_generator = trial.generators['standard']
         self.trial_block = []
         self.current_trial = None
         self.completed_trials = []
@@ -270,6 +271,18 @@ class BehaviorBox(object):
         command = '<o%d=0>'%output_definitions['reward_port']
         self.write_command(command)
 
+    def pulse_on(self):
+        command = '<p=2>'
+        self.write_command(command)
+
+    def pulse_off(self):
+        command = '<p=0>'
+        self.write_command(command)
+
+    def pulse_on_trigger(self):
+        command = '<p=1>'
+        self.write_command(command)
+
     def sync(self):
         # try:
         send_time = self.current_time
@@ -285,10 +298,6 @@ class BehaviorBox(object):
         # except Exception as e:
         #     print e
         #     return False
-
-    # def load_song(self, dir, file_name):
-    #     fid = open('%s%s/%s'%(stimuli_dir,dir,file_name))
-    #     ipdb.set_trace()
 
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
@@ -431,7 +440,6 @@ if __name__=='__main__':
     controller.stimset_names.append('boc_syl_discrim_v1_stimset_a')
     controller.stimset_names.append('boc_syl_discrim_v1_stimset_b_6')
     controller.load_stimsets()
-
     box = BehaviorBox()
     box.select_sound_card()
     #box.play_sound('/home/jknowles/wf_with_spikes.wav')

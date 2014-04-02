@@ -2,7 +2,10 @@ import numpy as np
 import scipy as sp
 
 
-# the loop iterations for each mode are loded into th loop dict.  
+## iterations and generators
+
+
+# the iterations and trial generators for each mode are loded into the mode dict
 iterations = {}
 def discrimination_iteration(controller, box):
     """ This function runs int the main loop in discrimination mode"""
@@ -56,6 +59,8 @@ def discrimination_iteration(controller, box):
             trial_ended = True
     return events_since_last, trial_ended
 iterations['discrimination'] = discrimination_iteration
+
+
 
 def song_only_iteration(controller, box):
     # record any events that have happened on the box     
