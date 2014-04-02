@@ -4,9 +4,6 @@ import numpy as np
 from numpy import array
 
 
-
-
-
 def _decode_list(data):
 	rv = []
 	for item in data:
@@ -41,11 +38,11 @@ def load_trials_and_save_mat(fname):
 	data = {'trials': np.array(trials)}
 	sio.savemat('test.mat', data)
 
+
 if __name__ == '__main__':
 	fname = "/Users/jknowles/data/doupe_lab/behavior/orange4white29_20140214_0.trial"
 	import cProfile, runsnakerun
 	data = cProfile.runctx('load_trials_and_save_mat(fname)', globals(), locals())#, filename='/Users/jknowles/data/temp/profile.test')
 	
 	import ipdb; ipdb.set_trace()
-	
 
