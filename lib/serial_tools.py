@@ -31,6 +31,8 @@ def return_list_of_usb_serial_ports():
         list_of_ports_and_ids.append((port, serialnum))
     return list_of_ports_and_ids
 
+
+
 # def find_tty(idVendor, idProduct):
 #     """find_tty_usb('067b', '2302') -> '/dev/ttyUSB0'"""
 #     # Note: if searching for a lot of pairs, it would be much faster to search

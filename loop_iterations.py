@@ -124,7 +124,6 @@ def sequence_iteration(controller, box):
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
             controller.task_state = 'waiting_for_response'
-
     # if a trial is ongoing then look for responses
     elif controller.task_state == 'waiting_for_response':
         # if there is a response

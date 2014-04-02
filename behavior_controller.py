@@ -49,7 +49,10 @@ class BehaviorController(object):
         self.timeout_period = 30; # timeout (punishment) time in seconds
         self.max_trial_length = 5; # maximum trial time in seconds
         self.feed_time = 5;
+
         # initializethe trial variables
+        self.trial_generator = None
+        self.trial_block = []
         self.current_trial = None
         self.completed_trials = []
         # to add: self.trial_block = []
@@ -100,20 +103,22 @@ class BehaviorController(object):
             stimuli.extend([(kstimset, kstim, stim['name']) for kstim,stim in enumerate(stimset['stims'])])
         return stimuli
 
-    def generate_next_trial(self):
+    def que_next_trial(self):
         if self.current_trial != None:
             self.store_current_trial()
-        # initialize
-        trial = {}
-        stim_list = self.list_all_stimuli()
-        # pick the stimset and the stimulus
-        idx = random.randint(0, len(stim_list)-1)
-        trial['stimulus'] = stim_list[idx][2]
-        trial['stimset_idx'] = stim_list[idx][0]
-        trial['stimset'] = self.stimset_names[trial['stimset_idx']]
-        trial['correct_answer'] = self.expected_responses[stim_list[idx][0]]
-        trial['stim_length'] = float(self.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/self.stimsets[stim_list[idx][0]]['samprate']
-        self.current_trial = trial
+        if len(self.trial_block) < 1:
+            self.trial_block = self.trial_generator(self)
+        self.current_trial = self.trial_block.pop(0)
+        # # initialize
+        # trial = {}
+        # stim_list = self.list_all_stimuli()
+        # # pick the stimset and the stimulus
+        # idx = random.randint(0, len(stim_list)-1)
+        # trial['stimulus'] = stim_list[idx][2]
+        # trial['stimset_idx'] = stim_list[idx][0]
+        # trial['stimset'] = self.stimset_names[trial['stimset_idx']]
+        # trial['correct_answer'] = self.expected_responses[stim_list[idx][0]]
+        # trial['stim_length'] = float(self.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/self.stimsets[stim_list[idx][0]]['samprate']
         pass
 
     def store_current_trial(self):
@@ -318,7 +323,7 @@ def run_box(controller, box):
 def main_loop(controller, box):
     try:
         # generate the first trial and set that as the state
-        controller.generate_next_trial()
+        controller.que_next_trial()
         controller.task_state = 'waiting_for_trial'
         controller.has_run = True
         evcount=0
@@ -343,7 +348,7 @@ def main_loop(controller, box):
             if trial_ended:
                 controller.task_state = 'waiting_for_trial'
                 controller.store_current_trial()
-                controller.generate_next_trial()
+                controller.que_next_trial()
 
         # exit routine:
 
