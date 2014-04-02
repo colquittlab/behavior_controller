@@ -67,7 +67,10 @@ def beep(a=.01, b=500):
 	pass
 	
 def list_sound_cards():
-	return aa.cards()
+	if os.uname()[0]=='Linux':
+		return aa.cards()
+	else:
+		return ['iLuv_1']
 
 if __name__=="__main__":
 	# sendwf(1, '/data/doupe_lab/stimuli/boc_syl_discrim_v1_stimset_a/song_a_1.wav','.wav',44100)
