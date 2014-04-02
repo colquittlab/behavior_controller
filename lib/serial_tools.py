@@ -31,7 +31,11 @@ def return_list_of_usb_serial_ports():
         list_of_ports_and_ids.append((port, serialnum))
     return list_of_ports_and_ids
 
-
+def return_list_of_named_arduinos():
+    dev = os.listdir('/dev/')
+    dev = filter(lambda x: x[0:8] == 'arduino_', dev)
+    dev = ['/dev/%s' % d for d in dev]
+    return dev
 
 # def find_tty(idVendor, idProduct):
 #     """find_tty_usb('067b', '2302') -> '/dev/ttyUSB0'"""
@@ -85,4 +89,4 @@ def return_list_of_usb_serial_ports():
 
 
 if __name__=='__main__':
-    print return_list_of_usb_serial_ports()
+    print return_list_of_named_arduinos()

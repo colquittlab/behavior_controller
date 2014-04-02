@@ -8,11 +8,13 @@ import time
 import datetime
 import io
 import json
+import ConfigParser
 
 import lib.soundout_tools as so
 import lib.serial_tools as st
 import loop_iterations as loop
 import trial_generators as trial
+import lib.usb_tools as ut
 
 # from pyfirmata import Arduino, util
 debug = True
@@ -180,6 +182,16 @@ class BehaviorBox(object):
     def current_time(self):
         return time.time()
 
+    def select_box(self, box):
+        list_of_boxes = ut.return_list_of_boxes()
+        if box in [b[0] for b in list_of_boxes]:
+            idx = [b[0] for b in list_of_boxes].index(box)
+            box = list_of_boxes[idx]
+            self.select_serial_port(box[1])
+            self.select_sound_card(box[2])
+        else:
+            raise(Exception('Box %s not connected'))
+
     def select_serial_port(self, port = None):
         list_of_ports = st.return_list_of_usb_serial_ports()
         if port == None:
@@ -194,7 +206,6 @@ class BehaviorBox(object):
             self.serial_port = port;
         result = self.connect_to_serial_port()
         return result
-
 
     def connect_to_serial_port(self):
         self.serial_c = serial.Serial(self.serial_port, 115200, parity = serial.PARITY_NONE, xonxoff = True, rtscts = True, dsrdtr = True, timeout = False)
@@ -433,15 +444,34 @@ def load_and_verify_stimset(stim_name):
 
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
+    import sys
+    if len(sys.argv) <= 1:
+        raise(Exception('No configuration file passed'))
+    else:
+        cfpath = sys.argv[1]
+
+    config = ConfigParser.ConfigParser() 
+    config.read(cfpath)
+
+    birdname = config.get('run_params','birdname')
+    stimset_0 = config.get('run_params','stimset_0')
+    stimset_1 = config.get('run_params','stimset_1')
+    mode = config.get('run_params','mode')
+    box = config.get('run_params','box')
+
+
     controller = BehaviorController()
-    controller.set_bird_name('test')
-    controller.mode = 'discrimination'
+    controller.set_bird_name(config.get('run_params','birdname'))
+    controller.mode = config.get('run_params','mode')
     controller.stimset_names = []
-    controller.stimset_names.append('boc_syl_discrim_v1_stimset_a')
-    controller.stimset_names.append('boc_syl_discrim_v1_stimset_b_6')
+    controller.stimset_names.append(config.get('run_params','stimset_0'))
+    controller.stimset_names.append(config.get('run_params','stimset_1'))
     controller.load_stimsets()
     box = BehaviorBox()
-    box.select_sound_card()
-    #box.play_sound('/home/jknowles/wf_with_spikes.wav')
-    box.select_serial_port()
+    if config.has_option('run_params','box'):
+        box.select_box(config.get('run_params','box'))
+    else:
+        box.select_sound_card()
+        box.select_serial_port()
+
     run_box(controller, box)
