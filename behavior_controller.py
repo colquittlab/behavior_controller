@@ -186,12 +186,12 @@ class BehaviorBox(object):
         list_of_boxes = ut.return_list_of_boxes()
         if box in [b[0] for b in list_of_boxes]:
             idx = [b[0] for b in list_of_boxes].index(box)
-            box = list_of_boxes[idx]
-            self.select_serial_port(box[1])
-            self.select_sound_card(box[2])
-            print 'Connected to %s' % box[0]
+            box_data = list_of_boxes[idx]
+            self.select_serial_port(box_data[1])
+            self.select_sound_card(box_data[2])
+            print 'Connected to %s' % box_data[0]
         else:
-            raise(Exception('Box %s not connected'))
+            raise(Exception('%s not connected' % box))
 
     def select_serial_port(self, port = None):
         list_of_ports = st.return_list_of_usb_serial_ports()
@@ -211,6 +211,7 @@ class BehaviorBox(object):
     def connect_to_serial_port(self):
         self.serial_c = serial.Serial(self.serial_port, 115200, parity = serial.PARITY_NONE, xonxoff = True, rtscts = True, dsrdtr = True, timeout = False)
         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 1), line_buffering = False)  
+        self.serial_io.flush()
         time.sleep(2)
         return self.sync()
 
