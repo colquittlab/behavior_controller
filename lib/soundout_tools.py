@@ -54,16 +54,18 @@ def playwf(cardidx, filename, filetype, rate):
 			data = np.array(data*2**15, dtype = np.dtype('i4'))
 			pcm.write(data.tostring())
 			data = np.fromfile(fid, dtype = np.dtype('d'), count = frame_size)
-	pass
 	pcm.close()
+	pass
 
 def sendwf(pcm, wavefile, filetype, rate):
 	p=Process(target = playwf, args = (pcm, wavefile, filetype, rate))
 	p.start()
+	pass
 
 def beep(a=.01, b=500):
 	os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % ( a, b))
-
+	pass
+	
 def list_sound_cards():
 	return aa.cards()
 
