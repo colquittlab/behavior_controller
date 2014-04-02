@@ -6,13 +6,16 @@ import serial
 from serial.tools import list_ports
 import time
 import datetime
-import random 
 import io
 import json
+import ConfigParser
 
-import soundout_tools as so
+import lib.soundout_tools as so
+import lib.serial_tools as st
 import loop_iterations as loop
-import serial_tools as st
+import trial_generators as trial
+import lib.usb_tools as ut
+
 # from pyfirmata import Arduino, util
 debug = True
 beep = False
@@ -49,7 +52,10 @@ class BehaviorController(object):
         self.timeout_period = 30; # timeout (punishment) time in seconds
         self.max_trial_length = 5; # maximum trial time in seconds
         self.feed_time = 5;
+
         # initializethe trial variables
+        self.trial_generator = trial.generators['standard']
+        self.trial_block = []
         self.current_trial = None
         self.completed_trials = []
         # to add: self.trial_block = []
@@ -100,20 +106,22 @@ class BehaviorController(object):
             stimuli.extend([(kstimset, kstim, stim['name']) for kstim,stim in enumerate(stimset['stims'])])
         return stimuli
 
-    def generate_next_trial(self):
+    def que_next_trial(self):
         if self.current_trial != None:
             self.store_current_trial()
-        # initialize
-        trial = {}
-        stim_list = self.list_all_stimuli()
-        # pick the stimset and the stimulus
-        idx = random.randint(0, len(stim_list)-1)
-        trial['stimulus'] = stim_list[idx][2]
-        trial['stimset_idx'] = stim_list[idx][0]
-        trial['stimset'] = self.stimset_names[trial['stimset_idx']]
-        trial['correct_answer'] = self.expected_responses[stim_list[idx][0]]
-        trial['stim_length'] = float(self.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/self.stimsets[stim_list[idx][0]]['samprate']
-        self.current_trial = trial
+        if len(self.trial_block) < 1:
+            self.trial_block = self.trial_generator(self)
+        self.current_trial = self.trial_block.pop(0)
+        # # initialize
+        # trial = {}
+        # stim_list = self.list_all_stimuli()
+        # # pick the stimset and the stimulus
+        # idx = random.randint(0, len(stim_list)-1)
+        # trial['stimulus'] = stim_list[idx][2]
+        # trial['stimset_idx'] = stim_list[idx][0]
+        # trial['stimset'] = self.stimset_names[trial['stimset_idx']]
+        # trial['correct_answer'] = self.expected_responses[stim_list[idx][0]]
+        # trial['stim_length'] = float(self.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/self.stimsets[stim_list[idx][0]]['samprate']
         pass
 
     def store_current_trial(self):
@@ -174,9 +182,20 @@ class BehaviorBox(object):
     def current_time(self):
         return time.time()
 
+    def select_box(self, box):
+        list_of_boxes = ut.return_list_of_boxes()
+        if box in [b[0] for b in list_of_boxes]:
+            idx = [b[0] for b in list_of_boxes].index(box)
+            box_data = list_of_boxes[idx]
+            self.select_serial_port(box_data[1])
+            self.select_sound_card(box_data[2])
+            print 'Connected to %s' % box_data[0]
+        else:
+            raise(Exception('%s not connected' % box))
+
     def select_serial_port(self, port = None):
+        list_of_ports = st.return_list_of_usb_serial_ports()
         if port == None:
-            list_of_ports = st.return_list_of_usb_serial_ports()
             print 'Select desired port from list below:'
             for k,port in enumerate(list_of_ports):
                 print '[%d] port: %s serial# %s' % (k,port[0], port[1])
@@ -186,12 +205,13 @@ class BehaviorBox(object):
             self.serial_device_id = list_of_ports[x][1]
         else:
             self.serial_port = port;
-        self.connect_to_serial_port()
-
+        result = self.connect_to_serial_port()
+        return result
 
     def connect_to_serial_port(self):
         self.serial_c = serial.Serial(self.serial_port, 115200, parity = serial.PARITY_NONE, xonxoff = True, rtscts = True, dsrdtr = True, timeout = False)
         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 1), line_buffering = False)  
+        self.serial_io.flush()
         time.sleep(2)
         return self.sync()
 
@@ -209,6 +229,7 @@ class BehaviorBox(object):
         else:
             idx = list_of_cards.index(cardname)
         self.sc_idx = idx
+        self.beep()
 
     # def connect_to_sound_card(self, cardidx):
     #     self.sc_object = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK, mode=alsaaudio.PCM_NORMAL, card='hw:%d,0'%cardidx)
@@ -263,6 +284,18 @@ class BehaviorBox(object):
         command = '<o%d=0>'%output_definitions['reward_port']
         self.write_command(command)
 
+    def pulse_on(self):
+        command = '<p=2>'
+        self.write_command(command)
+
+    def pulse_off(self):
+        command = '<p=0>'
+        self.write_command(command)
+
+    def pulse_on_trigger(self):
+        command = '<p=1>'
+        self.write_command(command)
+
     def sync(self):
         # try:
         send_time = self.current_time
@@ -279,10 +312,6 @@ class BehaviorBox(object):
         #     print e
         #     return False
 
-    # def load_song(self, dir, file_name):
-    #     fid = open('%s%s/%s'%(stimuli_dir,dir,file_name))
-    #     ipdb.set_trace()
-
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
         filename =  '%s%s/%s%s'%(stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
@@ -291,6 +320,9 @@ class BehaviorBox(object):
     def play_sound(self, filename):
         filetype = filename[-4:]
         so.sendwf(self.sc_idx, filename, filetype, 44100)
+        pass
+    def beep(self):
+        self.play_sound('sounds/beep.wav')
         pass
 
 ##
@@ -313,7 +345,7 @@ def run_box(controller, box):
 def main_loop(controller, box):
     try:
         # generate the first trial and set that as the state
-        controller.generate_next_trial()
+        controller.que_next_trial()
         controller.task_state = 'waiting_for_trial'
         controller.has_run = True
         evcount=0
@@ -338,7 +370,7 @@ def main_loop(controller, box):
             if trial_ended:
                 controller.task_state = 'waiting_for_trial'
                 controller.store_current_trial()
-                controller.generate_next_trial()
+                controller.que_next_trial()
 
         # exit routine:
 
@@ -414,16 +446,33 @@ def load_and_verify_stimset(stim_name):
 
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
-    controller = BehaviorController()
-    controller.set_bird_name('purple17purple35')
-    controller.mode = 'sequence'
-    controller.stimset_names = []
-    controller.stimset_names.append('exa1_motif_stimset_a')
-    controller.stimset_names.append('exa1_motif_stimset_b_2')
-    controller.load_stimsets()
+    import sys
+    if len(sys.argv) <= 1:
+        raise(Exception('No configuration file passed'))
+    else:
+        cfpath = sys.argv[1]
 
+    config = ConfigParser.ConfigParser() 
+    config.read(cfpath)
+
+    birdname = config.get('run_params','birdname')
+    stimset_0 = config.get('run_params','stimset_0')
+    stimset_1 = config.get('run_params','stimset_1')
+    mode = config.get('run_params','mode')
+    box = config.get('run_params','box')
+
+
+    controller = BehaviorController()
+    controller.set_bird_name(config.get('run_params','birdname'))
+    controller.mode = config.get('run_params','mode')
+    controller.stimset_names = []
+    controller.stimset_names.append(config.get('run_params','stimset_0'))
+    controller.stimset_names.append(config.get('run_params','stimset_1'))
+    controller.load_stimsets()
     box = BehaviorBox()
-    box.select_sound_card()
-    #box.play_sound('/home/jknowles/wf_with_spikes.wav')
-    box.select_serial_port()
+    if config.has_option('run_params','box'):
+        box.select_box(config.get('run_params','box'))
+    else:
+        box.select_sound_card()
+        box.select_serial_port()
     run_box(controller, box)

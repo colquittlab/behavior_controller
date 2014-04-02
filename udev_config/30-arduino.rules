@@ -1,0 +1,5 @@
+SUBSYSTEM!="usb",
+
+#
+DEVPATH=="/devices/pci0000:00/0000:00:14.0/usb3/3-3/3-3:1.0*", ATTRS{idProduct}=="0043", ATTRS{idVendor}=="2341", SYMLINK+= "arduino_1"
+

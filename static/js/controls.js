@@ -24,12 +24,12 @@ define([
     var fer = $('<div></div>');
     fer.append('Sound Box: ');
     fer.append(s.el);
-    $('#inputs').append(fer);
+    $('#box_select').append(fer);
     s.$el.change(function() {
       console.log(getInputs());
     });
     i.fetch({
-      url:'http://localhost:5000/list_current_boxes',
+      url:'http://localhost:5000/list_boxes',
       success: function(resp) {console.log('box_fetch:');console.log(resp)}
     });
   
@@ -37,7 +37,7 @@ define([
   var soundSelect = function() {
     //a selection widget
     var i = new Select.SelectCollection([]);
-    var s = new Select.SelectOption({collection: i, id: 'sound_select'});
+    var s = new Select.SelectOption({collection: i, id: 'soundcard_select'});
     var fer = $('<div></div>');
     fer.append('Sound Card: ');
     fer.append(s.el);
@@ -97,6 +97,15 @@ define([
   // };
 
   var prepButtons = function() {
+    var newboxButton = $('<button></button>')
+      .attr({id: 'newboxbutton', type: 'button'})
+      .text('Add Box');
+    var beepButton = $('<button></button>')
+      .attr({id: 'beepbutton', type: 'button'})
+      .text('Beep');
+    var feederButton = $('<button></button>')
+      .attr({id: 'feederbutton', type: 'button'})
+      .text('Raise Feeder');
     var startButton = $('<button></button>')
       .attr({id: 'gobutton', type: 'button'})
       .text('Start');
@@ -106,7 +115,9 @@ define([
     var stopButton = $('<button></button>')
       .attr({id: 'stopbutton', type: 'button'})
       .text('stop');
-
+    $('#box_select').append(newboxButton)
+    $('#testbuttons').append(beepButton);
+    $('#testbuttons').append(feederButton);
     $('#buttons').append(startButton);
     $('#buttons').append(resetButton);
     $('#buttons').append(stopButton);
@@ -116,7 +127,7 @@ define([
   //kicks everything off once dom is ready 
   var createInputs = function() {
     // birdnameInput();
-    // boxSelect();
+    boxSelect();
     soundSelect(); 
     serialSelect(); 
    // birdnameInput();
