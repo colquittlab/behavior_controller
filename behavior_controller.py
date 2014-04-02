@@ -181,8 +181,8 @@ class BehaviorBox(object):
         return time.time()
 
     def select_serial_port(self, port = None):
+        list_of_ports = st.return_list_of_usb_serial_ports()
         if port == None:
-            list_of_ports = st.return_list_of_usb_serial_ports()
             print 'Select desired port from list below:'
             for k,port in enumerate(list_of_ports):
                 print '[%d] port: %s serial# %s' % (k,port[0], port[1])
