@@ -189,6 +189,7 @@ class BehaviorBox(object):
             box = list_of_boxes[idx]
             self.select_serial_port(box[1])
             self.select_sound_card(box[2])
+            print 'Connected to %s' % box[0]
         else:
             raise(Exception('Box %s not connected'))
 
@@ -473,5 +474,4 @@ if __name__=='__main__':
     else:
         box.select_sound_card()
         box.select_serial_port()
-
     run_box(controller, box)
