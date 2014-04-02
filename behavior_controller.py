@@ -415,11 +415,11 @@ def load_and_verify_stimset(stim_name):
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
     controller = BehaviorController()
-    controller.set_bird_name('test')
-    controller.mode = 'discrimination'
+    controller.set_bird_name('purple17purple35')
+    controller.mode = 'sequence'
     controller.stimset_names = []
-    controller.stimset_names.append('boc_syl_discrim_v1_stimset_a')
-    controller.stimset_names.append('boc_syl_discrim_v1_stimset_b_6')
+    controller.stimset_names.append('exa1_motif_stimset_a')
+    controller.stimset_names.append('exa1_motif_stimset_b_2')
     controller.load_stimsets()
 
     box = BehaviorBox()
