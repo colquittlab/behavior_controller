@@ -12,9 +12,9 @@ import ConfigParser
 
 import lib.soundout_tools as so
 import lib.serial_tools as st
+import lib.usb_tools as ut
 import loop_iterations as loop
 import trial_generators as trial
-import lib.usb_tools as ut
 
 # from pyfirmata import Arduino, util
 debug = True
