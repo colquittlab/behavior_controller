@@ -24,7 +24,7 @@ long pulse_width = 50;        // pulse width in ms
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
+  Serial.begin(19200);
   //
   local_buffer.reserve(200);
   // configure input pins
