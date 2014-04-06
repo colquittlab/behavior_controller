@@ -1,13 +1,23 @@
 function trials = read_trials_from_file(fname,varargin)
 force_regenerate = false;
-
 matfname = [fname '.mat'];
 
-
-if exist(matfname)
+if (exist(matfname) && ~force_regenerate)
+    filedata = dir(fname);
     data = load(matfname);
-    trials = data.trials;
+    if (~isfield(data, 'date_modified') || data.date_modified ~= filedata.datenum)
+        trials = read_from_file(fname);
+    else
+        trials = data.trials;
+    end
 else
+    trials = read_from_file(fname);
+end
+end
+
+function trials = read_from_file(fname)
+    file_data=dir(fname);
+    date_modified = file_data.datenum;
     fid = fopen(fname,'r');
     count = 0;
     file_line = fgets(fid);
@@ -71,7 +81,5 @@ else
         file_line = fgets(fid);
     end
     fclose(fid);
-    save([fname '.mat'],'trials')
+    save([fname '.mat'],'trials','date_modified')
 end
-end
-

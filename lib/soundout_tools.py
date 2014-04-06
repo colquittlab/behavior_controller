@@ -10,7 +10,7 @@ else:
 
 
 #functions
-def playwf(cardidx, filename, filetype, rate):
+def playwf(cardidx, filename, filetype, rate, pulse = False, pulse_type = "high", pulse_period = 100, pulse_width = 50):
 	# pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='hw:%d,0'%cardidx)
 	pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='plughw:%d,0'%cardidx)
 	frame_size = 320
@@ -50,7 +50,6 @@ def playwf(cardidx, filename, filetype, rate):
 		while len(data) > 0:
 			if len(data) < frame_size:
 				data = np.append(data, np.zeros((frame_size-len(data), 1)))
-			
 			data = np.array(data*2**15, dtype = np.dtype('i4'))
 			pcm.write(data.tostring())
 			data = np.fromfile(fid, dtype = np.dtype('d'), count = frame_size)
@@ -65,7 +64,7 @@ def sendwf(pcm, wavefile, filetype, rate):
 def beep(a=.01, b=500):
 	os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % ( a, b))
 	pass
-	
+
 def list_sound_cards():
 	return aa.cards()
 
