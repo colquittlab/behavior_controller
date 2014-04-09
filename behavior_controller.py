@@ -22,12 +22,12 @@ beep = False
 ## Settings 
 mode_definitions = loop.iterations.keys()
 
-input_definitions = {2: ['song_trigger'], 
-                     3: ['response_trigger', 'response_a'],
-                     4: ['response_trigger', 'response_b']}
+# input_definitions = {2: ['song_trigger'], 
+#                      3: ['response_trigger', 'response_a'],
+#                      4: ['response_trigger', 'response_b']}
 
-output_definitions = {'reward_port': 12}
-trigger_value = 1
+# output_definitions = {'reward_port': 12}
+# trigger_value = 1
 stimuli_dir = '/home/jknowles/data/doupe_lab/stimuli/'
 data_dir = '/home/jknowles/data/doupe_lab/behavior/'
 class BehaviorController(object):
@@ -35,31 +35,36 @@ class BehaviorController(object):
         self.birdname = None
         # save the date and time 
         self.initial_date = datetime.datetime.now()
+
         # file names ext
         self.base_filename = None
         self.has_run = False
         self.log_fid = None
         self.trial_fid = None
+
         # initialize the state variables
         self.task_state = None
         self.box_state = 'stop'
+
         # initialize the task variables
         self.mode = None
         self.stimset_names = []
         self.stimsets = []
         self.expected_responses = ['response_a', 'response_b']
+
         # initialize the task parameters 
         self.timeout_period = 30; # timeout (punishment) time in seconds
         self.max_trial_length = 5; # maximum trial time in seconds
         self.feed_time = 5;
 
+        # trial
+        self.probe_occurance = 10
+
         # initializethe trial variables
-        self.trial_generator = trial.generators['standard']
+        self.trial_generator = 'standard'
         self.trial_block = []
         self.current_trial = None
         self.completed_trials = []
-        # to add: self.trial_block = []
-        self.random_stimuli = True
 
     def set_bird_name(self,birdname):
         if not self.has_run:
@@ -100,28 +105,21 @@ class BehaviorController(object):
             self.stimsets.append(load_and_verify_stimset(name))
         pass
 
-    def list_all_stimuli(self):
+    def list_stimuli(self, stimset_idxs = None):
+        if stimset_idxs == None:
+            stimset_idxs = range(len(self.stimsets))
         stimuli = []
-        for kstimset, stimset in enumerate(self.stimsets):
-            stimuli.extend([(kstimset, kstim, stim['name']) for kstim,stim in enumerate(stimset['stims'])])
+        for stimset_idx in stimset_idxs:
+            stimset = self.stimsets[stimset_idx]
+            stimuli.extend([(stimset_idx, kstim, stim['name']) for kstim,stim in enumerate(stimset['stims'])])
         return stimuli
 
     def que_next_trial(self):
         if self.current_trial != None:
             self.store_current_trial()
         if len(self.trial_block) < 1:
-            self.trial_block = self.trial_generator(self)
+            self.trial_block = trial.generators[self.trial_generator](self)
         self.current_trial = self.trial_block.pop(0)
-        # # initialize
-        # trial = {}
-        # stim_list = self.list_all_stimuli()
-        # # pick the stimset and the stimulus
-        # idx = random.randint(0, len(stim_list)-1)
-        # trial['stimulus'] = stim_list[idx][2]
-        # trial['stimset_idx'] = stim_list[idx][0]
-        # trial['stimset'] = self.stimset_names[trial['stimset_idx']]
-        # trial['correct_answer'] = self.expected_responses[stim_list[idx][0]]
-        # trial['stim_length'] = float(self.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/self.stimsets[stim_list[idx][0]]['samprate']
         pass
 
     def store_current_trial(self):
@@ -158,6 +156,13 @@ class BehaviorBox(object):
     and contains the methods to change the pins of the box"""
     def __init__(self):
         # 
+
+
+        self.input_definitions = {2: ['song_trigger'], 
+                             3: ['response_trigger', 'response_a'],
+                             4: ['response_trigger', 'response_b']}
+        self.output_definitions = {'reward_port': 12}
+        self.trigger_value = 1
 
         self.box_zero_time = 0
         self.serial_port = None
@@ -210,7 +215,7 @@ class BehaviorBox(object):
         return result
 
     def connect_to_serial_port(self):
-        self.serial_c = serial.Serial(self.serial_port, 19200, parity = serial.PARITY_NONE, xonxoff = True, rtscts = True, dsrdtr = True, timeout = False)
+        self.serial_c = serial.Serial(self.serial_port, 115200, parity = serial.PARITY_NONE, xonxoff = True, rtscts = True, dsrdtr = True, timeout = False)
         self.serial_c.flushInput()
         self.serial_c.flushOutput()
         self.serial_c.write('')
@@ -252,9 +257,9 @@ class BehaviorBox(object):
                 return (line_parts[0],line_parts[1],self.current_time)
             else: return None
         else: return None
-        if port in input_definitions.keys():
-            if state == trigger_value:
-                event = [box_time] + input_definitions[port]
+        if port in self.input_definitions.keys():
+            if state == self.trigger_value:
+                event = [box_time] + self.input_definitions[port]
             else: return None
         else: return None
         return tuple(event)
@@ -281,11 +286,11 @@ class BehaviorBox(object):
         self.serial_io.flush()
 
     def feeder_on(self):
-        command = '<o%d=1>'%output_definitions['reward_port']
+        command = '<o%d=1>'%self.output_definitions['reward_port']
         self.write_command(command)
 
     def feeder_off(self):
-        command = '<o%d=0>'%output_definitions['reward_port']
+        command = '<o%d=0>'%self.output_definitions['reward_port']
         self.write_command(command)
 
     def pulse_on(self):
@@ -347,39 +352,38 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
-    try:
-        # generate the first trial and set that as the state
-        controller.que_next_trial()
-        controller.task_state = 'waiting_for_trial'
-        controller.has_run = True
-        evcount=0
-        # enter the loop
-        while controller.box_state == 'go':
-            # run loop
-            # raw_input('pause')
-            events_since_last, trial_ended = loop.iterations[controller.mode](controller, box)
-            # save all the events that have happened in this loop to file
-            controller.save_events_to_log_file(events_since_last)
+    # try:
+    # generate the first trial and set that as the state
+    controller.que_next_trial()
+    controller.task_state = 'waiting_for_trial'
+    controller.has_run = True
+    evcount=0
+    # enter the loop
+    while controller.box_state == 'go':
+        # run loop
+        # raw_input('pause')
+        events_since_last, trial_ended = loop.iterations[controller.mode](controller, box)
+        # save all the events that have happened in this loop to file
+        controller.save_events_to_log_file(events_since_last)
+        
+        if debug:
+            for event in events_since_last:
+                evcount += 1
+                print evcount, event
+                if beep:
+                    so.beep()
 
-            
-            if debug:
-                for event in events_since_last:
-                    evcount += 1
-                    print evcount, event
-                    if beep:
-                        so.beep()
-    
 
-            # if a trial eneded in this loop then store event, save events, generate new trial
-            if trial_ended:
-                controller.task_state = 'waiting_for_trial'
-                controller.store_current_trial()
-                controller.que_next_trial()
+        # if a trial eneded in this loop then store event, save events, generate new trial
+        if trial_ended:
+            controller.task_state = 'waiting_for_trial'
+            controller.store_current_trial()
+            controller.que_next_trial()
 
         # exit routine:
 
-    except Exception as e:
-         raise e
+    # except Exception as e:
+    #      raise e
 
         # get any feeder variables
 
@@ -463,15 +467,20 @@ if __name__=='__main__':
     stimset_0 = config.get('run_params','stimset_0')
     stimset_1 = config.get('run_params','stimset_1')
     mode = config.get('run_params','mode')
+    generator = config.get('run_params', 'trial_generator')
     box = config.get('run_params','box')
 
 
     controller = BehaviorController()
     controller.set_bird_name(config.get('run_params','birdname'))
     controller.mode = config.get('run_params','mode')
+    controller.trial_generator = config.get('run_params','trial_generator')
     controller.stimset_names = []
     controller.stimset_names.append(config.get('run_params','stimset_0'))
     controller.stimset_names.append(config.get('run_params','stimset_1'))
+    if config.has_option('run_params','stimset_2'):
+        controller.stimset_names.append(config.get('run_params','stimset_2'))
+
     controller.load_stimsets()
     box = BehaviorBox()
     if config.has_option('run_params','box'):
