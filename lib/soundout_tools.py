@@ -80,7 +80,10 @@ def beep(a=.01, b=500):
 	pass
 
 def list_sound_cards():
-	return aa.cards()
+	if os.uname()[0]=='Linux':
+		return aa.cards()
+	else:
+		return ['iLuv_1']
 
 if __name__=="__main__":
 	# song1 = wave.open('/home/jknowles/test.wav')

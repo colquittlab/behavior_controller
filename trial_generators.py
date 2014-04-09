@@ -1,19 +1,20 @@
 import scipy as sp
 import numpy as np 
 import random 
-# import behavior_controller 
-
 
 
 generators = {}
 
-def standard_generator(controller, trials_per_block=10):
+
+def standard_generator(controller, trials_per_block=1):
+	"""Generates trial by trial with no pruning"""
 	trial_block = []
 	for k in range(0, trials_per_block):
 		trial = {}
 		stim_list = controller.list_stimuli()
 		# pick the stimset and the stimulus
 		idx = random.randint(0, len(stim_list)-1)
+
 		trial['stimulus'] = stim_list[idx][2]
 		trial['stimset_idx'] = stim_list[idx][0]
 		trial['stimset'] = controller.stimset_names[trial['stimset_idx']]
@@ -22,6 +23,7 @@ def standard_generator(controller, trials_per_block=10):
 		trial_block.append(trial)
 	return trial_block
 generators['standard'] = standard_generator
+
 
 def probes_generator(controller, trials_per_block=100):
 	trial_block = []

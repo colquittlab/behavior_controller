@@ -5,8 +5,9 @@ from multiprocessing import Manager, Process
 import threading
 import time
 
-import serial_tools as st
-import soundout_tools as so
+import lib.serial_tools as st
+import lib.soundout_tools as so
+import lib.usb_tools as ut
 import behavior_controller as behavior
 
 app = Flask(__name__)
@@ -53,8 +54,15 @@ def list_boxes():
 
 @app.route("/list_sound_cards", methods = ["GET", "POST"])
 def list_sound_cards():
+    global box_dict
+
     result = {}
-    result['list'] = box.return_list_of_sound_cards()
+    result['list'] = so.list_sound_cards()
+    if 'current' in request.values.keys():
+        pass
+    else:
+        result['current'] = None
+        return json.dumps(result)
     if box.sc_idx is None:
         result['current'] = None
     else: 
@@ -83,8 +91,6 @@ def set_sound_card():
     if 'soundcard_select' in request.values.keys():
         sound_card = request.values['soundcard_select']
     else: return json.dumps('No soundcard provided'), 400
-
-    global box
     cardlist = box.return_list_of_sound_cards()
     # filter card list
     if sound_card in cardlist:
