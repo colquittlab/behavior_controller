@@ -10,7 +10,7 @@ else:
 
 
 #functions
-def playwf(cardidx, filename, filetype, rate):
+def playwf(cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"):
 	# pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='hw:%d,0'%cardidx)
 	pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='plughw:%d,0'%cardidx)
 	frame_size = 320
@@ -18,7 +18,12 @@ def playwf(cardidx, filename, filetype, rate):
 		song=wave.open(filename)
 		"""takes a wave file object and plays it"""
 		# rate = song.getframerate()
-		nchannels=song.getnchannels()
+		if pulse:
+			nchannels=2
+			pcm.setperiodsize(frame_size)
+		else:
+			nchannels=1
+			pcm.setperiodsize(frame_size)
 		length=song.getnframes()
 		# 8bit is unsigned in wav files
 		pcm.setchannels(nchannels)
@@ -34,10 +39,18 @@ def playwf(cardidx, filename, filetype, rate):
 			pcm.setformat(aa.PCM_FORMAT_S32_LE)
 		else:
 			raise ValueError('Unsupported format')
-		pcm.setperiodsize(frame_size)
 		data=song.readframes(frame_size)
 		while data:
-			pcm.write(data)
+			if pulse:
+				# x = np.fromstring(data, np.int16)
+				# x = np.expand_dims(x,axis=1)
+				# x = np.concatenate((x, 0*np.ones(x.shape)), axis = 1)
+				# data = x.flatten().tostring()
+				pcm.write(data)
+				
+				# data = np.concatinate(np.array(data), np.one
+			else:
+				pcm.write(data)
 			data=song.readframes(frame_size)
 	elif filetype == '.sng':
 		fid= open(filename, 'r')
@@ -50,25 +63,35 @@ def playwf(cardidx, filename, filetype, rate):
 		while len(data) > 0:
 			if len(data) < frame_size:
 				data = np.append(data, np.zeros((frame_size-len(data), 1)))
-			
 			data = np.array(data*2**15, dtype = np.dtype('i4'))
 			pcm.write(data.tostring())
 			data = np.fromfile(fid, dtype = np.dtype('d'), count = frame_size)
 	pcm.close()
 	pass
 
-def sendwf(pcm, wavefile, filetype, rate):
-	p=Process(target = playwf, args = (pcm, wavefile, filetype, rate))
+def sendwf(pcm, wavefile, filetype, rate, pulse = False, pulse_type = "high"):
+	kwargs = {'pulse': pulse, 'pulse_type': pulse_type}
+	p=Process(target = playwf, args = (pcm, wavefile, filetype, rate), kwargs = kwargs)
 	p.start()
 	pass
 
 def beep(a=.01, b=500):
 	os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % ( a, b))
 	pass
-	
+
 def list_sound_cards():
-	return aa.cards()
+	if os.uname()[0]=='Linux':
+		return aa.cards()
+	else:
+		return ['iLuv_1']
 
 if __name__=="__main__":
-	# sendwf(1, '/data/doupe_lab/stimuli/boc_syl_discrim_v1_stimset_a/song_a_1.wav','.wav',44100)
+	# song1 = wave.open('/home/jknowles/test.wav')
+	# song2 = wave.open('/home/jknowles/test1ch.wav')
+	# import ipdb; ipdb.set_trace()
+
+	sendwf(1, '/home/jknowles/data/doupe_lab/stimuli/boc_syl_discrim_v1_stimset_a/song_a_1.wav','.wav',44100, pulse = False)
+	# playwf(1, '/home/jknowles/test.wav','.wav',44100, pulse = True)
+	# playwf(1, '/home/jknowles/test1ch.wav','.wav',44100, pulse = True)
+	
 	print list_sound_cards()
