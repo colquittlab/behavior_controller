@@ -49,7 +49,7 @@ class BehaviorController(object):
         self.stimsets = []
         self.expected_responses = ['response_a', 'response_b']
         # initialize the task parameters 
-        self.timeout_period = 30; # timeout (punishment) time in seconds
+        self.timeout_period = 60; # timeout (punishment) time in seconds
         self.max_trial_length = 5; # maximum trial time in seconds
         self.feed_time = 5;
 
