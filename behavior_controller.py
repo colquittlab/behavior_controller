@@ -17,11 +17,11 @@ import lib.usb_tools as ut
 import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
-import lib.bonetools as bt
+import lib.bone_tools as bt
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
-time_tollerance = 1e-1
+time_tollerance = 50e-2
 debug = True
 beep = False
 ## Settings 
@@ -386,7 +386,7 @@ class BehaviorBox(object):
             event = bt.event_buffer.pop(0)
             event_out = [event[0]]
             event_out.extend(box.input_definitions[event[1]])
-            events_since_last.append(event_out)
+            events_since_last.append(tuple(event_out))
         return events_since_last
 
 
@@ -398,7 +398,6 @@ class BehaviorBox(object):
     def feeder_on(self):
         command = '<o%d=1>'%self.output_definitions['reward_port']
         self.write_command(command)
-
     def feeder_off(self):
         command = '<o%d=0>'%self.output_definitions['reward_port']
         self.write_command(command)
@@ -416,16 +415,16 @@ class BehaviorBox(object):
         command = '<p=0>'
         self.write_command(command)
         self.pulse_state = 0
-    def pulse_on_trigger(self):
-        command = '<p=1>'
-        self.write_command(command)
-        self.pulse_state = 1
-    def set_pulse_period(self, period):
-        command = '<l=%d>' % int(period)
-        self.write_command(command)
-    def set_pulse_width(self, width):
-        command = '<w=%d>' % int(width)
-        self.write_command(command)
+    # def pulse_on_trigger(self):
+    #     command = '<p=1>'
+    #     self.write_command(command)
+    #     self.pulse_state = 1
+    # def set_pulse_period(self, period):
+    #     command = '<l=%d>' % int(period)
+    #     self.write_command(command)
+    # def set_pulse_width(self, width):
+    #     command = '<w=%d>' % int(width)
+    #     self.write_command(command)
 
     # def sync(self):
 
@@ -513,23 +512,18 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
-    # try:
-    if 1:
+    try:
+    
         # generate the first trial and set that as the state
         controller.que_next_trial()
         controller.task_state = 'prepare_trial'
         controller.has_run = True
-	loop_times = []
         # enter the loop
         last_time = box.current_time
         while controller.box_state == 'go':
             current_time = box.current_time
             loop_time = current_time - last_time
             last_time = current_time
-            loop_times.append(loop_time)
-            if len(loop_times)>10000:
-                print np.mean(loop_times)
-		loop_times = []
             # query serial events since the last itteration
             events_since_last = box.query_events()
             # save loop times greator than tollerance as events
@@ -544,24 +538,16 @@ def main_loop(controller, box):
                 controller.task_state = 'prepare_trial'
                 controller.store_current_trial()
                 controller.que_next_trial()
-
-            # other housecleaning:
-            # if current_time - box.last_sync_time > box.sync_period:
-            #     box.sync()
-            #     last_time = box.current_time
-
-            # exit routine:
+        # exit routine:
         pass
-    # except Exception as e:
-    #     # crash handeling
-    #     controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
-    #     # box.serial_c.close() 
-    #     # box.connect_to_serial_port() # reconnect to box
-    #     box.light_on()
-    #     controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
-        
-    #     # renter loop
-    #     main_loop(controller, box)
+    except Exception as e:
+        # crash handeling
+        controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
+        # box.serial_c.close() 
+        # box.connect_to_serial_port() # reconnect to box
+        box.light_on()
+        # renter loop
+        # main_loop(controller, box)
 
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
