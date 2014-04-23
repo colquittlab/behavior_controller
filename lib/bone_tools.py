@@ -4,10 +4,11 @@ import time
 import execjs
 from subprocess import call
 
+import pin_definitions as pindef
+
 
 ## set all inputs to pullup by default using bonescript (this sucks)
-input_pins = ['P8_11', 'P8_12']
-for pin in input_pins:
+for pin in pindef.input_definitions.keys():
 	# pin = "P8_11"
 	pud = "pullup"
 	mux = 7
@@ -15,31 +16,20 @@ for pin in input_pins:
 	command = ["node", "-e", script]
 	call(command)
 
+## initialize the event buffer
 event_buffer = []
-count = 0
+## create function to add to events to buffer
 def event_callback(arg):
 	event_buffer.append((time.time(), arg))
 
-	
-
-
+## initialize all input pins
 GPIO.cleanup()
-for pin in input_pins:
+for pin in pindef.input_definitions.keys():
 	GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP, 1)
 	GPIO.add_event_detect(pin, GPIO.FALLING, callback = event_callback, bouncetime = 250)
+## initialize all output pins
+for pin in pindef.output_definitions.values():
+	GPIO.setup(pin, GPIO.OUT)
 
 
 
-
-
-
-
-
-print "running"
-# count = [0]*len(input_pins)
-#while True:
-#	pass
- #	for k, pin in enumerate(input_pins):
- #		if GPIO.event_detected(pin):
- #			count[k] += 1
- #			print time.time(), pin, count[k], 'falling'

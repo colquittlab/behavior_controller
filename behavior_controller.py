@@ -18,21 +18,13 @@ import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
 import lib.bone_tools as bt
-
+import lib.pin_definitions as pindef
 # from pyfirmata import Arduino, util
-baud_rate = 19200
 time_tollerance = 50e-2
 debug = True
 beep = False
 ## Settings 
 mode_definitions = loop.iterations.keys()
-
-# input_definitions = {2: ['song_trigger'], 
-#                      3: ['response_trigger', 'response_a'],
-#                      4: ['response_trigger', 'response_b']}
-
-# output_definitions = {'reward_port': 12}
-# trigger_value = 1
 default_stimuli_dir = '/home/doupelab/data/stimuli/'
 default_data_dir = '/home/doupelab/data/behavior/'
 
@@ -241,10 +233,6 @@ class BehaviorController(object):
             stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
         return stats    
         
-        
-
-
-
 class BehaviorBox(object):
     """this object holds the present state of the behavior Arduino
     and contains the methods to change the pins of the box"""
@@ -252,27 +240,8 @@ class BehaviorBox(object):
         # 
 
         self.stimuli_dir = None
-
-        self.input_definitions = {'P8_11': ['song_trigger'], 
-                             'P8_12': ['response_trigger', 'response_a'],
-                             'P8_13': ['response_trigger', 'response_b']}
-        self.output_definitions = {'reward_port': 12,
-                                    'light_port': 11}
-        self.trigger_value = 1
-
-        self.box_zero_time = 0
-        # self.last_sync_time = 0
-        # self.sync_period = 60*30
-        self.serial_port = None
-        self.serial_device_id = None
-        self.serial_c = None
-        self.serial_io = None
-        self.sc_idx = None
-
         self.serial_buffer = ""
-
         self.box_name = None
-
         self.so_workers = []
         self.pulse_state = 0
 
@@ -301,40 +270,7 @@ class BehaviorBox(object):
             # self.select_serial_port(box_data[1])
             self.select_sound_card(box_data[2])
             self.box_name = box_data[0]
-        #     print 'Connected to %s' % box_data[0]
-        #     print box_data[1] # GK
-        #     print box_data[2] # GK
-        # else:
-        #     raise(Exception('%s not connected' % box))
 
-    # def select_serial_port(self, port = None):
-    #     list_of_ports = st.return_list_of_usb_serial_ports()
-    #     if port == None:
-    #         print 'Select desired port from list below:'
-    #         for k,port in enumerate(list_of_ports):
-    #             print '[%d] port: %s serial# %s' % (k,port[0], port[1])
-    #         # x = input('Enter Number: ')
-    #         x = 0
-    #         self.serial_port = list_of_ports[x][0]
-    #         self.serial_device_id = list_of_ports[x][1]
-    #     else:
-    #         self.serial_port = port;
-    #     result = self.connect_to_serial_port()
-    #     return result
-
-    # def connect_to_serial_port(self):
-    #     try:
-    #         self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
-    #         self.serial_c.setDTR(False)
-    #         self.serial_c.flushInput()
-    #         self.serial_c.flushOutput()
-    #         self.serial_c.setDTR(True)
-    #         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
-    #         time.sleep(2)
-    #         return self.sync()
-    #     except:
-    #         self.reload_arduino_firmware()
-    #         return self.connect_to_serial_port()
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
 
@@ -351,99 +287,26 @@ class BehaviorBox(object):
         self.sc_idx = idx
         self.beep()
 
-    # def connect_to_sound_card(self, cardidx):
-    #     self.sc_object = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK, mode=alsaaudio.PCM_NORMAL, card='hw:%d,0'%cardidx)
-    #     self.sc_object.setrate(44100)
-
-    # def parse_event_from_line(self,line):
-    #     line = line.strip('\n')
-    #     line = line.strip('\r')
-
-    #     idx1 = line.find('<') 
-    #     idx2 = line.find('>')
-    #     if idx1 > -1 and idx2 > -1:
-    #     # if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
-    #         line_parts = line[idx1+1:idx2].split('-')
-    #         if len(line_parts) is 3:
-    #             box_time = float(line_parts[0])
-    #             box_time = float(box_time)/1000 + self.box_zero_time
-    #             port = int(line_parts[1]) 
-    #             state = int(line_parts[2])
-    #         elif line_parts[1].lower() == "sync":
-    #             return (line_parts[0],line_parts[1],self.current_time)
-    #         else: return None
-    #     else: return None
-    #     if port in self.input_definitions.keys():
-    #         if state == self.trigger_value:
-    #             event = [box_time] + self.input_definitions[port]
-    #         else: return None
-    #     else: return None
-    #     return tuple(event)
-
     def query_events(self, timeout = 0):
         events_since_last = []
         while len(bt.event_buffer) > 0:
             event = bt.event_buffer.pop(0)
             event_out = [event[0]]
-            event_out.extend(box.input_definitions[event[1]])
+            event_out.extend(pindef.input_definitions[event[1]])
             events_since_last.append(tuple(event_out))
         return events_since_last
-
-
-    def write_command(self, command):
-        # self.serial_io.write(unicode(command))
-        # self.serial_io.flush()
-        print command
-        pass
     def feeder_on(self):
-        command = '<o%d=1>'%self.output_definitions['reward_port']
-        self.write_command(command)
+        bt.GPIO.output(pindef.output_definitions['feeder_port'], 1)
     def feeder_off(self):
-        command = '<o%d=0>'%self.output_definitions['reward_port']
-        self.write_command(command)
+        bt.GPIO.output(pindef.output_definitions['feeder_port'], 0)
     def light_on(self):
-        command = '<o%d=0>'%self.output_definitions['light_port']
-        self.write_command(command)
+        bt.GPIO.output(pindef.output_definitions['light_port'], 0)
     def light_off(self):
-        command = '<o%d=1>'%self.output_definitions['light_port']
-        self.write_command(command)
-    def pulse_on(self):
-        command = '<p=2>'
-        self.write_command(command)
-        self.pulse_state = 2
+        bt.GPIO.output(pindef.output_definitions['light_port'], 1)
+    def pulse_on(self, freq=100, duty=50):
+        bt.GPIO.output(pindef.output_definitions['light_port'], duty, freq)
     def pulse_off(self):
-        command = '<p=0>'
-        self.write_command(command)
-        self.pulse_state = 0
-    # def pulse_on_trigger(self):
-    #     command = '<p=1>'
-    #     self.write_command(command)
-    #     self.pulse_state = 1
-    # def set_pulse_period(self, period):
-    #     command = '<l=%d>' % int(period)
-    #     self.write_command(command)
-    # def set_pulse_width(self, width):
-    #     command = '<w=%d>' % int(width)
-    #     self.write_command(command)
-
-    # def sync(self):
-
-    #     send_time = self.current_time
-    #     self.write_command('<sync>')
-    #     events = []
-    #     count = 0
-    #     events = self.query_events(timeout = 2)
-    #     sync_time = None
-    #     for event in events:
-    #         if len(event) > 1 and event[1]=='sync':
-    #             sync_time = float(event[0])
-    #     if sync_time != None:
-    #         self.box_zero_time = send_time - float(sync_time)/1000
-    #         self.last_sync_time = self.current_time;
-    #         return True
-    #     else:
-    #         raise(Exception('Sync not successful'))
-    #     return True
+        bt.PWM.stop(pindef.output_definitions['laser_port'])
 
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
@@ -484,8 +347,6 @@ class BehaviorBox(object):
         return is_playing
 
 
-    def reload_arduino_firmware(self):
-        at.build_and_upload(self.serial_port)
 
 ##
 def run_box(controller, box):
@@ -593,23 +454,6 @@ def load_and_verify_stimset(stimuli_dir, stim_name):
         print 'Stimset ' + mat_fname + ' is not properly formatted'
         raise e 
     return stimset_out 
-
-# def return_list_of_usb_serial_ports():
-#     if os.name == 'nt':
-#         list_of_ports = []
-#         # windows
-#         for i in range(256):
-#             try:
-#                 s = serial.Serial(i)
-#                 s.close()
-#                 list_of_ports.append('COM' + str(i + 1))
-#             except serial.SerialException:
-#                 pass
-#     else:
-#         # unix
-#         list_of_ports = [port[0] for port in list_ports.comports()]
-#     # for port in list_of_ports: print port
-#     return filter(lambda x: 'ACM' in x, list_of_ports)
 
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
