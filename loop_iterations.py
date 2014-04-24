@@ -62,7 +62,7 @@ def discrimination_iteration(controller, box):
 iterations['discrimination'] = discrimination_iteration
 
 def probes_iteration(controller, box):
-    """ This function runs int the main loop in discrimination mode"""
+    """ This function runs int the main loop in probes mode"""
     # record any events that have happened on the box     
     events_since_last = box.query_events()
     events_since_last_names = [event[1] for event in events_since_last]
