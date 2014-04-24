@@ -4,7 +4,7 @@
 byte output_pins[2] = {12, 13};
 //byte output_pins[2] = {12, 13};
 // config input pins (digital)
-byte input_pins[3] = {2, 3, 4};
+byte input_pins[2] = {2, 3};
 bool current_values[sizeof(input_pins)];
 long last_input_change[sizeof(input_pins)];
 long bounce_time = 100;
@@ -24,8 +24,7 @@ long pulse_width = 50;        // pulse width in ms
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
-  Serial.flush();
+  Serial.begin(19200);
   //
   local_buffer.reserve(200);
   // configure input pins

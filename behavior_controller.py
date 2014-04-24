@@ -17,8 +17,9 @@ import loop_iterations as loop
 import trial_generators as trial
 
 # from pyfirmata import Arduino, util
+baud_rate = 19200
 debug = True
-beep = False
+beep = True
 ## Settings 
 mode_definitions = loop.iterations.keys()
 
@@ -53,12 +54,12 @@ class BehaviorController(object):
         self.expected_responses = ['response_a', 'response_b']
 
         # initialize the task parameters 
-        self.timeout_period = 30; # timeout (punishment) time in seconds
+        self.timeout_period = 60; # timeout (punishment) time in seconds
         self.max_trial_length = 5; # maximum trial time in seconds
         self.feed_time = 5;
 
         # trial
-        self.probe_occurance = 10
+        self.probe_occurance = 20
 
         # initializethe trial variables
         self.trial_generator = 'standard'
@@ -171,6 +172,10 @@ class BehaviorBox(object):
         self.serial_io = None
         self.sc_idx = None
 
+        self.serial_buffer = []
+
+        self.box_name = None
+
     def ready_to_run(self):
         if not self.serial_status:
             return (False, 'serial not connected')
@@ -195,6 +200,7 @@ class BehaviorBox(object):
             box_data = list_of_boxes[idx]
             self.select_serial_port(box_data[1])
             self.select_sound_card(box_data[2])
+            self.box_name = box_data[0]
             print 'Connected to %s' % box_data[0]
         else:
             raise(Exception('%s not connected' % box))
@@ -215,24 +221,13 @@ class BehaviorBox(object):
         return result
 
     def connect_to_serial_port(self):
-        self.serial_c = serial.Serial(self.serial_port, 115200, parity = serial.PARITY_NONE,  bytesize=serial.EIGHTBITS, stopbits=serial.STOPBITS_ONE, xonxoff = False, rtscts = False, dsrdtr = False, timeout = False)
+
+        self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, xonxoff = True, rtscts = True, dsrdtr = True, timeout = False)
         self.serial_c.flushInput()
         self.serial_c.flushOutput()
         self.serial_c.write('')
-        self.serial_c.readlines()
-        # self.serial_c.setDTR(False)
-        # self.serial_c.flushInput()
-        # self.serial_c.flushOutput()
-        # time.sleep(1)
-        # self.serial_c.setDTR(True)
-
-        # x = []
-        # while len(x)==0:
-        #     x = self.serial_c.read()
-        # print x
-        # self.serial_io = self.serial_c
-        self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 1), line_buffering = False)  
-        
+        self.serial_c.read()
+        # self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
         time.sleep(2)
         return self.sync()
 
@@ -258,8 +253,14 @@ class BehaviorBox(object):
 
     def parse_event_from_line(self,line):
         line = line.strip('\n')
-        if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
-            line_parts = line[1:-1].split('-')
+        line = line.strip('\r')
+
+        idx1 = line.find('<') 
+        idx2 = line.find('>')
+        if idx1 > -1 and idx2 > -1:
+        # if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
+            line_parts = line[idx1+1:idx2].split('-')
+            print line_parts
             if len(line_parts) is 3:
                 box_time = float(line_parts[0])
                 box_time = float(box_time)/1000 + self.box_zero_time
@@ -281,14 +282,18 @@ class BehaviorBox(object):
         self.serial_c.timeout = timeout
         try:
             # query box to see if there are any serial changes
-            serial_lines = self.serial_io.readlines()
+            serial_lines = self.serial_c.readlines()
+            # import ipdb; ipdb.set_trace()
+            # serial_lines = self.serial_io.readlines()
+            # import ipdb; ipdb.set_trace()
+            # serial_lines = [self.serial_io.readline()]
         except:
-            if withstand_errors:
-                self.serial_c.close()
-                self.connect_to_serial_port()
-                return [(self.current_time, 'bad_read','may_have_missed_serial_events')]
-            else:
-                return []
+            self.serial_c.close()
+            self.connect_to_serial_port()
+            #self.serial_io.
+            return [(self.current_time, 'bad_read','may_have_missed_serial_events')]
+        if len(serial_lines)>0:
+            print serial_lines
         for line in serial_lines:
             event = self.parse_event_from_line(line)
             if event != None:
@@ -387,7 +392,7 @@ def main_loop(controller, box):
         if debug:
             for event in events_since_last:
                 evcount += 1
-                print evcount, event
+                print box.box_name, evcount, event
                 if beep:
                     so.beep()
 
