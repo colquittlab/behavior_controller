@@ -1,6 +1,7 @@
 import os
 import wave
 from multiprocessing import Process
+import subprocess
 import numpy as np
 
 if os.uname()[0]=='Linux': # this allows for development on non-linux systems 
@@ -75,8 +76,12 @@ def sendwf(pcm, wavefile, filetype, rate, pulse = False, pulse_type = "high"):
 	p.start()
 	pass
 
-def beep(a=.01, b=500):
-	os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % ( a, b))
+def beep(a=.05, b=500):
+	command = 'play --no-show-progress --null --channels 1 synth %s sine %f' % ( a, b)
+	# print command
+	subprocess.Popen([command], stdout=subprocess.PIPE, shell = True)
+	#os.popen('play --no-show-progress --null --channels 1 synth %s sine %f' % ( a, b))
+	# sendwf(0, '/sounds/beep.wav', '.wav, 44100)
 	pass
 
 def list_sound_cards():
@@ -86,13 +91,14 @@ def list_sound_cards():
 		return ['iLuv_1']
 
 if __name__=="__main__":
-    import sys
-    if len(sys.argv) <= 1:
-        raise(Exception('no args passed'))
-    else:
-    	cardidx = int(sys.argv[1])
-        spath = sys.argv[2]
-    sendwf(cardidx, spath, '.wav',44100,pulse = False)
+	beep()
+    # import sys
+    # if len(sys.argv) <= 1:
+    #     raise(Exception('no args passed'))
+    # else:
+    # 	cardidx = int(sys.argv[1])
+    #     spath = sys.argv[2]
+    # sendwf(cardidx, spath, '.wav',44100,pulse = False)
 	# # song1 = wave.open('/home/jknowles/test.wav')
 	# # song2 = wave.open('/home/jknowles/test1ch.wav')
 	# # import ipdb; ipdb.set_trace()

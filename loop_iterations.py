@@ -82,6 +82,7 @@ def probes_iteration(controller, box):
             event_idx = events_since_last_names.index('response_trigger')
             controller.current_trial['response_time'] = box.current_time
             if controller.current_trial['trial_type'] == 'probe':
+                controller.current_trial['result'] = 'correct'
                 events_since_last.append((box.current_time, 'probe_trial - no reward'))
                 trial_ended = True
             else:
