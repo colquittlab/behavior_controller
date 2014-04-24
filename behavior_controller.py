@@ -172,7 +172,7 @@ class BehaviorBox(object):
         self.serial_io = None
         self.sc_idx = None
 
-        self.serial_buffer = []
+        self.serial_buffer = ""
 
         self.box_name = None
 
@@ -227,7 +227,7 @@ class BehaviorBox(object):
         self.serial_c.flushOutput()
         self.serial_c.write('')
         self.serial_c.read()
-        # self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
+        self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
         time.sleep(2)
         return self.sync()
 
@@ -260,7 +260,6 @@ class BehaviorBox(object):
         if idx1 > -1 and idx2 > -1:
         # if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
             line_parts = line[idx1+1:idx2].split('-')
-            print line_parts
             if len(line_parts) is 3:
                 box_time = float(line_parts[0])
                 box_time = float(box_time)/1000 + self.box_zero_time
@@ -277,28 +276,32 @@ class BehaviorBox(object):
         else: return None
         return tuple(event)
 
-    def query_events(self, timeout = 0, withstand_errors = False):
+    def query_events(self, timeout = 0):
         events_since_last = []
         self.serial_c.timeout = timeout
+
+
         try:
-            # query box to see if there are any serial changes
-            serial_lines = self.serial_c.readlines()
-            # import ipdb; ipdb.set_trace()
-            # serial_lines = self.serial_io.readlines()
-            # import ipdb; ipdb.set_trace()
-            # serial_lines = [self.serial_io.readline()]
+            # read any new input into the buffer
+            self.serial_buffer += self.serial_io.read()
         except:
             self.serial_c.close()
             self.connect_to_serial_port()
             #self.serial_io.
             return [(self.current_time, 'bad_read','may_have_missed_serial_events')]
-        if len(serial_lines)>0:
-            print serial_lines
-        for line in serial_lines:
-            event = self.parse_event_from_line(line)
-            if event != None:
-                events_since_last.append(event)
-        return events_since_last
+        while True:
+            idx1 = self.serial_buffer.find('<')
+            idx2 = self.serial_buffer[idx1:].find('>')
+            if idx1 > -1 and idx2 > -1:
+                idx2 = idx2 + idx1 + 1
+                line = self.serial_buffer[idx1:idx2]
+                event = self.parse_event_from_line(line)
+                if event != None:
+                    events_since_last.append(event)
+                self.serial_buffer = self.serial_buffer[idx2:]
+            else: 
+                return events_since_last
+
 
     def write_command(self, command):
         self.serial_io.write(unicode(command))
@@ -330,15 +333,16 @@ class BehaviorBox(object):
         self.write_command('<sync>')
         events = []
         count = 0
-        events = self.query_events(timeout = 2, withstand_errors = False)
+        events = self.query_events(timeout = 2)
         sync_time = None
         for event in events:
             if len(event) > 1 and event[1]=='sync':
                 sync_time = float(event[0])
         if sync_time != None:
             self.box_zero_time = send_time - float(sync_time)/1000
+            return True
         else:
-            import ipdb; ipdb.set_trace()
+            raise(Exception('Sync not successful'))
         return True
         # except Exception as e:
         #     print e
