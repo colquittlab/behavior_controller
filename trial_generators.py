@@ -30,7 +30,7 @@ def probes_generator(controller, trials_per_block=100):
 	for k in range(0, trials_per_block):
 		trial = {}
 
-		if random.uniform(0,1) < float(controller.probe_occurance) / 100:
+		if random.uniform(0,1) < float(controller.params['probe_occurance']) / 100:
 			trial['trial_type'] = 'probe'
 			stim_list = controller.list_stimuli(stimset_idxs = [2])
 		else:

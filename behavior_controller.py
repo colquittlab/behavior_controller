@@ -31,6 +31,7 @@ mode_definitions = loop.iterations.keys()
 # trigger_value = 1
 default_stimuli_dir = '/home/jknowles/data/doupe_lab/stimuli/'
 default_data_dir = '/home/jknowles/data/doupe_lab/behavior/'
+
 class BehaviorController(object):
     def __init__(self):
         self.birdname = None
@@ -43,6 +44,8 @@ class BehaviorController(object):
         self.log_fid = None
         self.trial_fid = None
 
+        self.config_file_contents = None
+
         # initialize the state variables
         self.task_state = None
         self.box_state = 'stop'
@@ -53,9 +56,11 @@ class BehaviorController(object):
         self.completed_trials = []
 
         # initialize the stimset holders
-        self.stimset_names = []
         self.stimsets = []
+        self.stimset_names = []
 
+        self.data_dir = default_data_dir
+        self.stimuli_dir = default_stimuli_dir
 
         # initialize the task parameters
         self.params = {}
@@ -85,8 +90,8 @@ class BehaviorController(object):
             return self.base_filename
         basename = '%s_%04d%02d%02d' %(self.birdname,self.initial_date.year,self.initial_date.month,self.initial_date.day) 
         idx = 0
-        while os.path.exists('%s%s_%d.log'%(data_dir,basename,idx)):
-            idx +=1
+        while os.path.exists('%s%s_%d.log'%(controller.data_dir, basename,idx)):
+            idx += 1
         name = '%s_%d'%(basename,idx)
         self.base_filename = name
         pass
@@ -111,7 +116,7 @@ class BehaviorController(object):
             raise Exception('Error: less than 2 stimset names set')
         self.stimsets = []
         for name in self.stimset_names:
-            self.stimsets.append(load_and_verify_stimset(name))
+            self.stimsets.append(load_and_verify_stimset(self.stimuli_dir, name))
         pass
 
     def list_stimuli(self, stimset_idxs = None):
@@ -127,7 +132,7 @@ class BehaviorController(object):
         if self.current_trial != None:
             self.store_current_trial()
         if len(self.trial_block) < 1:
-            self.trial_block = trial.generators[self.trial_generator](self)
+            self.trial_block = trial.generators[self.params['trial_generator']](self)
         self.current_trial = self.trial_block.pop(0)
         pass
 
@@ -139,13 +144,18 @@ class BehaviorController(object):
 
     def return_log_fid(self):
         if self.log_fid == None:
-            self.log_fid = open('%s%s.log'% (data_dir,self.base_filename), 'w')
+            self.log_fid = open('%s%s.log'% (self.data_dir,self.base_filename), 'w')
         return self.log_fid
 
     def return_events_fid(self):
         if self.trial_fid == None:
-            self.trial_fid = open('%s%s.trial'% (data_dir,self.base_filename), 'w')
+            self.trial_fid = open('%s%s.trial'% (self.data_dir,self.base_filename), 'w')
         return self.trial_fid
+
+    def save_config_file(self):
+        if self.config_file_contents is not None:
+            config_fid = open('%s%s.config'% (self.data_dir,self.base_filename), 'w')
+        pass
 
     def save_events_to_log_file(self,  events_since_last):
         fid = self.return_log_fid()
@@ -154,7 +164,7 @@ class BehaviorController(object):
         pass
 
     def save_trial_to_file(self, trial):
-        trial['mode'] = self.mode;
+        trial['mode'] = self.params['mode']
         fid = self.return_events_fid()
         fid.write('%s\n' % json.dumps(trial))
         fid.flush()
@@ -166,6 +176,7 @@ class BehaviorBox(object):
     def __init__(self):
         # 
 
+        self.stimuli_dir = None
 
         self.input_definitions = {2: ['song_trigger'], 
                              3: ['response_trigger', 'response_a'],
@@ -358,7 +369,7 @@ class BehaviorBox(object):
 
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
-        filename =  '%s%s/%s%s'%(stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
+        filename =  '%s%s/%s%s'%(self.stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
         so.sendwf(self.sc_idx, filename, stimset['stims'][0]['file_type'], 44100)
         pass  
     def play_sound(self, filename):
@@ -379,8 +390,9 @@ def run_box(controller, box):
     controller.box_state = 'go'
     controller.has_run = True
     controller.generate_file_name()
-
+    controller.save_config_file()
     # initialize box
+    box.stimuli_dir = controller.stimuli_dir
     box.query_events()
     # send loop
     main_loop(controller, box)
@@ -397,7 +409,7 @@ def main_loop(controller, box):
     while controller.box_state == 'go':
         # run loop
         # raw_input('pause')
-        events_since_last, trial_ended = loop.iterations[controller.mode](controller, box)
+        events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box)
         # save all the events that have happened in this loop to file
         controller.save_events_to_log_file(events_since_last)
         
@@ -426,7 +438,7 @@ def main_loop(controller, box):
 
 
 
-def load_and_verify_stimset(stim_name):
+def load_and_verify_stimset(stimuli_dir, stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that
     the stimset is properly formatted, that all stimuli exist, ext"""
     
@@ -497,12 +509,15 @@ if __name__=='__main__':
 
     config = ConfigParser.ConfigParser() 
     config.read(cfpath)
+    config_fid = open(cfpath)
 
     # set required parameters
     controller = BehaviorController()
+    controller.config_file_contents = config_fid.read()
     controller.set_bird_name(config.get('run_params','birdname'))
-    controller.mode = config.get('run_params','mode')
-    controller.trial_generator = config.get('run_params','trial_generator')
+    controller.params['mode'] = config.get('run_params','mode')
+    controller.params['trial_generator'] = config.get('run_params','trial_generator')
+    
     controller.stimset_names = []
     controller.stimset_names.append(config.get('run_params','stimset_0'))
     controller.stimset_names.append(config.get('run_params','stimset_1'))
