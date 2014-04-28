@@ -508,6 +508,7 @@ if __name__=='__main__':
         cfpath = sys.argv[1]
 
     config = ConfigParser.ConfigParser() 
+    import ipdb; ipdb.set_trace()
     config.read(cfpath)
     config_fid = open(cfpath)
 
