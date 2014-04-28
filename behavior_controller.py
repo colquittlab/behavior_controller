@@ -153,8 +153,16 @@ class BehaviorController(object):
         return self.trial_fid
 
     def save_config_file(self):
+        config_fname = '%s%s.config'% (self.data_dir,self.base_filename)
         if self.config_file_contents is not None:
-            config_fid = open('%s%s.config'% (self.data_dir,self.base_filename), 'w')
+            config_fid = open(config_fname, 'w')
+            config_fid.write(self.config_file_contents)
+        else:
+            config = ConfigParser.ConfigParser()
+            config.add_section('run_params')
+            for key in self.params.keys():
+                config.set('run_params', key, self.params[key])
+
         pass
 
     def save_events_to_log_file(self,  events_since_last):
