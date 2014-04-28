@@ -34,6 +34,11 @@ def discrimination_iteration(controller, box):
             controller.task_state = 'waiting_for_response'
     # if a trial is ongoing then look for responses
     elif controller.task_state == 'waiting_for_response':
+        if controller.params['withold_response']:
+            timeout_time = controller.current_trial['start_time'] + controller.current_trial['stim_length'] + controller.params['max_trial_length']
+        else:
+            timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']
+
         # if there is a response
         if 'response_trigger' in events_since_last_names:
             event_idx = events_since_last_names.index('response_trigger')
@@ -50,8 +55,10 @@ def discrimination_iteration(controller, box):
                 controller.task_state = 'time_out'
                 events_since_last.append((box.current_time, 'timeout_start'))
 
+        
+        
         # if no response and trial has timed out
-        elif box.current_time > controller.current_trial['start_time'] + controller.params['max_trial_length']:
+        elif box.current_time > timeout_time:
             controller.current_trial['result'] = 'no_response'
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True
@@ -82,7 +89,7 @@ def probes_iteration(controller, box):
             box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
-            if controller.params['withold_response']:
+            if controller.params['withold_response'] is True:
                 controller.task_state = 'playing_song'
             else:
                 controller.task_state = 'waiting_for_response'
@@ -97,6 +104,10 @@ def probes_iteration(controller, box):
 
     # if a trial is ongoing then look for responses
     elif controller.task_state == 'waiting_for_response':
+        if controller.params['withold_response']:
+            timeout_time = controller.current_trial['start_time'] + controller.current_trial['stim_length'] + controller.params['max_trial_length']
+        else:
+            timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']
         # if there is a response
         if 'response_trigger' in events_since_last_names:
             event_idx = events_since_last_names.index('response_trigger')
@@ -118,8 +129,9 @@ def probes_iteration(controller, box):
                     controller.task_state = 'time_out'
                     events_since_last.append((box.current_time, 'timeout_start'))
 
+       
         # if no response and trial has timed out
-        elif box.current_time > controller.current_trial['start_time'] + controller.params['max_trial_length']:
+        elif box.current_time > timeout_time:
             controller.current_trial['result'] = 'no_response'
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True
@@ -205,9 +217,23 @@ def sequence_iteration(controller, box):
             box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+            if controller.params['withold_response'] is True:
+                controller.task_state = 'playing_song'
+            else:
+                controller.task_state = 'waiting_for_response'
+    # if song is playing and responses are ignored during song
+    elif controller.task_state == 'playing_song':
+        # if there is a response
+        if 'response_trigger' in events_since_last_names:
+            events_since_last.append((box.current_time, 'response_ignored_during_playback'))
+        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             controller.task_state = 'waiting_for_response'
     # if a trial is ongoing then look for responses
     elif controller.task_state == 'waiting_for_response':
+        if controller.params['withold_response']:
+            timeout_time = controller.current_trial['start_time'] + controller.current_trial['stim_length'] + controller.params['max_trial_length']
+        else:
+            timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']
         # if there is a response
         if 'response_trigger' in events_since_last_names:
             event_idx = events_since_last_names.index('response_trigger')
@@ -219,7 +245,7 @@ def sequence_iteration(controller, box):
             box.feeder_on()
             ## otherwise anwser is incorrect 
         # if no response and trial has timed out
-        elif box.current_time > controller.current_trial['start_time'] + controller.params['max_trial_length']:
+        elif box.current_time > timeout_time:
             controller.current_trial['result'] = 'no_response'
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True

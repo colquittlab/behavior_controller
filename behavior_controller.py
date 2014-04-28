@@ -19,7 +19,7 @@ import trial_generators as trial
 # from pyfirmata import Arduino, util
 baud_rate = 19200
 debug = True
-beep = True
+beep = False
 ## Settings 
 mode_definitions = loop.iterations.keys()
 
@@ -401,6 +401,11 @@ def run_box(controller, box):
     controller.has_run = True
     controller.generate_file_name()
     controller.save_config_file()
+
+    # print out params
+    if debug:
+        for key in controller.params:
+            print key + ': ' + str(controller.params[key])
     # initialize box
     box.stimuli_dir = controller.stimuli_dir
     box.query_events()
@@ -543,12 +548,12 @@ if __name__=='__main__':
     # set (overwrite) boolean parameters
     for param in ['withold_response']:
         if config.has_option('run_params', param):
-            controller.params['withold_response'] = config.getboolean('run_params', param)
+            controller.params[param] = config.getboolean('run_params', param)
 
     # set (overwrite) float parameters
     for param in ['feed_time', 'max_trial_length', 'timeout_period']:
         if config.has_option('run_params', param):
-            controller.params['withold_response'] = config.getfloat('run_params', param)
+            controller.params[param] = config.getfloat('run_params', param)
 
 
 
