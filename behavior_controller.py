@@ -29,8 +29,8 @@ mode_definitions = loop.iterations.keys()
 
 # output_definitions = {'reward_port': 12}
 # trigger_value = 1
-stimuli_dir = '/home/jknowles/data/doupe_lab/stimuli/'
-data_dir = '/home/jknowles/data/doupe_lab/behavior/'
+default_stimuli_dir = '/home/jknowles/data/doupe_lab/stimuli/'
+default_data_dir = '/home/jknowles/data/doupe_lab/behavior/'
 class BehaviorController(object):
     def __init__(self):
         self.birdname = None
@@ -47,25 +47,33 @@ class BehaviorController(object):
         self.task_state = None
         self.box_state = 'stop'
 
-        # initialize the task variables
-        self.mode = None
-        self.stimset_names = []
-        self.stimsets = []
-        self.expected_responses = ['response_a', 'response_b']
-
-        # initialize the task parameters 
-        self.timeout_period = 60; # timeout (punishment) time in seconds
-        self.max_trial_length = 5; # maximum trial time in seconds
-        self.feed_time = 5;
-
-        # trial
-        self.probe_occurance = 20
-
-        # initializethe trial variables
-        self.trial_generator = 'standard'
+        # initialize trial variables
         self.trial_block = []
         self.current_trial = None
         self.completed_trials = []
+
+        # initialize the stimset holders
+        self.stimset_names = []
+        self.stimsets = []
+
+
+        # initialize the task parameters
+        self.params = {}
+        self.params['mode'] = None
+        self.expected_responses = ['response_a', 'response_b']
+
+        # initialize the task parameters 
+        self.params['timeout_period'] = 60; # timeout (punishment) time in seconds
+        self.params['max_trial_length'] = 5; # maximum trial time in seconds
+        self.params['feed_time'] = 5;
+
+        # initializethe trial variables
+        self.params['trial_generator'] = 'standard'
+
+        # trial
+        self.params['probe_occurance'] = 20
+
+
 
     def set_bird_name(self,birdname):
         if not self.has_run:
@@ -490,14 +498,7 @@ if __name__=='__main__':
     config = ConfigParser.ConfigParser() 
     config.read(cfpath)
 
-    birdname = config.get('run_params','birdname')
-    stimset_0 = config.get('run_params','stimset_0')
-    stimset_1 = config.get('run_params','stimset_1')
-    mode = config.get('run_params','mode')
-    generator = config.get('run_params', 'trial_generator')
-    box = config.get('run_params','box')
-
-
+    # set required parameters
     controller = BehaviorController()
     controller.set_bird_name(config.get('run_params','birdname'))
     controller.mode = config.get('run_params','mode')
@@ -505,6 +506,8 @@ if __name__=='__main__':
     controller.stimset_names = []
     controller.stimset_names.append(config.get('run_params','stimset_0'))
     controller.stimset_names.append(config.get('run_params','stimset_1'))
+    
+    # set optional paramters
     if config.has_option('run_params','stimset_2'):
         controller.stimset_names.append(config.get('run_params','stimset_2'))
 

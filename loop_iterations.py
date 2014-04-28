@@ -21,8 +21,17 @@ def discrimination_iteration(controller, box):
             box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+            if controller.params['withold_response']:
+                controller.task_state = 'playing_song'
+            else:
+                controller.task_state = 'waiting_for_response'
+    # if song is playing and responses are ignored during song
+    elif controller.task_state == 'playing_song':
+        # if there is a response
+        if 'response_trigger' in events_since_last_names:
+            events_since_last.append((box.current_time, 'response_ignored_during_playback'))
+        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             controller.task_state = 'waiting_for_response'
-
     # if a trial is ongoing then look for responses
     elif controller.task_state == 'waiting_for_response':
         # if there is a response
@@ -42,19 +51,19 @@ def discrimination_iteration(controller, box):
                 events_since_last.append((box.current_time, 'timeout_start'))
 
         # if no response and trial has timed out
-        elif box.current_time > controller.current_trial['start_time'] + controller.max_trial_length:
+        elif box.current_time > controller.current_trial['start_time'] + controller.params['max_trial_length']:
             controller.current_trial['result'] = 'no_response'
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True
 
     # if the box is in time_out state (after an incorrect trial) 
     elif controller.task_state == 'time_out':
-        if box.current_time > controller.current_trial['response_time'] + controller.timeout_period:
+        if box.current_time > controller.current_trial['response_time'] + controller.params['timeout_period']:
             events_since_last.append((box.current_time, 'timout_end'))
             trial_ended = True
     # if the reward period is over
     elif controller.task_state == 'reward':
-        if box.current_time > controller.current_trial['response_time'] + controller.feed_time:
+        if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
             box.feeder_off()
             events_since_last.append((box.current_time, 'reward_end'))
             trial_ended = True
@@ -73,6 +82,17 @@ def probes_iteration(controller, box):
             box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+            if controller.params['withold_response']:
+                controller.task_state = 'playing_song'
+            else:
+                controller.task_state = 'waiting_for_response'
+                
+    # if song is playing and responses are ignored during song
+    elif controller.task_state == 'playing_song':
+        # if there is a response
+        if 'response_trigger' in events_since_last_names:
+            events_since_last.append((box.current_time, 'response_ignored_during_playback'))
+        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             controller.task_state = 'waiting_for_response'
 
     # if a trial is ongoing then look for responses
@@ -99,19 +119,19 @@ def probes_iteration(controller, box):
                     events_since_last.append((box.current_time, 'timeout_start'))
 
         # if no response and trial has timed out
-        elif box.current_time > controller.current_trial['start_time'] + controller.max_trial_length:
+        elif box.current_time > controller.current_trial['start_time'] + controller.params['max_trial_length']:
             controller.current_trial['result'] = 'no_response'
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True
 
     # if the box is in time_out state (after an incorrect trial) 
     elif controller.task_state == 'time_out':
-        if box.current_time > controller.current_trial['response_time'] + controller.timeout_period:
+        if box.current_time > controller.current_trial['response_time'] + controller.params['timeout_period']:
             events_since_last.append((box.current_time, 'timout_end'))
             trial_ended = True
     # if the reward period is over
     elif controller.task_state == 'reward':
-        if box.current_time > controller.current_trial['response_time'] + controller.feed_time:
+        if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
             box.feeder_off()
             events_since_last.append((box.current_time, 'reward_end'))
             trial_ended = True
@@ -167,7 +187,7 @@ def song_plus_food_iteration(controller, box):
             box.feeder_on()
     # if the reward period is over
     elif controller.task_state == 'reward':
-        if box.current_time > controller.current_trial['response_time'] + controller.feed_time:
+        if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
             box.feeder_off()
             events_since_last.append((box.current_time, 'reward_end'))
             trial_ended = True
@@ -199,13 +219,13 @@ def sequence_iteration(controller, box):
             box.feeder_on()
             ## otherwise anwser is incorrect 
         # if no response and trial has timed out
-        elif box.current_time > controller.current_trial['start_time'] + controller.max_trial_length:
+        elif box.current_time > controller.current_trial['start_time'] + controller.params['max_trial_length']:
             controller.current_trial['result'] = 'no_response'
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True
     # if the reward period is over
     elif controller.task_state == 'reward':
-        if box.current_time > controller.current_trial['response_time'] + controller.feed_time:
+        if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
             box.feeder_off()
             events_since_last.append((box.current_time, 'reward_end'))
             trial_ended = True
