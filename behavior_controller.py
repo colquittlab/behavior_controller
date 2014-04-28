@@ -72,6 +72,8 @@ class BehaviorController(object):
         self.params['max_trial_length'] = 5; # maximum trial time in seconds
         self.params['feed_time'] = 5;
 
+        self.params['withold_response'] = False
+
         # initializethe trial variables
         self.params['trial_generator'] = 'standard'
 
@@ -516,7 +518,6 @@ if __name__=='__main__':
         cfpath = sys.argv[1]
 
     config = ConfigParser.ConfigParser() 
-    import ipdb; ipdb.set_trace()
     config.read(cfpath)
     config_fid = open(cfpath)
 
@@ -534,6 +535,22 @@ if __name__=='__main__':
     # set optional paramters
     if config.has_option('run_params','stimset_2'):
         controller.stimset_names.append(config.get('run_params','stimset_2'))
+
+    for key in controller.params.keys():
+        if config.has_option('run_params', key):
+            controller.params[key] = config.get('run_params', key)
+
+    # set (overwrite) boolean parameters
+    for param in ['withold_response']:
+        if config.has_option('run_params', param):
+            controller.params['withold_response'] = config.getboolean('run_params', param)
+
+    # set (overwrite) float parameters
+    for param in ['feed_time', 'max_trial_length', 'timeout_period']:
+        if config.has_option('run_params', param):
+            controller.params['withold_response'] = config.getfloat('run_params', param)
+
+
 
     controller.load_stimsets()
     box = BehaviorBox()

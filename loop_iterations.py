@@ -21,7 +21,7 @@ def discrimination_iteration(controller, box):
             box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
-            if controller.params['withold_response']:
+            if controller.params['withold_response'] is True:
                 controller.task_state = 'playing_song'
             else:
                 controller.task_state = 'waiting_for_response'
