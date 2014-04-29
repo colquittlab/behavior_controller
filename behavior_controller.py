@@ -205,6 +205,8 @@ class BehaviorBox(object):
 
         self.box_name = None
 
+        self.so_workers = []
+
     def ready_to_run(self):
         if not self.serial_status:
             return (False, 'serial not connected')
@@ -380,14 +382,32 @@ class BehaviorBox(object):
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
         filename =  '%s%s/%s%s'%(self.stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
-        so.sendwf(self.sc_idx, filename, stimset['stims'][0]['file_type'], 44100)
+        self.play_sound(filename)
         pass  
+
     def play_sound(self, filename):
+        # kill any workers
+        while len(self.so_workers)>0:
+            worker = self.so_workers.pop()
+            if worker[0].is_alive():
+                worker[1].value = 1;
+                worker[0].join()
+
         filetype = filename[-4:]
-        so.sendwf(self.sc_idx, filename, filetype, 44100)
+        p = so.sendwf(self.sc_idx, filename, filetype, 44100)
+        self.so_workers.append(p)
         pass
+
     def beep(self):
         self.play_sound('sounds/beep.wav')
+        pass
+
+    def stop_sounds(self):
+        while len(self.so_workers)>0:
+            worker = self.so_workers.pop()
+            if worker[0].is_alive():
+                worker[1].value = 1;
+                worker[0].join()
         pass
 
 ##
@@ -564,4 +584,5 @@ if __name__=='__main__':
     else:
         box.select_sound_card()
         box.select_serial_port()
+
     run_box(controller, box)

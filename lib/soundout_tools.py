@@ -1,6 +1,6 @@
 import os
 import wave
-from multiprocessing import Process
+from multiprocessing import Process, Value
 import subprocess
 import numpy as np
 
@@ -11,7 +11,7 @@ else:
 
 
 #functions
-def playwf(cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"):
+def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"):
 	# pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='hw:%d,0'%cardidx)
 	pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='plughw:%d,0'%cardidx)
 	frame_size = 320
@@ -41,7 +41,7 @@ def playwf(cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"
 		else:
 			raise ValueError('Unsupported format')
 		data=song.readframes(frame_size)
-		while data:
+		while data and stopsig.value==0:
 			if pulse:
 				# x = np.fromstring(data, np.int16)
 				# x = np.expand_dims(x,axis=1)
@@ -61,7 +61,7 @@ def playwf(cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"
 		pcm.setrate(rate)
 		pcm.setperiodsize(frame_size)
 		data = np.fromfile(fid, dtype = np.dtype('d'), count = frame_size)
-		while len(data) > 0:
+		while len(data) > 0 and stopsig.value==0:
 			if len(data) < frame_size:
 				data = np.append(data, np.zeros((frame_size-len(data), 1)))
 			data = np.array(data*2**15, dtype = np.dtype('i4'))
@@ -70,11 +70,12 @@ def playwf(cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"
 	pcm.close()
 	pass
 
-def sendwf(pcm, wavefile, filetype, rate, pulse = False, pulse_type = "high"):
+def sendwf(cardidx, wavefile, filetype, rate, pulse = False, pulse_type = "high"):
+	stopsig = Value('i', 0)
 	kwargs = {'pulse': pulse, 'pulse_type': pulse_type}
-	p=Process(target = playwf, args = (pcm, wavefile, filetype, rate), kwargs = kwargs)
+	p=Process(target = playwf, args = (stopsig, cardidx, wavefile, filetype, rate), kwargs = kwargs)
 	p.start()
-	pass
+	return (p, stopsig)
 
 def beep(a=.05, b=500):
 	command = 'play --no-show-progress --null --channels 1 synth %s sine %f' % ( a, b)
@@ -107,3 +108,4 @@ if __name__=="__main__":
 	# # playwf(1, '/home/jknowles/test.wav','.wav',44100, pulse = True)
 	# # playwf(1, '/home/jknowles/test1ch.wav','.wav',44100, pulse = True)
 	
+

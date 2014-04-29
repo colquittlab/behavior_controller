@@ -29,7 +29,11 @@ def discrimination_iteration(controller, box):
     elif controller.task_state == 'playing_song':
         # if there is a response
         if 'response_trigger' in events_since_last_names:
-            events_since_last.append((box.current_time, 'response_ignored_during_playback'))
+            box.stop_sounds()
+            events_since_last.append((box.current_time, 'response_during_song_playback_haulted'))
+            controller.current_trial['result'] = 'haulted'
+            controller.current_trial['response_time'] = box.current_time
+            trial_ended = True
         if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             controller.task_state = 'waiting_for_response'
     # if a trial is ongoing then look for responses
@@ -98,7 +102,11 @@ def probes_iteration(controller, box):
     elif controller.task_state == 'playing_song':
         # if there is a response
         if 'response_trigger' in events_since_last_names:
-            events_since_last.append((box.current_time, 'response_ignored_during_playback'))
+            box.stop_sounds()
+            events_since_last.append((box.current_time, 'response_during_song_playback_haulted'))
+            controller.current_trial['result'] = 'haulted'
+            controller.current_trial['response_time'] = box.current_time
+            trial_ended = True
         if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             controller.task_state = 'waiting_for_response'
 
@@ -225,7 +233,11 @@ def sequence_iteration(controller, box):
     elif controller.task_state == 'playing_song':
         # if there is a response
         if 'response_trigger' in events_since_last_names:
-            events_since_last.append((box.current_time, 'response_ignored_during_playback'))
+            box.stop_sounds()
+            events_since_last.append((box.current_time, 'response_during_song_playback_haulted'))
+            controller.current_trial['result'] = 'haulted'
+            controller.current_trial['response_time'] = box.current_time
+            trial_ended = True
         if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             controller.task_state = 'waiting_for_response'
     # if a trial is ongoing then look for responses
