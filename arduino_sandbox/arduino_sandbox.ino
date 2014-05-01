@@ -10,7 +10,7 @@ long last_input_change[sizeof(input_pins)];
 long bounce_time = 100;
 String local_buffer;
 
-byte pulse_mode = 1; // specify whether arduino should worry about pulse  0==off; 1==on if trigger is active; 2==on regardless of trigger
+byte pulse_mode = 1; // specify whether arduino should worry aboMut pulse  0==off; 1==on if trigger is active; 2==on regardless of trigger
 bool pulse_on = 0;     // specifies whether pulse is running at any time
 byte pulse_trigger_pin = 10;  //
 byte pulse_output_pin = 11;   // pulse output pin
@@ -39,7 +39,6 @@ void setup() {
   pinMode(pulse_output_pin, OUTPUT);
   digitalWrite(pulse_output_pin, 0);
   pinMode(pulse_trigger_pin, INPUT_PULLUP);
-  checkSerial();
 }
 
 //
