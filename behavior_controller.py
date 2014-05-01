@@ -13,8 +13,10 @@ import ConfigParser
 import lib.soundout_tools as so
 import lib.serial_tools as st
 import lib.usb_tools as ut
+import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
+
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
@@ -252,16 +254,20 @@ class BehaviorBox(object):
         return result
 
     def connect_to_serial_port(self):
-
-        self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, xonxoff = True, rtscts = True, dsrdtr = True, timeout = False)
-        self.serial_c.flushInput()
-        self.serial_c.flushOutput()
-        self.serial_c.write('')
-        self.serial_c.read()
-        self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
-        time.sleep(2)
-        return self.sync()
-
+        try:
+            self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
+            self.serial_c.setDTR(False)
+            time.sleep(1)
+            self.serial_c.flushInput()
+            self.serial_c.flushOutput()
+            time.sleep(1)
+            self.serial_c.setDTR(True)
+            self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
+            time.sleep(2)
+            return self.sync()
+        except:
+            at.build_and_upload(self.serial_port)
+            return self.connect_to_serial_port()
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
 
@@ -359,7 +365,7 @@ class BehaviorBox(object):
         self.write_command(command)
 
     def sync(self):
-        # try:
+
         send_time = self.current_time
         self.write_command('<sync>')
         events = []
@@ -375,9 +381,6 @@ class BehaviorBox(object):
         else:
             raise(Exception('Sync not successful'))
         return True
-        # except Exception as e:
-        #     print e
-        #     return False
 
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
@@ -410,6 +413,9 @@ class BehaviorBox(object):
                 worker[0].join()
         pass
 
+    def reload_arduino_firmware(self):
+        at.build_and_upload(self.serial_port)
+
 ##
 def run_box(controller, box):
     # if not controller.ready_to_run:
@@ -429,42 +435,46 @@ def run_box(controller, box):
     # initialize box
     box.stimuli_dir = controller.stimuli_dir
     box.query_events()
+    evcount = 0
     # send loop
-    main_loop(controller, box)
+    main_loop(controller, box, evcount)
     pass
 
-def main_loop(controller, box):
-    # try:
-    # generate the first trial and set that as the state
-    controller.que_next_trial()
-    controller.task_state = 'waiting_for_trial'
-    controller.has_run = True
-    evcount=0
-    # enter the loop
-    while controller.box_state == 'go':
-        # run loop
-        # raw_input('pause')
-        events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box)
-        # save all the events that have happened in this loop to file
-        controller.save_events_to_log_file(events_since_last)
-        
-        if debug:
-            for event in events_since_last:
-                evcount += 1
-                print box.box_name, evcount, event
-                if beep:
-                    so.beep()
+def main_loop(controller, box, evcount):
+    try:
+        # generate the first trial and set that as the state
+        controller.que_next_trial()
+        controller.task_state = 'waiting_for_trial'
+        controller.has_run = True
+        # enter the loop
+        while controller.box_state == 'go':
+            # run loop
+            # raw_input('pause')
+            events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box)
+            # save all the events that have happened in this loop to file
+            controller.save_events_to_log_file(events_since_last)
+            
+            if debug:
+                for event in events_since_last:
+                    evcount += 1
+                    print box.box_name, evcount, event
+                    if beep:
+                        so.beep()
 
 
-        # if a trial eneded in this loop then store event, save events, generate new trial
-        if trial_ended:
-            controller.task_state = 'waiting_for_trial'
-            controller.store_current_trial()
-            controller.que_next_trial()
+            # if a trial eneded in this loop then store event, save events, generate new trial
+            if trial_ended:
+                controller.task_state = 'waiting_for_trial'
+                controller.store_current_trial()
+                controller.que_next_trial()
+
+
 
         # exit routine:
 
-    # except Exception as e:
+    except Exception as e:
+        box.connect_to_serial_port()
+        main_loop(controller, box, evcount)
     #      raise e
 
         # get any feeder variables
