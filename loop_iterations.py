@@ -9,10 +9,9 @@ import scipy as sp
 iterations = {}
 
 
-def discrimination_iteration(controller, box):
+def discrimination_iteration(controller, box, events_since_last):
     """ This function runs int the main loop in discrimination mode"""
     # record any events that have happened on the box     
-    events_since_last = box.query_events()
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
     # examine what events have happened and trigger new ones, depending on box state
@@ -81,10 +80,9 @@ def discrimination_iteration(controller, box):
     return events_since_last, trial_ended
 iterations['discrimination'] = discrimination_iteration
 
-def probes_iteration(controller, box):
+def probes_iteration(controller, box, events_since_last):
     """ This function runs int the main loop in probes mode"""
     # record any events that have happened on the box     
-    events_since_last = box.query_events()
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
     # examine what events have happened and trigger new ones, depending on box state
@@ -159,9 +157,8 @@ def probes_iteration(controller, box):
 iterations['probes'] = probes_iteration
 
 
-def song_only_iteration(controller, box):
+def song_only_iteration(controller, box, events_since_last):
     # record any events that have happened on the box     
-    events_since_last = box.query_events()
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
     # examine what events have happened and trigger new ones, depending on box state
@@ -178,9 +175,8 @@ def song_only_iteration(controller, box):
     return events_since_last, trial_ended
 iterations['song_only'] = song_only_iteration
 
-def song_plus_food_iteration(controller, box):
+def song_plus_food_iteration(controller, box, events_since_last):
     # record any events that have happened on the box     
-    events_since_last = box.query_events()
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
     # examine what events have happened and trigger new ones, depending on box state
@@ -214,9 +210,8 @@ def song_plus_food_iteration(controller, box):
     return events_since_last, trial_ended
 iterations['song_plus_food'] = song_plus_food_iteration
 
-def sequence_iteration(controller, box):
+def sequence_iteration(controller, box, events_since_last):
     # record any events that have happened on the box     
-    events_since_last = box.query_events()
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
     # examine what events have happened and trigger new ones, depending on box state

@@ -75,7 +75,11 @@ function trials = read_from_file(fname)
         else
             trial.response_time = nan;
         end
-        
+        if isfield(data,'mode')
+            trial.mode = data.mode;
+        else
+            trial.mode = '';
+        end
         trials(count) = trial;
         
         file_line = fgets(fid);

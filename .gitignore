@@ -13,5 +13,5 @@ pathdef.m
 *.pyc
 *.mex*
 *.m~
-
+*.profile
 
