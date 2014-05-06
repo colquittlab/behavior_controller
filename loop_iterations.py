@@ -61,8 +61,6 @@ def discrimination_iteration(controller, box, events_since_last):
                     box.light_off()
                     events_since_last.append((box.current_time, 'light_off'))
 
-        
-        
         # if no response and trial has timed out
         elif box.current_time > timeout_time:
             controller.current_trial['result'] = 'no_response'

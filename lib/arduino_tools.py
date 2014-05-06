@@ -9,7 +9,7 @@ def build_and_upload(arduino_port):
 	arduino_ide_dir = o_cwd + '/arduino_ide/'
 	os.chdir(ino_project_dir)
 	code = call(['ino', 'clean'])
-	# code = call(['ino', 'build', '-d' + arduino_ide_dir])
+	code = call(['ino', 'build', '-d' + arduino_ide_dir])
 	code = call(['ino', 'upload', '-d' + arduino_ide_dir, '-p' + arduino_port]) 
 	# code = call(['ino', 'serial', '-p'+arduino_port, '-b 19200'])
 	os.chdir(o_cwd)
