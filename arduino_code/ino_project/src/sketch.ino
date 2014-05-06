@@ -1,7 +1,7 @@
 //#include <SoftwareSerial.h>
 
 // config output pins (digital)
-byte output_pins[2] = {12, 13};
+byte output_pins[2] = {11, 12, 13};
 //byte output_pins[2] = {12, 13};
 // config input pins (digital)
 byte input_pins[2] = {2, 3};
@@ -12,8 +12,8 @@ String local_buffer;
 
 byte pulse_mode = 1; // specify whether arduino should worry about pulse  0==off; 1==on if trigger is active; 2==on regardless of trigger
 bool pulse_on = 0;     // specifies whether pulse is running at any time
-byte pulse_trigger_pin = 10;  //
-byte pulse_output_pin = 11;   // pulse output pin
+byte pulse_trigger_pin = 9;  //
+byte pulse_output_pin = 10;   // pulse output pin
 long pulse_period = 100;      // pulse period in ms (1000/f)
 long pulse_width = 50;        // pulse width in ms
 

@@ -76,6 +76,7 @@ class BehaviorController(object):
         self.params['timeout_period'] = 60; # timeout (punishment) time in seconds
         self.params['max_trial_length'] = 5; # maximum trial time in seconds
         self.params['feed_time'] = 5;
+        self.params['timeout_light'] = True
 
         self.params['withold_response'] = False
 
@@ -202,7 +203,8 @@ class BehaviorBox(object):
         self.input_definitions = {2: ['song_trigger'], 
                              3: ['response_trigger', 'response_a'],
                              4: ['response_trigger', 'response_b']}
-        self.output_definitions = {'reward_port': 12}
+        self.output_definitions = {'reward_port': 12;
+                                    'light_port': 11}
         self.trigger_value = 1
 
         self.box_zero_time = 0
@@ -358,7 +360,12 @@ class BehaviorBox(object):
     def feeder_off(self):
         command = '<o%d=0>'%self.output_definitions['reward_port']
         self.write_command(command)
-
+    def light_on(self):
+        command = '<o%d=1>'%self.output_definitions['light_port']
+        self.write_command(command)
+    def light_off(self):
+        command = '<o%d=0>'%self.output_definitions['light_port']
+        self.write_command(command)
     def pulse_on(self):
         command = '<p=2>'
         self.write_command(command)
