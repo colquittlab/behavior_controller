@@ -41,6 +41,11 @@ def return_list_of_named_arduinos():
         return ['arduino_1']
 
 
+
+class SerialException(Exception):
+    pass
+
+
 # def find_tty(idVendor, idProduct):
 #     """find_tty_usb('067b', '2302') -> '/dev/ttyUSB0'"""
 #     # Note: if searching for a lot of pairs, it would be much faster to search
