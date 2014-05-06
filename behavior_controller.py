@@ -446,41 +446,42 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
-    try:
+    # try:
         # generate the first trial and set that as the state
-        controller.que_next_trial()
-        controller.task_state = 'waiting_for_trial'
-        controller.has_run = True
-        # enter the loop
-        last_time = box.current_time
-        while controller.box_state == 'go':
-            current_time = box.current_time
-            loop_time = current_time - last_time
-            last_time = current_time
-            # query serial events since the last itteration
-            events_since_last = box.query_events()
-            # save loop times greator than tollerance as events
-            if loop_time > time_tollerance:
-                events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
-            events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
-            # save all the events that have happened in this loop to file
-            controller.save_events_to_log_file(events_since_last)
-            # if a trial eneded in this loop then store event, save events, generate new trial
-            if trial_ended:
-                controller.task_state = 'waiting_for_trial'
-                controller.store_current_trial()
-                controller.que_next_trial()
-        # exit routine:
+    controller.que_next_trial()
+    controller.task_state = 'waiting_for_trial'
+    controller.has_run = True
+    # enter the loop
+    last_time = box.current_time
+    while controller.box_state == 'go':
+        current_time = box.current_time
+        loop_time = current_time - last_time
+        last_time = current_time
+        # query serial events since the last itteration
+        events_since_last = box.query_events()
+        # save loop times greator than tollerance as events
+        if loop_time > time_tollerance:
+            events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
+        events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
+        # save all the events that have happened in this loop to file
+        controller.save_events_to_log_file(events_since_last)
+        # if a trial eneded in this loop then store event, save events, generate new trial
+        if trial_ended:
+            controller.task_state = 'waiting_for_trial'
+            controller.store_current_trial()
+            controller.que_next_trial()
+    # exit routine:
         pass
-    except Exception as e:
-        # crash handeling
-        controller.save_events_to_log_file([(box.current_time, str(e))]) # save crash event
-        box.serial_c.close() 
-        box.connect_to_serial_port() # reconnect to box
-        controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
+    # except Exception as e:
+    #     # crash handeling
+    #     import ipdb; ipdb.set_trace()
+    #     controller.save_events_to_log_file([(box.current_time, str(e))]) # save crash event
+    #     box.serial_c.close() 
+    #     box.connect_to_serial_port() # reconnect to box
+    #     controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
         
-        # renter loop
-        main_loop(controller, box)
+    #     # renter loop
+    #     main_loop(controller, box)
 
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
