@@ -203,7 +203,7 @@ class BehaviorBox(object):
         self.input_definitions = {2: ['song_trigger'], 
                              3: ['response_trigger', 'response_a'],
                              4: ['response_trigger', 'response_b']}
-        self.output_definitions = {'reward_port': 12;
+        self.output_definitions = {'reward_port': 12,
                                     'light_port': 11}
         self.trigger_value = 1
 
@@ -449,6 +449,7 @@ def run_box(controller, box):
     # initialize box
     box.stimuli_dir = controller.stimuli_dir
     box.query_events()
+    box.light_on()
     # send loop
     main_loop(controller, box)
     pass
@@ -485,6 +486,7 @@ def main_loop(controller, box):
         controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
         box.serial_c.close() 
         box.connect_to_serial_port() # reconnect to box
+	box.light_on()
         controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
         
         # renter loop
