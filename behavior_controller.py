@@ -21,9 +21,9 @@ import trial_generators as trial
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
-time_tollerance = 1e-3
+time_tollerance = 500e-3
 debug = True
-beep = True
+beep = False
 ## Settings 
 mode_definitions = loop.iterations.keys()
 
