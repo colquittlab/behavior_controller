@@ -361,10 +361,10 @@ class BehaviorBox(object):
         command = '<o%d=0>'%self.output_definitions['reward_port']
         self.write_command(command)
     def light_on(self):
-        command = '<o%d=1>'%self.output_definitions['light_port']
+        command = '<o%d=0>'%self.output_definitions['light_port']
         self.write_command(command)
     def light_off(self):
-        command = '<o%d=0>'%self.output_definitions['light_port']
+        command = '<o%d=1>'%self.output_definitions['light_port']
         self.write_command(command)
     def pulse_on(self):
         command = '<p=2>'
@@ -515,10 +515,10 @@ def load_and_verify_stimset(stimuli_dir, stim_name):
         for stim in stimset[0,0].stims[0]:
             stim_out = {}
             stim_out['name'] = stim.name[0]
-            stim_out['type'] = stim.type[0]
+           # stim_out['type'] = stim.type[0]
             stim_out['length'] = stim.length[0,0]
-            stim_out['onset'] = stim.onset[0,0]
-            stim_out['offset'] = stim.offset[0,0] 
+           # stim_out['onset'] = stim.onset[0,0]
+           # stim_out['offset'] = stim.offset[0,0] 
 
             # verify that song file exists and deduce file type
             if os.path.exists(stim_dir + stim_out['name'] + '.sng'):
