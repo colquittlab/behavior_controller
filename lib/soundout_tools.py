@@ -92,13 +92,14 @@ def list_sound_cards():
 		return ['iLuv_1']
 
 if __name__=="__main__":
-    import sys
-    if len(sys.argv) <= 1:
-        raise(Exception('no args passed'))
-    else:
-    	cardidx = int(sys.argv[1])
-        spath = sys.argv[2]
-    sendwf(cardidx, spath, '.wav',44100,pulse = False)
+	beep()
+    # import sys
+    # if len(sys.argv) <= 1:
+    #     raise(Exception('no args passed'))
+    # else:
+    # 	cardidx = int(sys.argv[1])
+    #     spath = sys.argv[2]
+    # sendwf(cardidx, spath, '.wav',44100,pulse = False)
 	# # song1 = wave.open('/home/jknowles/test.wav')
 	# # song2 = wave.open('/home/jknowles/test1ch.wav')
 	# # import ipdb; ipdb.set_trace()
