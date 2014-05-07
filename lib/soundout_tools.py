@@ -92,19 +92,13 @@ def list_sound_cards():
 		return ['iLuv_1']
 
 if __name__=="__main__":
-	p1 = sendwf(1, '/home/jknowles/data/doupe_lab/stimuli/exa1_motif_stimset_a/exa1_song_a_1.wav', '.wav', 44100)
-	p2 = sendwf(0, '/home/jknowles/data/doupe_lab/stimuli/exa1_motif_stimset_b_2/exa1_song_b_1.wav', '.wav', 44100)
-	# p3 = sendwf(3, '/home/jknowles/data/doupe_lab/stimuli/exa1_motif_stimset_a/exa1_song_a_1.wav', '.wav', 44100)
-	p4 = sendwf(4, '/home/jknowles/data/doupe_lab/stimuli/exa1_motif_stimset_a/exa1_song_a_1.wav', '.wav', 44100)
-	p5 = sendwf(5, '/home/jknowles/data/doupe_lab/stimuli/exa1_motif_stimset_a/exa1_song_a_1.wav', '.wav', 44100)
-    
-    # import sys
-    # if len(sys.argv) <= 1:
-    #     raise(Exception('no args passed'))
-    # else:
-    # 	cardidx = int(sys.argv[1])
-    #     spath = sys.argv[2]
-    # sendwf(cardidx, spath, '.wav',44100,pulse = False)
+    import sys
+    if len(sys.argv) <= 1:
+        raise(Exception('no args passed'))
+    else:
+    	cardidx = int(sys.argv[1])
+        spath = sys.argv[2]
+    sendwf(cardidx, spath, '.wav',44100,pulse = False)
 	# # song1 = wave.open('/home/jknowles/test.wav')
 	# # song2 = wave.open('/home/jknowles/test1ch.wav')
 	# # import ipdb; ipdb.set_trace()

@@ -9,6 +9,7 @@ import datetime
 import io
 import json
 import ConfigParser
+import sys
 
 import lib.soundout_tools as so
 import lib.serial_tools as st
@@ -20,6 +21,7 @@ import trial_generators as trial
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
+time_tollerance = 1e-3
 debug = True
 beep = True
 ## Settings 
@@ -53,6 +55,7 @@ class BehaviorController(object):
         self.box_state = 'stop'
 
         # initialize trial variables
+        self.event_count = 0
         self.trial_block = []
         self.current_trial = None
         self.completed_trials = []
@@ -73,6 +76,7 @@ class BehaviorController(object):
         self.params['timeout_period'] = 60; # timeout (punishment) time in seconds
         self.params['max_trial_length'] = 5; # maximum trial time in seconds
         self.params['feed_time'] = 5;
+        self.params['timeout_light'] = True
 
         self.params['withold_response'] = False
 
@@ -171,7 +175,13 @@ class BehaviorController(object):
 
     def save_events_to_log_file(self,  events_since_last):
         fid = self.return_log_fid()
-        fid.writelines(["%s\n"%str(event) for event in events_since_last])
+        for event in events_since_last:
+            self.event_count += 1
+            fid.write("%d:%s\n"%(self.event_count, str(event)))
+            if debug:
+                print "%s: %d %s"%(box.box_name, self.event_count, str(event))
+                if beep:
+                    so.beep()
         fid.flush()
         pass
 
@@ -193,7 +203,8 @@ class BehaviorBox(object):
         self.input_definitions = {2: ['song_trigger'], 
                              3: ['response_trigger', 'response_a'],
                              4: ['response_trigger', 'response_b']}
-        self.output_definitions = {'reward_port': 12}
+        self.output_definitions = {'reward_port': 12,
+                                    'light_port': 11}
         self.trigger_value = 1
 
         self.box_zero_time = 0
@@ -266,7 +277,7 @@ class BehaviorBox(object):
             time.sleep(2)
             return self.sync()
         except:
-            at.build_and_upload(self.serial_port)
+            self.reload_arduino_firmware()
             return self.connect_to_serial_port()
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
@@ -315,19 +326,17 @@ class BehaviorBox(object):
 
     def query_events(self, timeout = 0):
         events_since_last = []
-        self.serial_c.timeout = timeout
-
-
         try:
+            if timeout != self.serial_c.timeout:
+                self.serial_c.timeout = timeout
             # read any new input into the buffer
             self.serial_buffer += self.serial_io.read()
-        except:
-            self.serial_c.close()
-            self.connect_to_serial_port()
-            #self.serial_io.
-            return [(self.current_time, 'bad_read','may_have_missed_serial_events')]
+        except st.SerialException as e:
+            raise e
+
+        # read any exigent events out of the serial buffer and add them to events_since_last
         while True:
-            idx1 = self.serial_buffer.find('<')
+            idx1 = self.serial_buffer.find('<') 
             idx2 = self.serial_buffer[idx1:].find('>')
             if idx1 > -1 and idx2 > -1:
                 idx2 = idx2 + idx1 + 1
@@ -351,7 +360,12 @@ class BehaviorBox(object):
     def feeder_off(self):
         command = '<o%d=0>'%self.output_definitions['reward_port']
         self.write_command(command)
-
+    def light_on(self):
+        command = '<o%d=1>'%self.output_definitions['light_port']
+        self.write_command(command)
+    def light_off(self):
+        command = '<o%d=0>'%self.output_definitions['light_port']
+        self.write_command(command)
     def pulse_on(self):
         command = '<p=2>'
         self.write_command(command)
@@ -435,52 +449,48 @@ def run_box(controller, box):
     # initialize box
     box.stimuli_dir = controller.stimuli_dir
     box.query_events()
-    evcount = 0
+    box.light_on()
     # send loop
-    main_loop(controller, box, evcount)
+    main_loop(controller, box)
     pass
 
-def main_loop(controller, box, evcount):
+def main_loop(controller, box):
     try:
         # generate the first trial and set that as the state
         controller.que_next_trial()
         controller.task_state = 'waiting_for_trial'
         controller.has_run = True
         # enter the loop
+        last_time = box.current_time
         while controller.box_state == 'go':
-            # run loop
-            # raw_input('pause')
-            events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box)
+            current_time = box.current_time
+            loop_time = current_time - last_time
+            last_time = current_time
+            # query serial events since the last itteration
+            events_since_last = box.query_events()
+            # save loop times greator than tollerance as events
+            if loop_time > time_tollerance:
+                events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
+            events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
             # save all the events that have happened in this loop to file
             controller.save_events_to_log_file(events_since_last)
-            
-            if debug:
-                for event in events_since_last:
-                    evcount += 1
-                    print box.box_name, evcount, event
-                    if beep:
-                        so.beep()
-
-
             # if a trial eneded in this loop then store event, save events, generate new trial
             if trial_ended:
                 controller.task_state = 'waiting_for_trial'
                 controller.store_current_trial()
                 controller.que_next_trial()
-
-
-
-        # exit routine:
-
+            # exit routine:
+        pass
     except Exception as e:
-        box.connect_to_serial_port()
-        main_loop(controller, box, evcount)
-    #      raise e
-
-        # get any feeder variables
-
-        # 
-
+        # crash handeling
+        controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
+        box.serial_c.close() 
+        box.connect_to_serial_port() # reconnect to box
+	box.light_on()
+        controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
+        
+        # renter loop
+        main_loop(controller, box)
 
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
@@ -596,3 +606,7 @@ if __name__=='__main__':
         box.select_serial_port()
 
     run_box(controller, box)
+    # import cProfile
+    # command = """run_box(controller,box)"""
+    # cProfile.runctx(command, globals(), locals(), filename = 'test.profile')
+
