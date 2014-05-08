@@ -34,7 +34,7 @@ function trials = read_from_file(fname)
         if isfield(data, 'start_time')
             trial.start_time = data.start_time;
         else
-            trial.starttime = nan;
+            trial.start_time = nan;
         end
         if isfield(data, 'stim_length')
             trial.stim_length = data.stim_length;
@@ -80,8 +80,10 @@ function trials = read_from_file(fname)
         else
             trial.mode = '';
         end
-        trials(count) = trial;
-        
+        try
+            trials(count) = trial;
+        catch
+        end
         file_line = fgets(fid);
     end
     fclose(fid);
