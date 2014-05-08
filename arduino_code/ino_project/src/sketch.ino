@@ -1,7 +1,7 @@
 //#include <SoftwareSerial.h>
 
 // config output pins (digital)
-byte output_pins[2] = {11, 12, 13};
+byte output_pins[3] = {11, 12, 13};
 //byte output_pins[2] = {12, 13};
 // config input pins (digital)
 byte input_pins[2] = {2, 3};

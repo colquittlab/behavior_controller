@@ -203,7 +203,7 @@ class BehaviorBox(object):
         self.input_definitions = {2: ['song_trigger'], 
                              3: ['response_trigger', 'response_a'],
                              4: ['response_trigger', 'response_b']}
-        self.output_definitions = {'reward_port': 12;
+        self.output_definitions = {'reward_port': 12,
                                     'light_port': 11}
         self.trigger_value = 1
 
@@ -361,10 +361,10 @@ class BehaviorBox(object):
         command = '<o%d=0>'%self.output_definitions['reward_port']
         self.write_command(command)
     def light_on(self):
-        command = '<o%d=1>'%self.output_definitions['light_port']
+        command = '<o%d=0>'%self.output_definitions['light_port']
         self.write_command(command)
     def light_off(self):
-        command = '<o%d=0>'%self.output_definitions['light_port']
+        command = '<o%d=1>'%self.output_definitions['light_port']
         self.write_command(command)
     def pulse_on(self):
         command = '<p=2>'
@@ -449,6 +449,7 @@ def run_box(controller, box):
     # initialize box
     box.stimuli_dir = controller.stimuli_dir
     box.query_events()
+    box.light_on()
     # send loop
     main_loop(controller, box)
     pass
@@ -485,6 +486,7 @@ def main_loop(controller, box):
         controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
         box.serial_c.close() 
         box.connect_to_serial_port() # reconnect to box
+	box.light_on()
         controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
         
         # renter loop
@@ -513,10 +515,10 @@ def load_and_verify_stimset(stimuli_dir, stim_name):
         for stim in stimset[0,0].stims[0]:
             stim_out = {}
             stim_out['name'] = stim.name[0]
-            stim_out['type'] = stim.type[0]
+           # stim_out['type'] = stim.type[0]
             stim_out['length'] = stim.length[0,0]
-            stim_out['onset'] = stim.onset[0,0]
-            stim_out['offset'] = stim.offset[0,0] 
+           # stim_out['onset'] = stim.onset[0,0]
+           # stim_out['offset'] = stim.offset[0,0] 
 
             # verify that song file exists and deduce file type
             if os.path.exists(stim_dir + stim_out['name'] + '.sng'):
