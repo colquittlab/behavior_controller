@@ -8,7 +8,6 @@ import scipy as sp
 # the iterations and for each mode are loded into the mode dict
 iterations = {}
 
-
 def discrimination_iteration(controller, box, events_since_last):
     """ This function runs int the main loop in discrimination mode"""
     # record any events that have happened on the box     
@@ -75,7 +74,6 @@ def discrimination_iteration(controller, box, events_since_last):
             if controller.params['timeout_light']:
                 box.light_on()
                 events_since_last.append((box.current_time, 'light_on'))
-
             trial_ended = True
     # if the reward period is over
     elif controller.task_state == 'reward':
@@ -404,3 +402,77 @@ def sequence_singleport_iteration(controller, box, events_since_last):
             trial_ended = True
     return events_since_last, trial_ended
 iterations['sequence_singleport'] = sequence_singleport_iteration
+
+
+class DiscriminationStateMachine(object):
+    def __init__(self):
+        pass
+    def waiting_for_trial(self, box, ):
+        if 'song_trigger' in events_since_last_names:
+            box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
+            controller.current_trial['start_time'] = box.current_time
+            events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+            if controller.params['withold_response'] is True:
+                controller.task_state = 'playing_song'
+            else:
+                controller.task_state = 'waiting_for_response'
+
+    def playing_song(self): 
+    # if song is playing and responses are ignored during song
+        # if there is a response
+        if 'response_trigger' in events_since_last_names:
+            box.stop_sounds()
+            events_since_last.append((box.current_time, 'response_during_song_playback_haulted'))
+            controller.current_trial['result'] = 'haulted'
+            controller.current_trial['response_time'] = box.current_time
+            trial_ended = True
+        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
+            controller.task_state = 'waiting_for_response'
+
+    def waiting_for_response(self):
+        # if a trial is ongoing then look for responses
+        if controller.params['withold_response']:
+            timeout_time = controller.current_trial['start_time'] + controller.current_trial['stim_length'] + controller.params['max_trial_length']
+        else:
+            timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']
+        # if there is a response
+        if 'response_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('response_trigger')
+            controller.current_trial['response_time'] = box.current_time
+            ## if anwser is correct
+            if  events_since_last[event_idx][2] == controller.current_trial['correct_answer']:
+                controller.current_trial['result'] = 'correct'
+                controller.task_state = 'reward'
+                events_since_last.append((box.current_time, 'reward_start'))
+                box.feeder_on()
+            ## otherwise anwser is incorrect 
+            else:
+                controller.current_trial['result'] = 'incorrect'
+                controller.task_state = 'time_out'
+                events_since_last.append((box.current_time, 'timeout_start'))
+                if controller.params['timeout_light']:
+                    box.light_off()
+                    events_since_last.append((box.current_time, 'light_off'))
+        # if no response and trial has timed out
+        elif box.current_time > timeout_time:
+            controller.current_trial['result'] = 'no_response'
+            events_since_last.append((box.current_time, 'no_response'))
+            trial_ended = True
+            # if the box is in time_out state (after an incorrect trial) 
+    def time_out(self):
+        if box.current_time > controller.current_trial['response_time'] + controller.params['timeout_period']:
+            box.light_on()
+            events_since_last.append((box.current_time, 'timout_end'))
+            if controller.params['timeout_light']:
+                box.light_on()
+                events_since_last.append((box.current_time, 'light_on'))
+            trial_ended = True
+        # if the reward period is over
+    def reward(self):
+        if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
+            box.feeder_off()
+            events_since_last.append((box.current_time, 'reward_end'))
+            trial_ended = True
+    return events_since_last, trial_ended
+
+
