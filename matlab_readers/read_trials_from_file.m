@@ -64,6 +64,8 @@ function trials = read_from_file(fname)
                 trial.result_idx = 0;
             elseif strcmp(trial.result,'no_response')
                 trial.result_idx = -1;
+            else
+                trial.result_idx = -2;
             end
         else
             trial.result = '';
