@@ -64,13 +64,13 @@ class BehaviorController(object):
         self.stimsets = []
         self.stimset_names = []
 
-        self.data_dir = default_data_dir
-        self.stimuli_dir = default_stimuli_dir
-
         # initialize the task parameters
         self.params = {}
         self.params['mode'] = None
         self.expected_responses = ['response_a', 'response_b']
+
+        self.params['data_dir'] = default_data_dir
+        self.params['stimuli_dir'] = default_stimuli_dir
 
         # initialize the task parameters 
         self.params['timeout_period'] = 60; # timeout (punishment) time in seconds
@@ -98,7 +98,7 @@ class BehaviorController(object):
             return self.base_filename
         basename = '%s_%04d%02d%02d' %(self.birdname,self.initial_date.year,self.initial_date.month,self.initial_date.day) 
         idx = 0
-        while os.path.exists('%s%s_%d.log'%(controller.data_dir, basename,idx)):
+        while os.path.exists('%s%s_%d.log'%(self.params['data_dir'], basename,idx)):
             idx += 1
         name = '%s_%d'%(basename,idx)
         self.base_filename = name
@@ -124,7 +124,7 @@ class BehaviorController(object):
             raise Exception('Error: less than 2 stimset names set')
         self.stimsets = []
         for name in self.stimset_names:
-            self.stimsets.append(load_and_verify_stimset(self.stimuli_dir, name))
+            self.stimsets.append(load_and_verify_stimset(self.params['stimuli_dir'], name))
         pass
 
     def list_stimuli(self, stimset_idxs = None):
@@ -152,16 +152,16 @@ class BehaviorController(object):
 
     def return_log_fid(self):
         if self.log_fid == None:
-            self.log_fid = open('%s%s.log'% (self.data_dir,self.base_filename), 'w')
+            self.log_fid = open('%s%s.log'% (self.params['data_dir'],self.base_filename), 'w')
         return self.log_fid
 
     def return_events_fid(self):
         if self.trial_fid == None:
-            self.trial_fid = open('%s%s.trial'% (self.data_dir,self.base_filename), 'w')
+            self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'w')
         return self.trial_fid
 
     def save_config_file(self):
-        config_fname = '%s%s.config'% (self.data_dir,self.base_filename)
+        config_fname = '%s%s.config'% (self.params['data_dir'],self.base_filename)
         if self.config_file_contents is not None:
             config_fid = open(config_fname, 'w')
             config_fid.write(self.config_file_contents)
@@ -447,7 +447,7 @@ def run_box(controller, box):
         for key in controller.params:
             print key + ': ' + str(controller.params[key])
     # initialize box
-    box.stimuli_dir = controller.stimuli_dir
+    box.stimuli_dir = controller.params['stimuli_dir']
     box.query_events()
     box.light_on()
     # send loop
