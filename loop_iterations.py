@@ -473,6 +473,6 @@ class DiscriminationStateMachine(object):
             box.feeder_off()
             events_since_last.append((box.current_time, 'reward_end'))
             trial_ended = True
-    return events_since_last, trial_ended
+    # return events_since_last, trial_ended
 
 
