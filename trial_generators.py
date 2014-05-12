@@ -25,6 +25,8 @@ def standard_generator(controller, trials_per_block=1):
 generators['standard'] = standard_generator
 
 
+
+
 def probes_generator(controller, trials_per_block=100):
 	trial_block = []
 	for k in range(0, trials_per_block):
