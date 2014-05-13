@@ -208,6 +208,8 @@ class BehaviorBox(object):
         self.trigger_value = 1
 
         self.box_zero_time = 0
+        self.last_sync_time = 0
+        self.sync_period = 60*10
         self.serial_port = None
         self.serial_device_id = None
         self.serial_c = None
@@ -391,6 +393,7 @@ class BehaviorBox(object):
                 sync_time = float(event[0])
         if sync_time != None:
             self.box_zero_time = send_time - float(sync_time)/1000
+            self.last_sync_time = self.current_time;
             return True
         else:
             raise(Exception('Sync not successful'))
@@ -479,6 +482,10 @@ def main_loop(controller, box):
                 controller.task_state = 'waiting_for_trial'
                 controller.store_current_trial()
                 controller.que_next_trial()
+
+            # other housecleaning:
+            if current_time - box.last_sync_time > box.sync_period:
+                box.sync()
             # exit routine:
         pass
     except Exception as e:
