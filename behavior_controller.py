@@ -430,6 +430,12 @@ class BehaviorBox(object):
                 worker[0].join()
         pass
 
+    def is_playing(self):
+        is_playing = False
+        for worker in self.so_workers:
+            print worker[1].value
+
+
     def reload_arduino_firmware(self):
         at.build_and_upload(self.serial_port)
 

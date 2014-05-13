@@ -4,7 +4,7 @@
 byte output_pins[3] = {11, 12, 13};
 //byte output_pins[2] = {12, 13};
 // config input pins (digital)
-byte input_pins[2] = {2, 3};
+byte input_pins[3] = {2, 3, 4};
 bool current_values[sizeof(input_pins)];
 long last_input_change[sizeof(input_pins)];
 long bounce_time = 100;
