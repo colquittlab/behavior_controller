@@ -13,7 +13,7 @@ String local_buffer;
 byte pulse_mode = 0; // specify whether arduino should worry about pulse  0==off; 1==on if trigger is active; 2==on regardless of trigger
 bool pulse_on = 0;     // specifies whether pulse is running at any time
 byte pulse_trigger_pin = 9;  //
-byte pulse_output_pin = 13;   // pulse output pin
+byte pulse_output_pin = 10;   // pulse output pin
 long pulse_period = 100;      // pulse period in ms (1000/f)
 long pulse_width = 50;        // pulse width in ms
 
