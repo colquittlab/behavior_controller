@@ -85,6 +85,9 @@ class BehaviorController(object):
 
         # trial
         self.params['probe_occurance'] = 20
+        self.params['laser_occurance'] = 50
+        self.params['pulse_width'] = 50
+        self.params['pulse_period'] = 100
 
 
 
@@ -221,6 +224,7 @@ class BehaviorBox(object):
         self.box_name = None
 
         self.so_workers = []
+        self.pulse_state = 0
 
     def ready_to_run(self):
         if not self.serial_status:
@@ -371,13 +375,20 @@ class BehaviorBox(object):
     def pulse_on(self):
         command = '<p=2>'
         self.write_command(command)
-
+        self.pulse_state = 2
     def pulse_off(self):
         command = '<p=0>'
         self.write_command(command)
-
+        self.pulse_state = 0
     def pulse_on_trigger(self):
         command = '<p=1>'
+        self.write_command(command)
+        self.pulse_state = 1
+    def set_pulse_period(self, period):
+        command = '<l=%d>' % int(period)
+        self.write_command(command)
+    def set_pulse_width(self, width):
+        command = '<w=%d>' % int(width)
         self.write_command(command)
 
     def sync(self):
@@ -433,7 +444,9 @@ class BehaviorBox(object):
     def is_playing(self):
         is_playing = False
         for worker in self.so_workers:
-            print worker[1].value
+            if worker[1].value == 0:
+                is_playing = True
+        return is_playing
 
 
     def reload_arduino_firmware(self):
@@ -467,7 +480,7 @@ def main_loop(controller, box):
     try:
         # generate the first trial and set that as the state
         controller.que_next_trial()
-        controller.task_state = 'waiting_for_trial'
+        controller.task_state = 'prepare_trial'
         controller.has_run = True
         # enter the loop
         last_time = box.current_time
@@ -485,7 +498,7 @@ def main_loop(controller, box):
             controller.save_events_to_log_file(events_since_last)
             # if a trial eneded in this loop then store event, save events, generate new trial
             if trial_ended:
-                controller.task_state = 'waiting_for_trial'
+                controller.task_state = 'prepare_trial'
                 controller.store_current_trial()
                 controller.que_next_trial()
 
@@ -499,7 +512,7 @@ def main_loop(controller, box):
         controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
         box.serial_c.close() 
         box.connect_to_serial_port() # reconnect to box
-	box.light_on()
+        box.light_on()
         controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
         
         # renter loop
@@ -604,7 +617,7 @@ if __name__=='__main__':
             controller.params[param] = config.getboolean('run_params', param)
 
     # set (overwrite) float parameters
-    for param in ['feed_time', 'max_trial_length', 'timeout_period']:
+    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
@@ -617,7 +630,6 @@ if __name__=='__main__':
     else:
         box.select_sound_card()
         box.select_serial_port()
-
     run_box(controller, box)
     # import cProfile
     # command = """run_box(controller,box)"""

@@ -44,7 +44,7 @@ def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, pulse_type
 		while data and stopsig.value==0:
 			if pulse:
 				# x = np.fromstring(data, np.int16)
-				# x = np.expand_dims(x,axis=1)
+				# x = np.expand_bebbdims(x,axis=1)
 				# x = np.concatenate((x, 0*np.ones(x.shape)), axis = 1)
 				# data = x.flatten().tostring()
 				pcm.write(data)
@@ -68,6 +68,7 @@ def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, pulse_type
 			pcm.write(data.tostring())
 			data = np.fromfile(fid, dtype = np.dtype('d'), count = frame_size)
 	pcm.close()
+	stopsig.value = 1
 	pass
 
 def sendwf(cardidx, wavefile, filetype, rate, pulse = False, pulse_type = "high"):
