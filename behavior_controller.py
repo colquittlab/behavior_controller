@@ -181,7 +181,11 @@ class BehaviorController(object):
     def save_events_to_log_file(self,  events_since_last):
         fid = self.return_log_fid()
         for event in events_since_last:
+            # tally counts from events
             self.event_count += 1
+            if event[1] == "reward_start":
+                self.reward_count += 1
+
             fid.write("%d:%s\n"%(self.event_count, str(event)))
             if debug:
                 #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
