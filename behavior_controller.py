@@ -189,7 +189,7 @@ class BehaviorController(object):
             fid.write("%d:%s\n"%(self.event_count, str(event)))
             if debug:
                 #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
-                print "%s events: %d rewards: %d %s"%(box.box_name, self.event_count, self.reward_count, str(event)) #GK
+                print "%s events: %d, trials: %d, rewards: %d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, str(event)) #GK
                 if beep:
                     so.beep()
         fid.flush()
