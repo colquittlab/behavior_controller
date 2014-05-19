@@ -219,7 +219,7 @@ class BehaviorBox(object):
 
         self.box_zero_time = 0
         self.last_sync_time = 0
-        self.sync_period = 60*10
+        self.sync_period = 60*30
         self.serial_port = None
         self.serial_device_id = None
         self.serial_c = None
@@ -500,6 +500,7 @@ def main_loop(controller, box):
             # save loop times greator than tollerance as events
             if loop_time > time_tollerance:
                 events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
+            # run throgh loop itteration state machine
             events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
             # save all the events that have happened in this loop to file
             controller.save_events_to_log_file(events_since_last)
@@ -512,6 +513,8 @@ def main_loop(controller, box):
             # other housecleaning:
             if current_time - box.last_sync_time > box.sync_period:
                 box.sync()
+                last_time = box.current_time
+
             # exit routine:
         pass
     except Exception as e:
