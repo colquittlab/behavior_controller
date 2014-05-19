@@ -54,6 +54,8 @@ def discrimination_iteration(controller, box, events_since_last):
             if  events_since_last[event_idx][2] == controller.current_trial['correct_answer']:
                 controller.current_trial['result'] = 'correct'
                 controller.task_state = 'reward'
+                controller.reward_count += 1 # GK
+                
                 events_since_last.append((box.current_time, 'reward_start'))
                 box.feeder_on()
             ## otherwise anwser is incorrect 
@@ -135,6 +137,7 @@ def discrimination_singleport_iteration(controller, box, events_since_last):
                 controller.current_trial['result'] = 'correct'
                 controller.task_state = 'reward'
                 events_since_last.append((box.current_time, 'reward_start'))
+                controller.reward_count += 1 # GK
                 box.feeder_on()
             ## otherwise anwser is incorrect 
             else:
@@ -297,6 +300,7 @@ def song_plus_food_iteration(controller, box, events_since_last):
             controller.task_state = 'reward'
             events_since_last.append((box.current_time, 'reward_start'))
             controller.current_trial['response_time'] = box.current_time
+            controller.reward_count += 1 # GK
             box.feeder_on()
     # if the reward period is over
     elif controller.task_state == 'reward':
@@ -349,6 +353,7 @@ def sequence_iteration(controller, box, events_since_last):
             controller.current_trial['result'] = 'correct'
             controller.task_state = 'reward'
             events_since_last.append((box.current_time, 'reward_start'))
+            controller.reward_count += 1 # GK
             box.feeder_on()
             ## otherwise anwser is incorrect 
         # if no response and trial has timed out
@@ -408,6 +413,7 @@ def sequence_singleport_iteration(controller, box, events_since_last):
             controller.current_trial['result'] = 'correct'
             controller.task_state = 'reward'
             events_since_last.append((box.current_time, 'reward_start'))
+            controller.reward_count += 1 # GK
             box.feeder_on()
             ## otherwise anwser is incorrect 
         # if no response and trial has timed out
@@ -553,6 +559,7 @@ def discrimination_laser_iteration(controller, box, events_since_last):
                 controller.task_state = 'reward'
                 events_since_last.append((box.current_time, 'reward_start'))
                 box.feeder_on()
+                controller.reward_count += 1
             ## otherwise anwser is incorrect 
             else:
                 controller.current_trial['result'] = 'incorrect'
