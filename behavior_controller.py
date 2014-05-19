@@ -60,6 +60,8 @@ class BehaviorController(object):
         self.current_trial = None
         self.completed_trials = []
 
+        self.reward_count = 0 # GK
+
         # initialize the stimset holders
         self.stimsets = []
         self.stimset_names = []
@@ -182,7 +184,8 @@ class BehaviorController(object):
             self.event_count += 1
             fid.write("%d:%s\n"%(self.event_count, str(event)))
             if debug:
-                print "%s: %d %s"%(box.box_name, self.event_count, str(event))
+                #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
+                print "%s events: %d rewards: %d %s"%(box.box_name, self.event_count, self.reward_count, str(event)) #GK
                 if beep:
                     so.beep()
         fid.flush()
