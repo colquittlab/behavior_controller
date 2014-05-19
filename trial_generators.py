@@ -25,6 +25,30 @@ def standard_generator(controller, trials_per_block=1):
 generators['standard'] = standard_generator
 
 
+def gk_without_replacement_generator(controller, trials_per_block=None):
+	"""Generate a block of trials the size  of all stimuli and sample without replacement"""
+	trial_block = []
+	stim_list = controller.list_stimuli()
+	trials_per_block = len(stim_list)
+	idx_list = random.sample(xrange(0, len(stim_list)), len(stim_list))
+	#print idx_list
+
+	for k in range(0, trials_per_block):
+		trial = {}
+		#stim_list = controller.list_stimuli()
+		# pick the stimset and the stimulus
+		idx = idx_list[k]
+
+		trial['stimulus'] = stim_list[idx][2]
+		trial['stimset_idx'] = stim_list[idx][0]
+		trial['stimset'] = controller.stimset_names[trial['stimset_idx']]
+		trial['correct_answer'] = controller.expected_responses[stim_list[idx][0]]
+		trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
+		trial_block.append(trial)
+	return trial_block
+generators['gk_without_replacement'] = gk_without_replacement_generator
+
+
 
 def standard_laser_generator(controller, trials_per_block=1):
 	"""Generates trial by trial with no pruning"""
