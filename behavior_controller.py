@@ -274,10 +274,8 @@ class BehaviorBox(object):
         try:
             self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
             self.serial_c.setDTR(False)
-            time.sleep(1)
             self.serial_c.flushInput()
             self.serial_c.flushOutput()
-            time.sleep(1)
             self.serial_c.setDTR(True)
             self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
             time.sleep(2)
