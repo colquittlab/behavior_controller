@@ -21,7 +21,7 @@ import trial_generators as trial
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
-time_tollerance = 500e-3
+time_tollerance = 1e-1
 debug = True
 beep = False
 ## Settings 
@@ -79,6 +79,7 @@ class BehaviorController(object):
         self.params['max_trial_length'] = 5; # maximum trial time in seconds
         self.params['feed_time'] = 5;
         self.params['timeout_light'] = True
+        self.params['minimum_response_time'] = 0.6
 
         self.params['withold_response'] = False
 

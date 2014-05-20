@@ -24,21 +24,25 @@ def discrimination_iteration(controller, box, events_since_last):
             box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
-            if controller.params['withold_response'] is True:
-                controller.task_state = 'playing_song'
-            else:
-                controller.task_state = 'waiting_for_response'
+            controller.task_state = 'playing_song'
+
     # if song is playing and responses are ignored during song
     elif controller.task_state == 'playing_song':
-        # if there is a response
-        if 'response_trigger' in events_since_last_names:
-            box.stop_sounds()
-            events_since_last.append((box.current_time, 'response_during_song_playback_haulted'))
-            controller.current_trial['result'] = 'haulted'
-            controller.current_trial['response_time'] = box.current_time
-            trial_ended = True
-        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
-            controller.task_state = 'waiting_for_response'
+        if controller.params['withold_response']:
+            # if there is a response
+            if 'response_trigger' in events_since_last_names:
+                box.stop_sounds()
+                events_since_last.append((box.current_time, 'response_during_song_playback_haulted'))
+                controller.current_trial['result'] = 'haulted'
+                controller.current_trial['response_time'] = box.current_time
+                trial_ended = True
+            if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
+                controller.task_state = 'waiting_for_response'
+        else:
+            if box.current_time > controller.current_trial['start_time'] + controller.params['minimum_response_time']:
+                controller.task_state = 'waiting_for_response'
+
+
     # if a trial is ongoing then look for responses
     elif controller.task_state == 'waiting_for_response':
         if controller.params['withold_response']:
