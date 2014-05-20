@@ -86,8 +86,8 @@ class BehaviorController(object):
         self.params['trial_generator'] = 'standard'
 
         # trial
-        self.params['probe_occurance'] = 20
-        self.params['laser_occurance'] = 50
+        self.params['probe_occurance'] = 0
+        self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
 
@@ -473,7 +473,7 @@ def run_box(controller, box):
 
     # print out params
     if debug:
-        for key in controller.params:
+        for key in sorted(controller.params.keys()):
             print key + ': ' + str(controller.params[key])
     # initialize box
     box.stimuli_dir = controller.params['stimuli_dir']
