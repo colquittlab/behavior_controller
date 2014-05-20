@@ -60,6 +60,8 @@ class BehaviorController(object):
         self.current_trial = None
         self.completed_trials = []
 
+        self.reward_count = 0 # GK
+
         # initialize the stimset holders
         self.stimsets = []
         self.stimset_names = []
@@ -84,8 +86,8 @@ class BehaviorController(object):
         self.params['trial_generator'] = 'standard'
 
         # trial
-        self.params['probe_occurance'] = 20
-        self.params['laser_occurance'] = 50
+        self.params['probe_occurance'] = 0
+        self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
 
@@ -179,10 +181,15 @@ class BehaviorController(object):
     def save_events_to_log_file(self,  events_since_last):
         fid = self.return_log_fid()
         for event in events_since_last:
+            # tally counts from events
             self.event_count += 1
+            if event[1] == "reward_start":
+                self.reward_count += 1
+
             fid.write("%d:%s\n"%(self.event_count, str(event)))
             if debug:
-                print "%s: %d %s"%(box.box_name, self.event_count, str(event))
+                #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
+                print "%s events: %d, trials: %d, rewards: %d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, str(event)) #GK
                 if beep:
                     so.beep()
         fid.flush()
@@ -212,7 +219,7 @@ class BehaviorBox(object):
 
         self.box_zero_time = 0
         self.last_sync_time = 0
-        self.sync_period = 60*10
+        self.sync_period = 60*30
         self.serial_port = None
         self.serial_device_id = None
         self.serial_c = None
@@ -464,7 +471,7 @@ def run_box(controller, box):
 
     # print out params
     if debug:
-        for key in controller.params:
+        for key in sorted(controller.params.keys()):
             print key + ': ' + str(controller.params[key])
     # initialize box
     box.stimuli_dir = controller.params['stimuli_dir']
@@ -491,6 +498,7 @@ def main_loop(controller, box):
             # save loop times greator than tollerance as events
             if loop_time > time_tollerance:
                 events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
+            # run throgh loop itteration state machine
             events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
             # save all the events that have happened in this loop to file
             controller.save_events_to_log_file(events_since_last)
@@ -503,6 +511,8 @@ def main_loop(controller, box):
             # other housecleaning:
             if current_time - box.last_sync_time > box.sync_period:
                 box.sync()
+                last_time = box.current_time
+
             # exit routine:
         pass
     except Exception as e:
