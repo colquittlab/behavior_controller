@@ -60,7 +60,9 @@ class BehaviorController(object):
         self.current_trial = None
         self.completed_trials = []
 
-        self.reward_count = 0 # GK
+        # initialize tallies 
+        self.reward_count = 0 
+        self.timeout_count = 0
 
         # initialize the stimset holders
         self.stimsets = []
@@ -186,11 +188,13 @@ class BehaviorController(object):
             self.event_count += 1
             if event[1] == "reward_start":
                 self.reward_count += 1
+            if event[1] == "timeout_start":
+                self.timeout_count += 1
 
             fid.write("%d:%s\n"%(self.event_count, str(event)))
             if debug:
                 #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
-                print "%s events: %d, trials: %d, rewards: %d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, str(event)) #GK
+                print "%s events:%d, trials:%d, rewards:%d, tos:%d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, self.timeout_count, str(event)) #GK
                 if beep:
                     so.beep()
         fid.flush()
