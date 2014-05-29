@@ -89,6 +89,7 @@ class BehaviorController(object):
         self.params['trial_generator'] = 'standard'
 
         # trial
+        self.params['stimset_occurance'] = None
         self.params['probe_occurance'] = 0
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
@@ -634,7 +635,10 @@ if __name__=='__main__':
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
-
+    # set (overwrite) list parameters
+    for param in ['stimset_occurance']:
+        if config.has_option('run_params', param):
+                controller.params[param] = json.loads(config.get('run_params',param))
 
     controller.load_stimsets()
     box = BehaviorBox()
