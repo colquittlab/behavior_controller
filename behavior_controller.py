@@ -208,6 +208,42 @@ class BehaviorController(object):
         fid.flush()
         pass
 
+    def calculate_performance_statistics(self, n_trials_back = None):
+        stats = {}
+        stats['by_stimset'] = []
+        if n_trials_back != None:
+            if len(self.completed_trials) > n_trials_back:
+                relevant_trials = self.completed_trials[len(self.completed_trials) - n_trials_back:]
+            else:
+                relevant_trials = self.completed_trials
+        else:
+            relevant_trials = self.completed_trials
+        # initialize recording dictionaries
+        for stimset_idx in range(0, len(self.stimsets)):
+            stats['by_stimset'].append({})
+            stats['by_stimset'][stimset_idx]['n_correct'] = 0
+            stats['by_stimset'][stimset_idx]['n_incorrect'] = 0
+            stats['by_stimset'][stimset_idx]['n_haulted'] = 0
+            stats['by_stimset'][stimset_idx]['n_noresponse'] = 0
+        # count events in trials
+        for trial in relevant_trials:
+            if trial['result'] == 'correct':
+                stats['by_stimset'][trial['stimset_idx']]['n_correct'] += 1
+            elif trial['result'] == 'incorrect':
+                stats['by_stimset'][trial['stimset_idx']]['n_incorrect'] += 1
+            elif trial['result'] == 'haulted':
+                stats['by_stimset'][trial['stimset_idx']]['n_haulted'] += 1
+            elif trial['result'] == 'no_response':
+                stats['by_stimset'][trial['stimset_idx']]['n_noresponse'] += 1
+        # calculate statisics for each stimset
+        for stimset_idx in range(0, len(self.stimsets)):
+            stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
+        return stats    
+        
+        
+
+
+
 class BehaviorBox(object):
     """this object holds the present state of the behavior Arduino
     and contains the methods to change the pins of the box"""

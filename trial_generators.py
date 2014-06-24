@@ -75,6 +75,57 @@ def gk_without_replacement_generator(controller, trials_per_block=None):
 generators['gk_without_replacement'] = gk_without_replacement_generator
 
 
+def gk_without_replacement_adaptive_generator(controller, trials_per_block=None):
+	"""Generate a block of trials the size  of all stimuli and sample without replacement"""
+	trial_block = []
+	if sum(controller.params['stimset_occurance']) != 1:
+		raise Exception('Stimset Occurance does not sum to 1')	
+	
+	if len(controller.completed_trials) > 25:
+		stats = controller.calculate_performance_statistics(n_trials_back = 25)
+		if (stats['by_stimset'][0]['n_correct']+stats['by_stimset'][0]['n_incorrect']) >= 10 and (stats['by_stimset'][1]['n_correct']+stats['by_stimset'][1]['n_incorrect']) >= 10:
+			if stats['by_stimset'][1]['p_correct'] + stats['by_stimset'][0]['p_correct'] == 0:
+				Aocc = controller.params['stimset_occurance'][0]
+				Bocc = controller.params['stimset_occurance'][1]
+			else:
+				Aocc = stats['by_stimset'][1]['p_correct']/(stats['by_stimset'][1]['p_correct'] + stats['by_stimset'][0]['p_correct'])
+				Bocc = 1 - Aocc
+	else:
+		Aocc = controller.params['stimset_occurance'][0]
+		Bocc = controller.params['stimset_occurance'][1]
+		
+	A_stimuli = controller.list_stimuli(stimset_idxs = [0])
+	B_stimuli = controller.list_stimuli(stimset_idxs = [1])
+	if Aocc < 0.5:				
+		random.shuffle(A_stimuli)
+		nsubtract = int(round((len(A_stimuli) - Aocc*(len(A_stimuli)+len(B_stimuli))) / (1-Aocc) ))
+		A_stimuli = A_stimuli[:len(A_stimuli)-nsubtract]
+	if Bocc < 0.5:				
+		random.shuffle(B_stimuli)
+		nsubtract = int(round((len(B_stimuli) - Bocc*(len(A_stimuli)+len(B_stimuli))) / (1-Bocc) ))
+		B_stimuli = B_stimuli[:len(B_stimuli)-nsubtract]
+		
+	stim_list = []
+	stim_list.extend(A_stimuli)
+	stim_list.extend(B_stimuli)
+	trials_per_block = len(stim_list)
+	idx_list = random.sample(xrange(0, len(stim_list)), len(stim_list))
+	for k in range(0, trials_per_block):
+		trial = {}
+		#stim_list = controller.list_stimuli()
+		# pick the stimset and the stimulus
+		idx = idx_list[k]
+
+		trial['stimulus'] = stim_list[idx][2]
+		trial['stimset_idx'] = stim_list[idx][0]
+		trial['stimset'] = controller.stimset_names[trial['stimset_idx']]
+		trial['correct_answer'] = controller.expected_responses[stim_list[idx][0]]
+		trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
+		trial_block.append(trial)
+	return trial_block
+generators['gk_without_replacement_adaptive'] = gk_without_replacement_adaptive_generator
+
+
 
 def standard_laser_generator(controller, trials_per_block=1):
 	"""Generates trial by trial with no pruning"""
