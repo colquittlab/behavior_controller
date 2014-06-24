@@ -265,6 +265,8 @@ class BehaviorBox(object):
             self.select_sound_card(box_data[2])
             self.box_name = box_data[0]
             print 'Connected to %s' % box_data[0]
+            print box_data[1] # GK
+            print box_data[2] # GK
         else:
             raise(Exception('%s not connected' % box))
 
