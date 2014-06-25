@@ -33,8 +33,8 @@ mode_definitions = loop.iterations.keys()
 
 # output_definitions = {'reward_port': 12}
 # trigger_value = 1
-default_stimuli_dir = '/home/jknowles/data/doupe_lab/stimuli/'
-default_data_dir = '/home/jknowles/data/doupe_lab/behavior/'
+default_stimuli_dir = '/home/doupelab/data/stimuli/'
+default_data_dir = '/home/doupelab/data/behavior/'
 
 class BehaviorController(object):
     def __init__(self):
@@ -89,7 +89,8 @@ class BehaviorController(object):
         self.params['trial_generator'] = 'standard'
 
         # trial
-        self.params['stimset_occurance'] = None
+        #self.params['stimset_occurance'] = None #GK
+        self.params['stimset_occurance'] = [0.5, 0.5] #GK
         self.params['probe_occurance'] = 0
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
@@ -97,7 +98,7 @@ class BehaviorController(object):
 
 
 
-    def set_bird_name(self,birdname):
+    def set_bird_name(self, birdname):
         if not self.has_run:
             self.birdname = birdname
         self.generate_file_name()
