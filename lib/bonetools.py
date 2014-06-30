@@ -50,7 +50,3 @@ while True:
 		count += 1
 		print time.time(), count, 'falling'
 
-
-call("node -pe 'require('bonescript').pinMode('P8_11',b.input,7,'pullup')")
-
-call('node -pe "require('bonescript').pinMode('P8_11',b.input,7,'pullup')'')
