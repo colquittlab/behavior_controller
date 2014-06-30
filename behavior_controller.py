@@ -89,8 +89,7 @@ class BehaviorController(object):
         self.params['trial_generator'] = 'standard'
 
         # trial
-        #self.params['stimset_occurance'] = None #GK
-        self.params['stimset_occurance'] = [0.5, 0.5] #GK
+        self.params['stimset_occurance'] = None
         self.params['probe_occurance'] = 0
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
@@ -238,7 +237,10 @@ class BehaviorController(object):
                 stats['by_stimset'][trial['stimset_idx']]['n_noresponse'] += 1
         # calculate statisics for each stimset
         for stimset_idx in range(0, len(self.stimsets)):
-            stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
+            if (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect']) == 0:
+                stats['by_stimset'][stimset_idx]['p_correct'] = 0
+            else:
+                stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
         return stats    
         
         
@@ -302,8 +304,8 @@ class BehaviorBox(object):
             self.select_sound_card(box_data[2])
             self.box_name = box_data[0]
             print 'Connected to %s' % box_data[0]
-            print box_data[1] # GK
-            print box_data[2] # GK
+            #print box_data[1] # GK
+            #print box_data[2] # GK
         else:
             raise(Exception('%s not connected' % box))
 
@@ -482,6 +484,10 @@ class BehaviorBox(object):
     def beep(self):
         self.play_sound('sounds/beep.wav')
         pass
+        
+    def beep_warning(self):
+    	self.play_sound('sounds/buzzer.wav')
+    	pass        
 
     def stop_sounds(self):
         while len(self.so_workers)>0:

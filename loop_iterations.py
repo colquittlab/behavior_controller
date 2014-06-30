@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+import time
 
 
 ## iterations and generators
@@ -303,12 +304,15 @@ def song_plus_food_iteration(controller, box, events_since_last):
         if 'response_trigger' in events_since_last_names:
             controller.task_state = 'reward'
             events_since_last.append((box.current_time, 'reward_start'))
-            controller.current_trial['response_time'] = box.current_time
-             
+            controller.current_trial['response_time'] = box.current_time             
             box.feeder_on()
     # if the reward period is over
     elif controller.task_state == 'reward':
         if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
+            # GK
+            if box.box_name == 'box_3':
+                box.beep_warning()
+                time.sleep(1)
             box.feeder_off()
             events_since_last.append((box.current_time, 'reward_end'))
             trial_ended = True
