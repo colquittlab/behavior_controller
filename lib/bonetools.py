@@ -2,6 +2,14 @@ import Adafruit_BBIO.GPIO as GPIO
 import Adafruit_BBIO.PWM as PWM
 import time
 import execjs
+from subprocess import call
+
+
+## set all inputs to pullup by default using bonescript
+return_code = call(""" node -pe "require('bonescript').getPlatform().bonescript" """)
+import ipdb; ipdb.set_trace()
+
+
 GPIO.cleanup()
 #PWM.start("P9_14", 50, 1)
 GPIO.setup("P8_11", GPIO.IN, GPIO.PUD_UP, 1)
