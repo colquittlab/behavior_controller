@@ -13,7 +13,7 @@ GPIO.add_event_detect("P9_12", GPIO.FALLING)
 
 bonescript_api = js.compile("""
 	var b = require('bonescrpt')
-	pinMode = b.pinMode
+	b.getPinMode('P8_11')
 	""")
 
 
