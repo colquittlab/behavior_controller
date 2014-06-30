@@ -13,7 +13,7 @@ GPIO.add_event_detect("P9_12", GPIO.FALLING)
 
 bs = js.compile("""
 	var b = require('bonescrpt');
-	function pinMode(pin, pud) {}
+	function pinMode(pin, pud) {
 		return b.pinMode(pin, b.INPUT, 7, pud);
 		}
 	""")
