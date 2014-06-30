@@ -26,7 +26,7 @@ generators['standard'] = standard_generator
 
 
 def stimset_occurance_generator(controller, trials_per_block=1):
-	"""Generates trial by trial with no pruning"""
+	"""Generates trial by trial with no pruning but allows you to set stimet occurance"""
 	trial_block = []
 	if sum(controller.params['stimset_occurance']) != 1:
 		raise Exception('Stimset Occurance does not sum to 1')
@@ -52,7 +52,7 @@ def stimset_occurance_generator(controller, trials_per_block=1):
 generators['stimset_occurance'] = stimset_occurance_generator
 
 def gk_without_replacement_generator(controller, trials_per_block=None):
-	"""Generate a block of trials the size  of all stimuli and sample without replacement"""
+	"""Generate a block of trials the size of all stimuli and sample without replacement"""
 	trial_block = []
 	stim_list = controller.list_stimuli()
 	trials_per_block = len(stim_list)
@@ -76,7 +76,8 @@ generators['gk_without_replacement'] = gk_without_replacement_generator
 
 
 def gk_without_replacement_adaptive_generator(controller, trials_per_block=None):
-	"""Generate a block of trials the size  of all stimuli and sample without replacement"""
+	"""Generate a block of trials the size  of all stimuli and sample without replacement.
+	Then prune the block based on gk's (kn's) adaptive algorithm"""
 	trial_block = []
 	if sum(controller.params['stimset_occurance']) != 1:
 		raise Exception('Stimset Occurance does not sum to 1')	
