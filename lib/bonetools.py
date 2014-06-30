@@ -5,6 +5,7 @@ import time
 GPIO.cleanup()
 #PWM.start("P9_14", 50, 1)
 GPIO.setup("P8_11", GPIO.IN)
+GPIO.setup("P9_12", GPIO.IN)
 GPIO.add_event_detect("P8_11", GPIO.FALLING)#,bouncetime = 1)
 GPIO.add_event_detect("P9_12", GPIO.FALLING)
 
