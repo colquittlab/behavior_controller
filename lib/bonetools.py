@@ -10,9 +10,10 @@ from subprocess import call
 import ipdb; ipdb.set_trace()
 
 
-script = """
-b = require('bonescript');
-b.pinmode("P8_11", b.OUTPUT, 7, 'pullup')"""
+pin = "P8_11"
+pud = 'pullup'
+script = "b = require('bonescript'); b.pinmode('%s', b.OUTPUT, 7, '%s')" % (pin, pud)
+
 
 import ipdb; ipdb.set_trace()
 
