@@ -11,7 +11,10 @@ GPIO.setup("P9_12", GPIO.IN, GPIO.PUD_UP, 1)
 GPIO.add_event_detect("P8_11", GPIO.FALLING)#,bouncetime = 1)
 GPIO.add_event_detect("P9_12", GPIO.FALLING)
 
-bonescript_api = js.eval("var b = require('bonescrpt')")
+bs = js.compile("""
+	var b = require('bonescrpt')
+	b.getPinMode('P8_11')
+	""")
 
 
 # GPIO.add_event_dectect("P9_10", GPIO.FALLINGPIO.add_event_detect("P8_11", GPIO.FALLING, bouncetime = 100000)G,bouncetime = 100)
