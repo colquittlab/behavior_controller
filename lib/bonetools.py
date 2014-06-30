@@ -12,8 +12,10 @@ GPIO.add_event_detect("P8_11", GPIO.FALLING)#,bouncetime = 1)
 GPIO.add_event_detect("P9_12", GPIO.FALLING)
 
 bs = js.compile("""
-	var b = require('bonescrpt')
-	a = b.getPinMode('P8_11')
+	var b = require('bonescrpt');
+	function pinMode(pin, pud) {}
+		b.pinmode(pin, b.INPUT, 7, pud);
+		}
 	""")
 
 
