@@ -6,8 +6,16 @@ from subprocess import call
 
 
 ## set all inputs to pullup by default using bonescript
-return_code = call(""" node -pe "require('bonescript').getPlatform().bonescript" """)
+
 import ipdb; ipdb.set_trace()
+
+
+script = """
+b = require('bonescript');
+b.pinmode("P8_11", b.OUTPUT, 7, 'pullup')"""
+
+import ipdb; ipdb.set_trace()
+
 
 
 GPIO.cleanup()
@@ -41,3 +49,8 @@ while True:
 	if GPIO.event_detected("P9_12"):
 		count += 1
 		print time.time(), count, 'falling'
+
+
+call("node -pe 'require('bonescript').pinMode('P8_11',b.input,7,'pullup')")
+
+call('node -pe "require('bonescript').pinMode('P8_11',b.input,7,'pullup')'')
