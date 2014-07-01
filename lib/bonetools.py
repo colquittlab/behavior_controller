@@ -6,17 +6,16 @@ from subprocess import call
 
 
 ## set all inputs to pullup by default using bonescript
-input_pins = ['P8_11']
+input_pins = ['P8_11', 'P8_12']
 for pin in input_pins:
 	# pin = "P8_11"
 	pud = "pullup"
 	mux = 7
 	script = "var b = require('bonescript'); b.pinMode('%s',b.INPUT,%i,'%s');" % (pin, mux, pud)
-	command = 'node -e "%s"' % script
+	command = ["node", "-e", script]
 	call(command)
 
 
-import ipdb; ipdb.set_trace()
 
 GPIO.cleanup()
 #PWM.start("P9_14", 50, 1)
@@ -40,7 +39,6 @@ node.eval("require('bonescript').getPlatform().bonescript")
 
 
 # GPIO.add_event_dectect("P9_10", GPIO.FALLINGPIO.add_event_detect("P8_11", GPIO.FALLING, bouncetime = 100000)G,bouncetime = 100)
-import ipdb; ipdb.set_trace()
 count = 0
 while True:
 	if GPIO.event_detected("P8_11"):
