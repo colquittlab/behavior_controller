@@ -5,7 +5,7 @@ import execjs
 from subprocess import call
 
 
-## set all inputs to pullup by default using bonescript
+## set all inputs to pullup by default using bonescript (this sucks)
 input_pins = ['P8_11', 'P8_12']
 for pin in input_pins:
 	# pin = "P8_11"
@@ -18,27 +18,14 @@ for pin in input_pins:
 
 
 GPIO.cleanup()
-#PWM.start("P9_14", 50, 1)
-GPIO.setup("P8_11", GPIO.IN, GPIO.PUD_UP, 1)
-GPIO.setup("P8_12", GPIO.IN, GPIO.PUD_UP, 1)
-GPIO.setup("P8_13", GPIO.OUT)
-GPIO.setup("P9_12", GPIO.IN, GPIO.PUD_UP, 1)
-GPIO.add_event_detect("P8_11", GPIO.FALLING)#,bouncetime = 1)
-GPIO.add_event_detect("P9_12", GPIO.FALLING)
-
-node = execjs.get('Node')
-node.eval("require('bonescript').getPlatform().bonescript")
-# bs = js.compile("""
-# 	var b = require('bonescrpt');
-# 	function pinMode(pin, pud) {
-# 		return b.pinMode(pin, b.INPUT, 7, pud);
-# 		}
-# 	""")
-
-# bs.call('pinMode', 'P8_11', 'pullup')
+for pin in input_pins:
+	GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP, 1)
+	GPIO.add_event_detect("P8_11", GPIO.FALLING, bouncetime = 100000)
 
 
-# GPIO.add_event_dectect("P9_10", GPIO.FALLINGPIO.add_event_detect("P8_11", GPIO.FALLING, bouncetime = 100000)G,bouncetime = 100)
+
+
+
 count = 0
 while True:
 	if GPIO.event_detected("P8_11"):
