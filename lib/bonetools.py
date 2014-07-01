@@ -15,17 +15,18 @@ for pin in input_pins:
 	command = ["node", "-e", script]
 	call(command)
 
-
+event_buffer = []
 count = 0
-def event_callback():
-	print time.time()
+def event_callback(arg):
+	event_buffer.append((time.time(), arg))
+
 	
 
 
 GPIO.cleanup()
 for pin in input_pins:
 	GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP, 1)
-	GPIO.add_event_detect(pin, GPIO.FALLING, callback = event_callback, bouncetime = 1)
+	GPIO.add_event_detect(pin, GPIO.FALLING, callback = event_callback, bouncetime = 100)
 
 
 
@@ -35,8 +36,9 @@ for pin in input_pins:
 
 print "running"
 # count = [0]*len(input_pins)
-# while True:
-# 	for k, pin in enumerate(input_pins):
-# 		if GPIO.event_detected(pin):
-# 			count[k] += 1
-# 			print time.time(), pin, count[k], 'falling'
+#while True:
+#	pass
+ #	for k, pin in enumerate(input_pins):
+ #		if GPIO.event_detected(pin):
+ #			count[k] += 1
+ #			print time.time(), pin, count[k], 'falling'
