@@ -261,8 +261,8 @@ class BehaviorBox(object):
         self.trigger_value = 1
 
         self.box_zero_time = 0
-        self.last_sync_time = 0
-        self.sync_period = 60*30
+        # self.last_sync_time = 0
+        # self.sync_period = 60*30
         self.serial_port = None
         self.serial_device_id = None
         self.serial_c = None
@@ -539,9 +539,9 @@ def main_loop(controller, box):
                 controller.que_next_trial()
 
             # other housecleaning:
-            if current_time - box.last_sync_time > box.sync_period:
-                box.sync()
-                last_time = box.current_time
+            # if current_time - box.last_sync_time > box.sync_period:
+            #     box.sync()
+            #     last_time = box.current_time
 
             # exit routine:
         pass
