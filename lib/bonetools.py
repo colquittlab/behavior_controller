@@ -25,8 +25,8 @@ def event_callback():
 GPIO.cleanup()
 for pin in input_pins:
 	GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP, 1)
-	GPIO.add_event_detect(pin, GPIO.FALLING, callback = event_callback, bouncetime = int(1e6bounce))
-	
+	GPIO.add_event_detect(pin, GPIO.FALLING, callback = event_callback, bouncetime = 1)
+
 
 
 
