@@ -6,13 +6,14 @@ from subprocess import call
 
 
 ## set all inputs to pullup by default using bonescript
-
-
-
-pin = "P8_11"
-pud = "pullup"
-script = "var b = require('bonescript'); b.pinMode('%s',b.INPUT,7,'%s');" % (pin, pud)
-command = "node -e \"%s\"" % script
+input_pins = ['P8_11']
+for pin in input_pins:
+	# pin = "P8_11"
+	pud = "pullup"
+	mux = 7
+	script = "var b = require('bonescript'); b.pinMode('%s',b.INPUT,%i,'%s');" % (pin, mux, pud)
+	command = 'node -e "%s"' % script
+	call(command)
 
 
 import ipdb; ipdb.set_trace()
