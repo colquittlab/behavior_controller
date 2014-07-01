@@ -385,7 +385,7 @@ class BehaviorBox(object):
         while len(bt.event_buffer) > 0:
             event = bt.event_buffer.pop()
             event = [event[0]].extend(box.input_definitions[event[1]])
-
+            events_since_last.append(event)
         return events_since_last
 
 
@@ -548,7 +548,7 @@ def main_loop(controller, box):
     except Exception as e:
         # crash handeling
         controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
-        box.serial_c.close() 
+        # box.serial_c.close() 
         box.connect_to_serial_port() # reconnect to box
         box.light_on()
         controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
