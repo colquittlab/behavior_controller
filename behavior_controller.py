@@ -384,8 +384,9 @@ class BehaviorBox(object):
         events_since_last = []
         while len(bt.event_buffer) > 0:
             event = bt.event_buffer.pop()
-            event = [event[0]].extend(box.input_definitions[event[1]])
-            events_since_last.append(event)
+            event_out = [event[0]]
+            event_out.extend(box.input_definitions[event[1]])
+            events_since_last.append(event_out)
         return events_since_last
 
 
