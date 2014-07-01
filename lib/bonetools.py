@@ -6,7 +6,7 @@ from subprocess import call
 
 
 ## set all inputs to pullup by default using bonescript (this sucks)
-input_pins = ['P8_11', 'P8_12', 'P8_14']
+input_pins = ['P8_11', 'P8_12']
 for pin in input_pins:
 	# pin = "P8_11"
 	pud = "pullup"

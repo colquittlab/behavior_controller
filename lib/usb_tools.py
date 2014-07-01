@@ -22,7 +22,7 @@ def return_list_of_boxes():
     #                 sc_num = sc.split('_')[1]
     #                 if sc_num == ad_num:
     #                     boxes_present.append(('box_' + ad_num, ad, sc))
-    boxes_present = ('box_1', None, 1)
+    boxes_present = [('box_1', None, 1)]
     return boxes_present                
 
 # def return_list_of_usb_serial_ports():

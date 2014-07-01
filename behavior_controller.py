@@ -17,7 +17,7 @@ import lib.usb_tools as ut
 import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
-import bonetools as bt
+import lib.bonetools as bt
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
@@ -295,7 +295,7 @@ class BehaviorBox(object):
 
     def select_box(self, box):
         list_of_boxes = ut.return_list_of_boxes()
-        if box in [b[0] for b in list_of_boxes]:
+	if box in [b[0] for b in list_of_boxes]:
             idx = [b[0] for b in list_of_boxes].index(box)
             box_data = list_of_boxes[idx]
             # self.select_serial_port(box_data[1])
