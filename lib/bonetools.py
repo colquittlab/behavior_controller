@@ -7,16 +7,15 @@ from subprocess import call
 
 ## set all inputs to pullup by default using bonescript
 
-import ipdb; ipdb.set_trace()
 
 
 pin = "P8_11"
 pud = 'pullup'
-script = "b = require('bonescript'); b.pinmode('%s', b.OUTPUT, 7, '%s')" % (pin, pud)
-full_call = 'node -pe  "%s"' % script
+script = "var b = require('bonescript'); b.pinMode(%s,b.INPUT,7,%s);" % (pin, pud)
+command = "node -e \"%s\"" % script
+
+
 import ipdb; ipdb.set_trace()
-
-
 
 GPIO.cleanup()
 #PWM.start("P9_14", 50, 1)
