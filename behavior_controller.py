@@ -12,12 +12,12 @@ import ConfigParser
 import sys
 
 import lib.soundout_tools as so
-import lib.serial_tools as st
+# import lib.serial_tools as st
 import lib.usb_tools as ut
 import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
-
+import bonetools as bt
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
@@ -253,9 +253,9 @@ class BehaviorBox(object):
 
         self.stimuli_dir = None
 
-        self.input_definitions = {2: ['song_trigger'], 
-                             3: ['response_trigger', 'response_a'],
-                             4: ['response_trigger', 'response_b']}
+        self.input_definitions = {'P8_11': ['song_trigger'], 
+                             'P8_12': ['response_trigger', 'response_a'],
+                             'P8_13': ['response_trigger', 'response_b']}
         self.output_definitions = {'reward_port': 12,
                                     'light_port': 11}
         self.trigger_value = 1
@@ -298,43 +298,43 @@ class BehaviorBox(object):
         if box in [b[0] for b in list_of_boxes]:
             idx = [b[0] for b in list_of_boxes].index(box)
             box_data = list_of_boxes[idx]
-            self.select_serial_port(box_data[1])
+            # self.select_serial_port(box_data[1])
             self.select_sound_card(box_data[2])
             self.box_name = box_data[0]
-            print 'Connected to %s' % box_data[0]
-            print box_data[1] # GK
-            print box_data[2] # GK
-        else:
-            raise(Exception('%s not connected' % box))
+        #     print 'Connected to %s' % box_data[0]
+        #     print box_data[1] # GK
+        #     print box_data[2] # GK
+        # else:
+        #     raise(Exception('%s not connected' % box))
 
-    def select_serial_port(self, port = None):
-        list_of_ports = st.return_list_of_usb_serial_ports()
-        if port == None:
-            print 'Select desired port from list below:'
-            for k,port in enumerate(list_of_ports):
-                print '[%d] port: %s serial# %s' % (k,port[0], port[1])
-            # x = input('Enter Number: ')
-            x = 0
-            self.serial_port = list_of_ports[x][0]
-            self.serial_device_id = list_of_ports[x][1]
-        else:
-            self.serial_port = port;
-        result = self.connect_to_serial_port()
-        return result
+    # def select_serial_port(self, port = None):
+    #     list_of_ports = st.return_list_of_usb_serial_ports()
+    #     if port == None:
+    #         print 'Select desired port from list below:'
+    #         for k,port in enumerate(list_of_ports):
+    #             print '[%d] port: %s serial# %s' % (k,port[0], port[1])
+    #         # x = input('Enter Number: ')
+    #         x = 0
+    #         self.serial_port = list_of_ports[x][0]
+    #         self.serial_device_id = list_of_ports[x][1]
+    #     else:
+    #         self.serial_port = port;
+    #     result = self.connect_to_serial_port()
+    #     return result
 
-    def connect_to_serial_port(self):
-        try:
-            self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
-            self.serial_c.setDTR(False)
-            self.serial_c.flushInput()
-            self.serial_c.flushOutput()
-            self.serial_c.setDTR(True)
-            self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
-            time.sleep(2)
-            return self.sync()
-        except:
-            self.reload_arduino_firmware()
-            return self.connect_to_serial_port()
+    # def connect_to_serial_port(self):
+    #     try:
+    #         self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
+    #         self.serial_c.setDTR(False)
+    #         self.serial_c.flushInput()
+    #         self.serial_c.flushOutput()
+    #         self.serial_c.setDTR(True)
+    #         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
+    #         time.sleep(2)
+    #         return self.sync()
+    #     except:
+    #         self.reload_arduino_firmware()
+    #         return self.connect_to_serial_port()
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
 
@@ -382,27 +382,11 @@ class BehaviorBox(object):
 
     def query_events(self, timeout = 0):
         events_since_last = []
-        try:
-            if timeout != self.serial_c.timeout:
-                self.serial_c.timeout = timeout
-            # read any new input into the buffer
-            self.serial_buffer += self.serial_io.read()
-        except st.SerialException as e:
-            raise e
+        while len(bt.event_buffer) > 0:
+            event = bt.event_buffer.pop()
+            event = [event[0]].extend(box.input_definitions[event[1]])
 
-        # read any exigent events out of the serial buffer and add them to events_since_last
-        while True:
-            idx1 = self.serial_buffer.find('<') 
-            idx2 = self.serial_buffer[idx1:].find('>')
-            if idx1 > -1 and idx2 > -1:
-                idx2 = idx2 + idx1 + 1
-                line = self.serial_buffer[idx1:idx2]
-                event = self.parse_event_from_line(line)
-                if event != None:
-                    events_since_last.append(event)
-                self.serial_buffer = self.serial_buffer[idx2:]
-            else: 
-                return events_since_last
+        return events_since_last
 
 
     def write_command(self, command):
