@@ -512,7 +512,8 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
-    try:
+    # try:
+    if 1:
         # generate the first trial and set that as the state
         controller.que_next_trial()
         controller.task_state = 'prepare_trial'
@@ -545,16 +546,16 @@ def main_loop(controller, box):
 
             # exit routine:
         pass
-    except Exception as e:
-        # crash handeling
-        controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
-        # box.serial_c.close() 
-        # box.connect_to_serial_port() # reconnect to box
-        box.light_on()
-        controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
+    # except Exception as e:
+    #     # crash handeling
+    #     controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
+    #     # box.serial_c.close() 
+    #     # box.connect_to_serial_port() # reconnect to box
+    #     box.light_on()
+    #     controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
         
-        # renter loop
-        main_loop(controller, box)
+    #     # renter loop
+    #     main_loop(controller, box)
 
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
