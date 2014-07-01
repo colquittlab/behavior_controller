@@ -355,30 +355,30 @@ class BehaviorBox(object):
     #     self.sc_object = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK, mode=alsaaudio.PCM_NORMAL, card='hw:%d,0'%cardidx)
     #     self.sc_object.setrate(44100)
 
-    def parse_event_from_line(self,line):
-        line = line.strip('\n')
-        line = line.strip('\r')
+    # def parse_event_from_line(self,line):
+    #     line = line.strip('\n')
+    #     line = line.strip('\r')
 
-        idx1 = line.find('<') 
-        idx2 = line.find('>')
-        if idx1 > -1 and idx2 > -1:
-        # if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
-            line_parts = line[idx1+1:idx2].split('-')
-            if len(line_parts) is 3:
-                box_time = float(line_parts[0])
-                box_time = float(box_time)/1000 + self.box_zero_time
-                port = int(line_parts[1]) 
-                state = int(line_parts[2])
-            elif line_parts[1].lower() == "sync":
-                return (line_parts[0],line_parts[1],self.current_time)
-            else: return None
-        else: return None
-        if port in self.input_definitions.keys():
-            if state == self.trigger_value:
-                event = [box_time] + self.input_definitions[port]
-            else: return None
-        else: return None
-        return tuple(event)
+    #     idx1 = line.find('<') 
+    #     idx2 = line.find('>')
+    #     if idx1 > -1 and idx2 > -1:
+    #     # if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
+    #         line_parts = line[idx1+1:idx2].split('-')
+    #         if len(line_parts) is 3:
+    #             box_time = float(line_parts[0])
+    #             box_time = float(box_time)/1000 + self.box_zero_time
+    #             port = int(line_parts[1]) 
+    #             state = int(line_parts[2])
+    #         elif line_parts[1].lower() == "sync":
+    #             return (line_parts[0],line_parts[1],self.current_time)
+    #         else: return None
+    #     else: return None
+    #     if port in self.input_definitions.keys():
+    #         if state == self.trigger_value:
+    #             event = [box_time] + self.input_definitions[port]
+    #         else: return None
+    #     else: return None
+    #     return tuple(event)
 
     def query_events(self, timeout = 0):
         events_since_last = []
@@ -390,9 +390,10 @@ class BehaviorBox(object):
 
 
     def write_command(self, command):
-        self.serial_io.write(unicode(command))
-        self.serial_io.flush()
-
+        # self.serial_io.write(unicode(command))
+        # self.serial_io.flush()
+        print command
+        pass
     def feeder_on(self):
         command = '<o%d=1>'%self.output_definitions['reward_port']
         self.write_command(command)
@@ -425,24 +426,24 @@ class BehaviorBox(object):
         command = '<w=%d>' % int(width)
         self.write_command(command)
 
-    def sync(self):
+    # def sync(self):
 
-        send_time = self.current_time
-        self.write_command('<sync>')
-        events = []
-        count = 0
-        events = self.query_events(timeout = 2)
-        sync_time = None
-        for event in events:
-            if len(event) > 1 and event[1]=='sync':
-                sync_time = float(event[0])
-        if sync_time != None:
-            self.box_zero_time = send_time - float(sync_time)/1000
-            self.last_sync_time = self.current_time;
-            return True
-        else:
-            raise(Exception('Sync not successful'))
-        return True
+    #     send_time = self.current_time
+    #     self.write_command('<sync>')
+    #     events = []
+    #     count = 0
+    #     events = self.query_events(timeout = 2)
+    #     sync_time = None
+    #     for event in events:
+    #         if len(event) > 1 and event[1]=='sync':
+    #             sync_time = float(event[0])
+    #     if sync_time != None:
+    #         self.box_zero_time = send_time - float(sync_time)/1000
+    #         self.last_sync_time = self.current_time;
+    #         return True
+    #     else:
+    #         raise(Exception('Sync not successful'))
+    #     return True
 
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
