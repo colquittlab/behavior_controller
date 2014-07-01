@@ -12,7 +12,7 @@ from subprocess import call
 pin = "P8_11"
 pud = "pullup"
 script = "var b = require('bonescript'); b.pinMode('%s',b.INPUT,7,'%s');" % (pin, pud)
-command = "node -e \"%s\"" % script
+command = ["node", "-e", script]
 
 
 import ipdb; ipdb.set_trace()
