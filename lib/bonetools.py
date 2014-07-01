@@ -13,7 +13,7 @@ import ipdb; ipdb.set_trace()
 pin = "P8_11"
 pud = 'pullup'
 script = "b = require('bonescript'); b.pinmode('%s', b.OUTPUT, 7, '%s')" % (pin, pud)
-full_call = "node -pe ""%s""" % script
+full_call = 'node -pe  "%s"' % script
 import ipdb; ipdb.set_trace()
 
 
