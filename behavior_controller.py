@@ -13,12 +13,13 @@ import sys
 
 import lib.soundout_tools as so
 # import lib.serial_tools as st
+# import lib.arduino_tools as at
 import lib.usb_tools as ut
-import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
 import lib.bone_tools as bt
 import lib.pin_definitions as pindef
+
 # from pyfirmata import Arduino, util
 time_tollerance = 50e-2
 debug = True
