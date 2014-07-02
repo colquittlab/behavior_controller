@@ -301,7 +301,6 @@ class BehaviorBox(object):
             # self.select_serial_port(box_data[1])
             self.select_sound_card(box_data[2])
             self.box_name = box_data[0]
-            import ipdb; ipdb.set_trace()
         #     print 'Connected to %s' % box_data[0]
         #     print box_data[1] # GK
         #     print box_data[2] # GK
@@ -384,7 +383,7 @@ class BehaviorBox(object):
     def query_events(self, timeout = 0):
         events_since_last = []
         while len(bt.event_buffer) > 0:
-            event = bt.event_buffer.pop()
+            event = bt.event_buffer.pop(0)
             event_out = [event[0]]
             event_out.extend(box.input_definitions[event[1]])
             events_since_last.append(event_out)
@@ -520,12 +519,17 @@ def main_loop(controller, box):
         controller.que_next_trial()
         controller.task_state = 'prepare_trial'
         controller.has_run = True
+	loop_times = []
         # enter the loop
         last_time = box.current_time
         while controller.box_state == 'go':
             current_time = box.current_time
             loop_time = current_time - last_time
             last_time = current_time
+            loop_times.append(loop_time)
+            if len(loop_times)>10000:
+                print np.mean(loop_times)
+		loop_times = []
             # query serial events since the last itteration
             events_since_last = box.query_events()
             # save loop times greator than tollerance as events
