@@ -15,27 +15,24 @@ for pin in input_pins:
 	command = ["node", "-e", script]
 	call(command)
 
+## Create event buffer and create callback function
 event_buffer = []
 count = 0
 def event_callback(arg):
 	event_buffer.append((time.time(), arg))
 
-	
 
-
+## activate all inpuyt GPIOS
 GPIO.cleanup()
 for pin in input_pins:
 	GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP, 1)
 	GPIO.add_event_detect(pin, GPIO.FALLING, callback = event_callback, bouncetime = 250)
+## activate all output GPIOS
 
 
+## activate all PWMS
+PWM.cleanup()
 
-
-
-
-
-
-print "running"
 # count = [0]*len(input_pins)
 #while True:
 #	pass
