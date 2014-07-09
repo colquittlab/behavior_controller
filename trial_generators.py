@@ -82,30 +82,38 @@ def gk_without_replacement_adaptive_generator(controller, trials_per_block=None)
 	if sum(controller.params['stimset_occurance']) != 1:
 		raise Exception('Stimset Occurance does not sum to 1')	
 	
+	if len(controller.completed_trials) == 0:
+		if len(controller.params['stimset_occurance']) > 0:
+			controller.Aocc = controller.params['stimset_occurance'][0]
+			controller.Bocc = controller.params['stimset_occurance'][1]
+			print 'Aocc=',controller.Aocc,' Bocc=',controller.Bocc
+
 	if len(controller.completed_trials) > 25:
 		stats = controller.calculate_performance_statistics(n_trials_back = 25)
+		print 'A_n_correct+n_incorrect=',stats['by_stimset'][0]['n_correct']+stats['by_stimset'][0]['n_incorrect']
+		print 'B_n_correct+n_incorrect=',stats['by_stimset'][1]['n_correct']+stats['by_stimset'][1]['n_incorrect']
 		if (stats['by_stimset'][0]['n_correct']+stats['by_stimset'][0]['n_incorrect']) >= 10 and (stats['by_stimset'][1]['n_correct']+stats['by_stimset'][1]['n_incorrect']) >= 10:
-			if stats['by_stimset'][1]['p_correct'] + stats['by_stimset'][0]['p_correct'] == 0:
-				Aocc = controller.params['stimset_occurance'][0]
-				Bocc = controller.params['stimset_occurance'][1]
-			else:
-				Aocc = stats['by_stimset'][1]['p_correct']/(stats['by_stimset'][1]['p_correct'] + stats['by_stimset'][0]['p_correct'])
-				Bocc = 1 - Aocc
-	else:
-		Aocc = controller.params['stimset_occurance'][0]
-		Bocc = controller.params['stimset_occurance'][1]
-		
+			if stats['by_stimset'][1]['p_correct'] + stats['by_stimset'][0]['p_correct'] != 0:
+				controller.Aocc = stats['by_stimset'][1]['p_correct']/(stats['by_stimset'][1]['p_correct'] + stats['by_stimset'][0]['p_correct'])
+				controller.Bocc = 1 - controller.Aocc
+				print 'Aocc=',controller.Aocc,' Bocc=',controller.Bocc
+	
+	print 'len(controller.completed_trials)=',len(controller.completed_trials)
+	print 'Aocc=',controller.Aocc,' Bocc=',controller.Bocc
+
 	A_stimuli = controller.list_stimuli(stimset_idxs = [0])
 	B_stimuli = controller.list_stimuli(stimset_idxs = [1])
-	if Aocc < 0.5:				
+	if controller.Aocc < 0.5:				
 		random.shuffle(A_stimuli)
-		nsubtract = int(round((len(A_stimuli) - Aocc*(len(A_stimuli)+len(B_stimuli))) / (1-Aocc) ))
+		nsubtract = int(round((len(A_stimuli) - controller.Aocc*(len(A_stimuli)+len(B_stimuli))) / (1-controller.Aocc) ))
 		A_stimuli = A_stimuli[:len(A_stimuli)-nsubtract]
-	if Bocc < 0.5:				
+	if controller.Bocc < 0.5:				
 		random.shuffle(B_stimuli)
-		nsubtract = int(round((len(B_stimuli) - Bocc*(len(A_stimuli)+len(B_stimuli))) / (1-Bocc) ))
+		nsubtract = int(round((len(B_stimuli) - controller.Bocc*(len(A_stimuli)+len(B_stimuli))) / (1-controller.Bocc) ))
 		B_stimuli = B_stimuli[:len(B_stimuli)-nsubtract]
 		
+	print 'nAstim=',len(A_stimuli),' nBstim=',len(B_stimuli) 
+
 	stim_list = []
 	stim_list.extend(A_stimuli)
 	stim_list.extend(B_stimuli)

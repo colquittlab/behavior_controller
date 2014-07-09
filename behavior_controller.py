@@ -84,6 +84,7 @@ class BehaviorController(object):
         self.params['minimum_response_time'] = 0.6
 
         self.params['withold_response'] = False
+        self.params['warn_feeder_off'] = False
 
         # initializethe trial variables
         self.params['trial_generator'] = 'standard'
@@ -94,6 +95,10 @@ class BehaviorController(object):
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
+        
+        # stimset occurance
+        self.Aocc = 0.5
+        self.Bocc = 1 - self.Aocc
 
 
 
@@ -243,8 +248,6 @@ class BehaviorController(object):
                 stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
         return stats    
         
-        
-
 
 
 class BehaviorBox(object):
@@ -415,9 +418,13 @@ class BehaviorBox(object):
         command = '<o%d=1>'%self.output_definitions['reward_port']
         self.write_command(command)
 
-    def feeder_off(self):
+    def feeder_off(self, do_warning=False):
+    	if do_warning:
+    		self.beep_warning()
+    		time.sleep(1)
         command = '<o%d=0>'%self.output_definitions['reward_port']
         self.write_command(command)
+        
     def light_on(self):
         command = '<o%d=0>'%self.output_definitions['light_port']
         self.write_command(command)
@@ -486,7 +493,7 @@ class BehaviorBox(object):
         pass
         
     def beep_warning(self):
-    	self.play_sound('sounds/buzzer.wav')
+    	self.play_sound('sounds/buzzer_quite.wav')
     	pass        
 
     def stop_sounds(self):
@@ -672,6 +679,10 @@ if __name__=='__main__':
 
     # set (overwrite) boolean parameters
     for param in ['withold_response']:
+        if config.has_option('run_params', param):
+            controller.params[param] = config.getboolean('run_params', param)
+            
+    for param in ['warn_feeder_off']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getboolean('run_params', param)
 
