@@ -106,11 +106,17 @@ def gk_without_replacement_adaptive_generator(controller, trials_per_block=None)
 	if controller.Aocc < 0.5:				
 		random.shuffle(A_stimuli)
 		nsubtract = int(round((len(A_stimuli) - controller.Aocc*(len(A_stimuli)+len(B_stimuli))) / (1-controller.Aocc) ))
-		A_stimuli = A_stimuli[:len(A_stimuli)-nsubtract]
+		if nsubtract == len(A_stimuli):
+			A_stimuli = A_stimuli[0]
+		else:
+			A_stimuli = A_stimuli[:len(A_stimuli)-nsubtract]
 	if controller.Bocc < 0.5:				
 		random.shuffle(B_stimuli)
 		nsubtract = int(round((len(B_stimuli) - controller.Bocc*(len(A_stimuli)+len(B_stimuli))) / (1-controller.Bocc) ))
-		B_stimuli = B_stimuli[:len(B_stimuli)-nsubtract]
+		if nsubtract == len(B_stimuli):
+			B_stimuli = B_stimuli[0]
+		else:
+			B_stimuli = B_stimuli[:len(B_stimuli)-nsubtract]
 		
 	print 'nAstim=',len(A_stimuli),' nBstim=',len(B_stimuli) 
 
