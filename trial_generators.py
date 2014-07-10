@@ -103,18 +103,18 @@ def gk_without_replacement_adaptive_generator(controller, trials_per_block=None)
 
 	A_stimuli = controller.list_stimuli(stimset_idxs = [0])
 	B_stimuli = controller.list_stimuli(stimset_idxs = [1])
-	if controller.Aocc < 0.5:				
+	if controller.Aocc < 0.5:
 		random.shuffle(A_stimuli)
-		nsubtract = int(round((len(A_stimuli) - controller.Aocc*(len(A_stimuli)+len(B_stimuli))) / (1-controller.Aocc) ))
+		nsubtract = int(round((len(A_stimuli)-controller.Aocc*(len(A_stimuli)+len(B_stimuli))) / (1-controller.Aocc) ))
 		if nsubtract == len(A_stimuli):
-			A_stimuli = A_stimuli[0]
+			A_stimuli = [A_stimuli[0]]
 		else:
 			A_stimuli = A_stimuli[:len(A_stimuli)-nsubtract]
 	if controller.Bocc < 0.5:				
 		random.shuffle(B_stimuli)
-		nsubtract = int(round((len(B_stimuli) - controller.Bocc*(len(A_stimuli)+len(B_stimuli))) / (1-controller.Bocc) ))
+		nsubtract = int(round((len(B_stimuli)-controller.Bocc*(len(A_stimuli)+len(B_stimuli))) / (1-controller.Bocc) ))
 		if nsubtract == len(B_stimuli):
-			B_stimuli = B_stimuli[0]
+			B_stimuli = [B_stimuli[0]]
 		else:
 			B_stimuli = B_stimuli[:len(B_stimuli)-nsubtract]
 		
