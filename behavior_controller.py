@@ -84,17 +84,21 @@ class BehaviorController(object):
         self.params['minimum_response_time'] = 0.6
 
         self.params['withold_response'] = False
+        self.params['warn_feeder_off'] = False
 
         # initializethe trial variables
         self.params['trial_generator'] = 'standard'
 
         # trial
-        #self.params['stimset_occurance'] = None #GK
-        self.params['stimset_occurance'] = [0.5, 0.5] #GK
+        self.params['stimset_occurance'] = None
         self.params['probe_occurance'] = 0
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
+        
+        # stimset occurance
+        self.Aocc = 0.5
+        self.Bocc = 1 - self.Aocc
 
 
 
@@ -238,11 +242,12 @@ class BehaviorController(object):
                 stats['by_stimset'][trial['stimset_idx']]['n_noresponse'] += 1
         # calculate statisics for each stimset
         for stimset_idx in range(0, len(self.stimsets)):
-            stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
+            if (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect']) == 0:
+                stats['by_stimset'][stimset_idx]['p_correct'] = 0
+            else:
+                stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
         return stats    
         
-        
-
 
 
 class BehaviorBox(object):
@@ -301,40 +306,40 @@ class BehaviorBox(object):
             # self.select_serial_port(box_data[1])
             self.select_sound_card(box_data[2])
             self.box_name = box_data[0]
-        #     print 'Connected to %s' % box_data[0]
-        #     print box_data[1] # GK
-        #     print box_data[2] # GK
-        # else:
-        #     raise(Exception('%s not connected' % box))
+            print 'Connected to %s' % box_data[0]
+            #print box_data[1] # GK
+            #print box_data[2] # GK
+        else:
+            raise(Exception('%s not connected' % box))
 
-    # def select_serial_port(self, port = None):
-    #     list_of_ports = st.return_list_of_usb_serial_ports()
-    #     if port == None:
-    #         print 'Select desired port from list below:'
-    #         for k,port in enumerate(list_of_ports):
-    #             print '[%d] port: %s serial# %s' % (k,port[0], port[1])
-    #         # x = input('Enter Number: ')
-    #         x = 0
-    #         self.serial_port = list_of_ports[x][0]
-    #         self.serial_device_id = list_of_ports[x][1]
-    #     else:
-    #         self.serial_port = port;
-    #     result = self.connect_to_serial_port()
-    #     return result
+    def select_serial_port(self, port = None):
+        list_of_ports = st.return_list_of_usb_serial_ports()
+        if port == None:
+            print 'Select desired port from list below:'
+            for k,port in enumerate(list_of_ports):
+                print '[%d] port: %s serial# %s' % (k,port[0], port[1])
+            # x = input('Enter Number: ')
+            x = 0
+            self.serial_port = list_of_ports[x][0]
+            self.serial_device_id = list_of_ports[x][1]
+        else:
+            self.serial_port = port;
+        result = self.connect_to_serial_port()
+        return result
 
-    # def connect_to_serial_port(self):
-    #     try:
-    #         self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
-    #         self.serial_c.setDTR(False)
-    #         self.serial_c.flushInput()
-    #         self.serial_c.flushOutput()
-    #         self.serial_c.setDTR(True)
-    #         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
-    #         time.sleep(2)
-    #         return self.sync()
-    #     except:
-    #         self.reload_arduino_firmware()
-    #         return self.connect_to_serial_port()
+    def connect_to_serial_port(self):
+        try:
+            self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
+            self.serial_c.setDTR(False)
+            self.serial_c.flushInput()
+            self.serial_c.flushOutput()
+            self.serial_c.setDTR(True)
+            self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
+            time.sleep(2)
+            return self.sync()
+        except:
+            self.reload_arduino_firmware()
+            return self.connect_to_serial_port()
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
 
@@ -399,9 +404,13 @@ class BehaviorBox(object):
         command = '<o%d=1>'%self.output_definitions['reward_port']
         self.write_command(command)
 
-    def feeder_off(self):
+    def feeder_off(self, do_warning=False):
+    	if do_warning:
+    		self.beep_warning()
+    		time.sleep(1)
         command = '<o%d=0>'%self.output_definitions['reward_port']
         self.write_command(command)
+        
     def light_on(self):
         command = '<o%d=0>'%self.output_definitions['light_port']
         self.write_command(command)
@@ -468,6 +477,10 @@ class BehaviorBox(object):
     def beep(self):
         self.play_sound('sounds/beep.wav')
         pass
+        
+    def beep_warning(self):
+    	self.play_sound('sounds/buzzer_quite.wav')
+    	pass        
 
     def stop_sounds(self):
         while len(self.so_workers)>0:
@@ -658,6 +671,10 @@ if __name__=='__main__':
 
     # set (overwrite) boolean parameters
     for param in ['withold_response']:
+        if config.has_option('run_params', param):
+            controller.params[param] = config.getboolean('run_params', param)
+            
+    for param in ['warn_feeder_off']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getboolean('run_params', param)
 
