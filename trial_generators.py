@@ -88,11 +88,11 @@ def gk_without_replacement_adaptive_generator(controller, trials_per_block=None)
 			controller.Bocc = controller.params['stimset_occurance'][1]
 			print 'Aocc=',controller.Aocc,' Bocc=',controller.Bocc
 
-	if len(controller.completed_trials) > 25:
-		stats = controller.calculate_performance_statistics(n_trials_back = 25)
+	if len(controller.completed_trials) > 40:
+		stats = controller.calculate_performance_statistics(n_trials_back = 40)
 		print 'A_n_correct+n_incorrect=',stats['by_stimset'][0]['n_correct']+stats['by_stimset'][0]['n_incorrect']
 		print 'B_n_correct+n_incorrect=',stats['by_stimset'][1]['n_correct']+stats['by_stimset'][1]['n_incorrect']
-		if (stats['by_stimset'][0]['n_correct']+stats['by_stimset'][0]['n_incorrect']) >= 10 and (stats['by_stimset'][1]['n_correct']+stats['by_stimset'][1]['n_incorrect']) >= 10:
+		if (stats['by_stimset'][0]['n_correct']+stats['by_stimset'][0]['n_incorrect']) >= 5 and (stats['by_stimset'][1]['n_correct']+stats['by_stimset'][1]['n_incorrect']) >= 5:
 			if stats['by_stimset'][1]['p_correct'] + stats['by_stimset'][0]['p_correct'] != 0:
 				controller.Aocc = stats['by_stimset'][1]['p_correct']/(stats['by_stimset'][1]['p_correct'] + stats['by_stimset'][0]['p_correct'])
 				controller.Bocc = 1 - controller.Aocc
