@@ -11,54 +11,55 @@ import soundout_tools as so
 
 
 def return_list_of_boxes():
-    list_of_sound_cards = so.list_sound_cards()
-    list_of_arduinos = st.return_list_of_named_arduinos()
-    boxes_present = []
-    for ad in list_of_arduinos:
-        if '_' in ad:
-            ad_num = ad.split('_')[1]
-            for sc in list_of_sound_cards:
-                if '_' in sc:
-                    sc_num = sc.split('_')[1]
-                    if sc_num == ad_num:
-                        boxes_present.append(('box_' + ad_num, ad, sc))
+    # list_of_sound_cards = so.list_sound_cards()
+    # # list_of_arduinos = st.return_list_of_named_arduinos()
+    # boxes_present = []
+    # for ad in list_of_arduinos:
+    #     if '_' in ad:
+    #         ad_num = ad.split('_')[1]
+    #         for sc in list_of_sound_cards:
+    #             if '_' in sc:
+    #                 sc_num = sc.split('_')[1]
+    #                 if sc_num == ad_num:
+    #                     boxes_present.append(('box_' + ad_num, ad, sc))
+    boxes_present = [('box_1', None, 'Device')]
     return boxes_present                
 
-def return_list_of_usb_serial_ports():
-    if os.name == 'nt':
-        list_of_ports = []
-        # windows
-        for i in range(256):
-            try:
-                s = serial.Serial(i)
-                s.close()
-                list_of_ports.append('COM' + str(i + 1))
-            except serial.SerialException:
-                pass
-    else:
-        # unix
-        list_of_ports = [port[0] for port in list_ports.comports()]
+# def return_list_of_usb_serial_ports():
+#     if os.name == 'nt':
+#         list_of_ports = []
+#         # windows
+#         for i in range(256):
+#             try:
+#                 s = serial.Serial(i)
+#                 s.close()
+#                 list_of_ports.append('COM' + str(i + 1))
+#             except serial.SerialException:
+#                 pass
+#     else:
+#         # unix
+#         list_of_ports = [port[0] for port in list_ports.comports()]
 
-    list_of_ports = filter(lambda x: 'ACM' in x, list_of_ports)
-    list_of_ports_and_ids = []
-    for port in list_of_ports:
-        command = "udevadm info -a -n %s | grep '{serial}' | head -n1" % port
-        #command = "udevadm info -a -n %s" % port
-        data = os.popen(command)
-        data =  data.read()
-        data =data.split('"')
-        serialnum = data[1]
-        list_of_ports_and_ids.append((port, serialnum))
-    return list_of_ports_and_ids
+#     list_of_ports = filter(lambda x: 'ACM' in x, list_of_ports)
+#     list_of_ports_and_ids = []
+#     for port in list_of_ports:
+#         command = "udevadm info -a -n %s | grep '{serial}' | head -n1" % port
+#         #command = "udevadm info -a -n %s" % port
+#         data = os.popen(command)
+#         data =  data.read()
+#         data =data.split('"')
+#         serialnum = data[1]
+#         list_of_ports_and_ids.append((port, serialnum))
+#     return list_of_ports_and_ids
 
-def return_list_of_named_arduinos():
-    if os.uname()[0]=='Linux': 
-        dev = os.listdir('/dev/')
-        dev = filter(lambda x: x[0:8] == 'arduino_', dev)
-        dev = ['/dev/%s' % d for d in dev]
-        return dev
-    else:
-        return ['arduino_1']
+# def return_list_of_named_arduinos():
+#     if os.uname()[0]=='Linux': 
+#         dev = os.listdir('/dev/')
+#         dev = filter(lambda x: x[0:8] == 'arduino_', dev)
+#         dev = ['/dev/%s' % d for d in dev]
+#         return dev
+#     else:
+#         return ['arduino_1']
 
 # def list_dev_infWo():
 # 	device_re = re.compile("Bus\s+(?P<bus>\d+)\s+Device\s+(?P<device>\d+).+ID\s(?P<id>\w+:\w+)\s(?P<tag>.+)$", re.I)

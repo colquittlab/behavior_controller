@@ -12,12 +12,12 @@ import ConfigParser
 import sys
 
 import lib.soundout_tools as so
-import lib.serial_tools as st
+# import lib.serial_tools as st
 import lib.usb_tools as ut
 import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
-
+import lib.bonetools as bt
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
@@ -258,16 +258,16 @@ class BehaviorBox(object):
 
         self.stimuli_dir = None
 
-        self.input_definitions = {2: ['song_trigger'], 
-                             3: ['response_trigger', 'response_a'],
-                             4: ['response_trigger', 'response_b']}
+        self.input_definitions = {'P8_11': ['song_trigger'], 
+                             'P8_12': ['response_trigger', 'response_a'],
+                             'P8_13': ['response_trigger', 'response_b']}
         self.output_definitions = {'reward_port': 12,
                                     'light_port': 11}
         self.trigger_value = 1
 
         self.box_zero_time = 0
-        self.last_sync_time = 0
-        self.sync_period = 60*30
+        # self.last_sync_time = 0
+        # self.sync_period = 60*30
         self.serial_port = None
         self.serial_device_id = None
         self.serial_c = None
@@ -303,7 +303,7 @@ class BehaviorBox(object):
         if box in [b[0] for b in list_of_boxes]:
             idx = [b[0] for b in list_of_boxes].index(box)
             box_data = list_of_boxes[idx]
-            self.select_serial_port(box_data[1])
+            # self.select_serial_port(box_data[1])
             self.select_sound_card(box_data[2])
             self.box_name = box_data[0]
             print 'Connected to %s' % box_data[0]
@@ -360,60 +360,46 @@ class BehaviorBox(object):
     #     self.sc_object = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK, mode=alsaaudio.PCM_NORMAL, card='hw:%d,0'%cardidx)
     #     self.sc_object.setrate(44100)
 
-    def parse_event_from_line(self,line):
-        line = line.strip('\n')
-        line = line.strip('\r')
+    # def parse_event_from_line(self,line):
+    #     line = line.strip('\n')
+    #     line = line.strip('\r')
 
-        idx1 = line.find('<') 
-        idx2 = line.find('>')
-        if idx1 > -1 and idx2 > -1:
-        # if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
-            line_parts = line[idx1+1:idx2].split('-')
-            if len(line_parts) is 3:
-                box_time = float(line_parts[0])
-                box_time = float(box_time)/1000 + self.box_zero_time
-                port = int(line_parts[1]) 
-                state = int(line_parts[2])
-            elif line_parts[1].lower() == "sync":
-                return (line_parts[0],line_parts[1],self.current_time)
-            else: return None
-        else: return None
-        if port in self.input_definitions.keys():
-            if state == self.trigger_value:
-                event = [box_time] + self.input_definitions[port]
-            else: return None
-        else: return None
-        return tuple(event)
+    #     idx1 = line.find('<') 
+    #     idx2 = line.find('>')
+    #     if idx1 > -1 and idx2 > -1:
+    #     # if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
+    #         line_parts = line[idx1+1:idx2].split('-')
+    #         if len(line_parts) is 3:
+    #             box_time = float(line_parts[0])
+    #             box_time = float(box_time)/1000 + self.box_zero_time
+    #             port = int(line_parts[1]) 
+    #             state = int(line_parts[2])
+    #         elif line_parts[1].lower() == "sync":
+    #             return (line_parts[0],line_parts[1],self.current_time)
+    #         else: return None
+    #     else: return None
+    #     if port in self.input_definitions.keys():
+    #         if state == self.trigger_value:
+    #             event = [box_time] + self.input_definitions[port]
+    #         else: return None
+    #     else: return None
+    #     return tuple(event)
 
     def query_events(self, timeout = 0):
         events_since_last = []
-        try:
-            if timeout != self.serial_c.timeout:
-                self.serial_c.timeout = timeout
-            # read any new input into the buffer
-            self.serial_buffer += self.serial_io.read()
-        except st.SerialException as e:
-            raise e
-
-        # read any exigent events out of the serial buffer and add them to events_since_last
-        while True:
-            idx1 = self.serial_buffer.find('<') 
-            idx2 = self.serial_buffer[idx1:].find('>')
-            if idx1 > -1 and idx2 > -1:
-                idx2 = idx2 + idx1 + 1
-                line = self.serial_buffer[idx1:idx2]
-                event = self.parse_event_from_line(line)
-                if event != None:
-                    events_since_last.append(event)
-                self.serial_buffer = self.serial_buffer[idx2:]
-            else: 
-                return events_since_last
+        while len(bt.event_buffer) > 0:
+            event = bt.event_buffer.pop(0)
+            event_out = [event[0]]
+            event_out.extend(box.input_definitions[event[1]])
+            events_since_last.append(event_out)
+        return events_since_last
 
 
     def write_command(self, command):
-        self.serial_io.write(unicode(command))
-        self.serial_io.flush()
-
+        # self.serial_io.write(unicode(command))
+        # self.serial_io.flush()
+        print command
+        pass
     def feeder_on(self):
         command = '<o%d=1>'%self.output_definitions['reward_port']
         self.write_command(command)
@@ -450,24 +436,24 @@ class BehaviorBox(object):
         command = '<w=%d>' % int(width)
         self.write_command(command)
 
-    def sync(self):
+    # def sync(self):
 
-        send_time = self.current_time
-        self.write_command('<sync>')
-        events = []
-        count = 0
-        events = self.query_events(timeout = 2)
-        sync_time = None
-        for event in events:
-            if len(event) > 1 and event[1]=='sync':
-                sync_time = float(event[0])
-        if sync_time != None:
-            self.box_zero_time = send_time - float(sync_time)/1000
-            self.last_sync_time = self.current_time;
-            return True
-        else:
-            raise(Exception('Sync not successful'))
-        return True
+    #     send_time = self.current_time
+    #     self.write_command('<sync>')
+    #     events = []
+    #     count = 0
+    #     events = self.query_events(timeout = 2)
+    #     sync_time = None
+    #     for event in events:
+    #         if len(event) > 1 and event[1]=='sync':
+    #             sync_time = float(event[0])
+    #     if sync_time != None:
+    #         self.box_zero_time = send_time - float(sync_time)/1000
+    #         self.last_sync_time = self.current_time;
+    #         return True
+    #     else:
+    #         raise(Exception('Sync not successful'))
+    #     return True
 
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
@@ -540,17 +526,23 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
-    try:
+    # try:
+    if 1:
         # generate the first trial and set that as the state
         controller.que_next_trial()
         controller.task_state = 'prepare_trial'
         controller.has_run = True
+	loop_times = []
         # enter the loop
         last_time = box.current_time
         while controller.box_state == 'go':
             current_time = box.current_time
             loop_time = current_time - last_time
             last_time = current_time
+            loop_times.append(loop_time)
+            if len(loop_times)>10000:
+                print np.mean(loop_times)
+		loop_times = []
             # query serial events since the last itteration
             events_since_last = box.query_events()
             # save loop times greator than tollerance as events
@@ -567,22 +559,22 @@ def main_loop(controller, box):
                 controller.que_next_trial()
 
             # other housecleaning:
-            if current_time - box.last_sync_time > box.sync_period:
-                box.sync()
-                last_time = box.current_time
+            # if current_time - box.last_sync_time > box.sync_period:
+            #     box.sync()
+            #     last_time = box.current_time
 
             # exit routine:
         pass
-    except Exception as e:
-        # crash handeling
-        controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
-        box.serial_c.close() 
-        box.connect_to_serial_port() # reconnect to box
-        box.light_on()
-        controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
+    # except Exception as e:
+    #     # crash handeling
+    #     controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
+    #     # box.serial_c.close() 
+    #     # box.connect_to_serial_port() # reconnect to box
+    #     box.light_on()
+    #     controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
         
-        # renter loop
-        main_loop(controller, box)
+    #     # renter loop
+    #     main_loop(controller, box)
 
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
