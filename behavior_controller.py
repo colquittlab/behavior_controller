@@ -98,7 +98,7 @@ class BehaviorController(object):
         
         # stimset occurance
         self.Aocc = 0.5
-        self.Bocc = 1 - self.Aocc
+        self.Bocc = 1.0 - self.Aocc
 
 
 
