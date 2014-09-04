@@ -7,7 +7,6 @@ import scipy as sp
 
 # the iterations and for each mode are loded into the mode dict
 iterations = {}
-
 def discrimination_iteration(controller, box, events_since_last):
     """ This function runs int the main loop in discrimination mode"""
     # record any events that have happened on the box     
@@ -54,22 +53,27 @@ def discrimination_iteration(controller, box, events_since_last):
         if 'response_trigger' in events_since_last_names:
             event_idx = events_since_last_names.index('response_trigger')
             controller.current_trial['response_time'] = box.current_time
-            ## if anwser is correct
-            if  events_since_last[event_idx][2] == controller.current_trial['correct_answer']:
+            if controller.current_trial['trial_type'] == 'probe':
                 controller.current_trial['result'] = 'correct'
-                controller.task_state = 'reward'
-                 
-                
-                events_since_last.append((box.current_time, 'reward_start'))
-                box.feeder_on()
-            ## otherwise anwser is incorrect 
+                events_since_last.append((box.current_time, 'probe_trial - no reward'))
+                trial_ended = True
             else:
-                controller.current_trial['result'] = 'incorrect'
-                controller.task_state = 'time_out'
-                events_since_last.append((box.current_time, 'timeout_start'))
-                if controller.params['timeout_light']:
-                    box.light_off()
-                    events_since_last.append((box.current_time, 'light_off'))
+                ## if anwser is correct
+                if  events_since_last[event_idx][2] == controller.current_trial['correct_answer']:
+                    controller.current_trial['result'] = 'correct'
+                    controller.task_state = 'reward'
+                     
+                    
+                    events_since_last.append((box.current_time, 'reward_start'))
+                    box.feeder_on()
+                ## otherwise anwser is incorrect 
+                else:
+                    controller.current_trial['result'] = 'incorrect'
+                    controller.task_state = 'time_out'
+                    events_since_last.append((box.current_time, 'timeout_start'))
+                    if controller.params['timeout_light']:
+                        box.light_off()
+                        events_since_last.append((box.current_time, 'light_off'))
 
         # if no response and trial has timed out
         elif box.current_time > timeout_time:
