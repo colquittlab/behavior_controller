@@ -24,8 +24,9 @@ def standard_generator(controller, trials_per_block=1):
 		trial['stimulus'] = stim_list[idx][2]
 		trial['stimset_idx'] = stim_list[idx][0]
 		trial['stimset'] = controller.stimset_names[trial['stimset_idx']]
-		trial['correct_answer'] = controller.expected_responses[stim_list[idx][0]]
 		trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
+		if trial['trial_type'] == 'discrimination':
+			trial['correct_answer'] = controller.expected_responses[stim_list[idx][0]]
 		trial_block.append(trial)
 	return trial_block
 generators['standard'] = standard_generator
