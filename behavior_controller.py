@@ -687,7 +687,7 @@ if __name__=='__main__':
             controller.params[param] = config.getboolean('run_params', param)
 
     # set (overwrite) float parameters
-    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period']:
+    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
