@@ -17,8 +17,6 @@ def standard_generator(controller, trials_per_block=1):
 		else:
 			trial['trial_type'] = 'discrimination'
 			stim_list = controller.list_stimuli(stimset_idxs = [0, 1])
-		stim_list = controller.list_stimuli()
-
 		# pick the stimset and the stimulus
 		idx = random.randint(0, len(stim_list)-1)
 		trial['stimulus'] = stim_list[idx][2]
@@ -38,22 +36,29 @@ def stimset_occurance_generator(controller, trials_per_block=1):
 	if sum(controller.params['stimset_occurance']) != 1:
 		raise Exception('Stimset Occurance does not sum to 1')
 
-	for k in range(0, trials_per_block):
-		rand_num = random.uniform(0,1)
-		for stimset_idx in range(0,len(controller.params['stimset_occurance'])):
-			if rand_num < sum(controller.params['stimset_occurance'][:stimset_idx+1]):
-				break
 
+	for k in range(0, trials_per_block):
 		trial = {}
-		stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
+		if random.uniform(0,1) < float(controller.params['probe_occurance']) / 100:
+			trial['trial_type'] = 'probe'
+			stim_list = controller.list_stimuli(stimset_idxs = [2])
+		else:
+			trial['trial_type'] = 'discrimination'
+			stim_list = controller.list_stimuli(stimset_idxs = [0, 1])
+			rand_num = random.uniform(0,1)
+			for stimset_idx in range(0,len(controller.params['stimset_occurance'])):
+				if rand_num < sum(controller.params['stimset_occurance'][:stimset_idx+1]):
+					break
+			stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
 		# pick the stimset and the stimulus
 		idx = random.randint(0, len(stim_list)-1)
 
 		trial['stimulus'] = stim_list[idx][2]
 		trial['stimset_idx'] = stim_list[idx][0]
 		trial['stimset'] = controller.stimset_names[trial['stimset_idx']]
-		trial['correct_answer'] = controller.expected_responses[stim_list[idx][0]]
 		trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
+		if trial['trial_type'] == 'discrimination':
+			trial['correct_answer'] = controller.expected_responses[stim_list[idx][0]]
 		trial_block.append(trial)
 	return trial_block
 generators['stimset_occurance'] = stimset_occurance_generator
