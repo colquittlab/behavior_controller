@@ -36,6 +36,7 @@ def standard_playback_generator(controller, trials_per_block=1):
 	for k in range(0, trials_per_block):
 		trial = {}
 		# pick the stimset and the stimulus
+		stim_list = controller.list_stimuli(stimset_idxs = [0, 1])
 		idx = random.randint(0, len(stim_list)-1)
 		trial['stimulus'] = stim_list[idx][2]
 		trial['stimset_idx'] = stim_list[idx][0]

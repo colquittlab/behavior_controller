@@ -612,32 +612,44 @@ def playback_and_count_iteration(controller, box, events_since_last):
     if controller.task_state == 'waiting_for_trial': 
         box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
         controller.task_state = 'playing_song'
+        events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+
+        # prepair trial 
         controller.current_trial['start_time'] = box.current_time
         controller.current_trial['response_times'] = []
         controller.current_trial['response_triggers'] = []
         controller.current_trial['response_count'] = 0
         controller.current_trial['isi_response_count'] = 0
         if controller.current_trial['stimset_idx'] == 0:
-            controller.current_trial['trial_ype'] = 'rewarded'
+            controller.current_trial['trial_type'] = 'rewarded'
             box.feeder_on()
+            events_since_last.append((box.current_time, 'reward_start'))
+        else:
+            controller.current_trial['trial_type'] = 'not_rewarded'
+
     elif controller.task_state == 'playing_song':
         # record events
-        if True in ['trigger' in event for event in event_since_last_names]:
-            event_idx = events_since_last_names.index('song_trigger')
+        if True in ['trigger' in event for event in events_since_last_names]:
+            event_idx = ['trigger' in event for event in events_since_last_names].index(True)
             controller.current_trial['response_times'].append(box.current_time-controller.current_trial['start_time'])
             controller.current_trial['response_triggers'].append(events_since_last_names[event_idx])
             controller.current_trial['response_count'] += 1
-        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
+        if box.current_time > controller.current_trial['start_time'] + controller.params['feed_time']:
             controller.task_state = 'isi'
             controller.current_trial['stimulus_end'] = box.current_time
+            if controller.current_trial['trial_type'] == 'rewarded':
+                box.feeder_off()
+                events_since_last.append((box.current_time, 'reward_end'))
+
     elif controller.task_state == 'isi':
-        if True in ['trigger' in event for event in event_since_last_names]:
-            event_idx = events_since_last_names.index('song_trigger')
+        if True in ['trigger' in event for event in events_since_last_names]:
+            event_idx = ['trigger' in event for event in events_since_last_names].index(True)
             controller.current_trial['response_times'].append(box.current_time-controller.current_trial['start_time'])
             controller.current_trial['response_triggers'].append(events_since_last_names[event_idx])
             controller.current_trial['isi_response_count'] += 1
         if box.current_time > controller.current_trial['stimulus_end'] + controller.current_trial['isi']:
             trial_ended = True
+    return events_since_last, trial_ended
 iterations['playback_and_count'] = playback_and_count_iteration
 
 
