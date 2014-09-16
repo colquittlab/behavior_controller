@@ -600,3 +600,44 @@ def discrimination_laser_iteration(controller, box, events_since_last):
             trial_ended = True
     return events_since_last, trial_ended
 iterations['discrimination_laser'] = discrimination_laser_iteration
+
+
+def playback_and_count_iteration(controller, box, events_since_last):
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # make any initial parameters
+    if controller.task_state == 'prepare_trial':
+        controller.task_state = 'waiting_for_trial'
+    # if no trial has been initiatied
+    if controller.task_state == 'waiting_for_trial': 
+        box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
+        controller.task_state = 'playing_song'
+        controller.current_trial['start_time'] = box.current_time
+        controller.current_trial['response_times'] = []
+        controller.current_trial['response_triggers'] = []
+        controller.current_trial['response_count'] = 0
+        controller.current_trial['isi_response_count'] = 0
+        if controller.current_trial['stimset_idx'] == 0:
+            controller.current_trial['trial_ype'] = 'rewarded'
+            box.feeder_on()
+    elif controller.task_state == 'playing_song':
+        # record events
+        if True in ['trigger' in event for event in event_since_last_names]:
+            event_idx = events_since_last_names.index('song_trigger')
+            controller.current_trial['response_times'].append(box.current_time-controller.current_trial['start_time'])
+            controller.current_trial['response_triggers'].append(events_since_last_names[event_idx])
+            controller.current_trial['response_count'] += 1
+        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
+            controller.task_state = 'isi'
+            controller.current_trial['stimulus_end'] = box.current_time
+    elif controller.task_state == 'isi':
+        if True in ['trigger' in event for event in event_since_last_names]:
+            event_idx = events_since_last_names.index('song_trigger')
+            controller.current_trial['response_times'].append(box.current_time-controller.current_trial['start_time'])
+            controller.current_trial['response_triggers'].append(events_since_last_names[event_idx])
+            controller.current_trial['isi_response_count'] += 1
+        if box.current_time > controller.current_trial['stimulus_end'] + controller.current_trial['isi']:
+            trial_ended = True
+iterations['playback_and_count'] = playback_and_count_iteration
+
+

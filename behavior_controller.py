@@ -95,6 +95,11 @@ class BehaviorController(object):
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
+
+        # parameters for playback mode
+        self.params['isi_distribution'] = 'exponential'
+        self.params['isi_parameter'] = 10
+
         
         # stimset occurance
         self.Aocc = 0.5
