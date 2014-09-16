@@ -30,6 +30,29 @@ def standard_generator(controller, trials_per_block=1):
 generators['standard'] = standard_generator
 
 
+def standard_playback_generator(controller, trials_per_block=1):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		# pick the stimset and the stimulus
+		idx = random.randint(0, len(stim_list)-1)
+		trial['stimulus'] = stim_list[idx][2]
+		trial['stimset_idx'] = stim_list[idx][0]
+		trial['stimset'] = controller.stimset_names[trial['stimset_idx']]
+		trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
+		if controller.params['isi_distribution'] == 'exponential':
+			trial['isi'] = np.random.exponential(controller.params['isi_parameter'])
+		elif controller.params['isi_distribution'] == 'uniform':
+			trial['isi']  = np.random.uniform(controller.params['isi_parameter'][0],controller.params['isi_parameter'][1])
+		elif controller.params['isi_distribution'] == 'fixed':
+			trial['isi'] = controller.params['isi_parameter']
+		trial_block.append(trial)
+	return trial_block
+generators['standard_playback'] = standard_playback_generator
+
+
+
 def stimset_occurance_generator(controller, trials_per_block=1):
 	"""Generates trial by trial with no pruning but allows you to set stimet occurance"""
 	trial_block = []
