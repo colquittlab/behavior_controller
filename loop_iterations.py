@@ -618,8 +618,6 @@ def playback_and_count_iteration(controller, box, events_since_last):
         controller.current_trial['start_time'] = box.current_time
         controller.current_trial['response_times'] = []
         controller.current_trial['response_triggers'] = []
-        controller.current_trial['response_count'] = 0
-        controller.current_trial['isi_response_count'] = 0
         if controller.current_trial['stimset_idx'] == 0:
             controller.current_trial['trial_type'] = 'rewarded'
             box.feeder_on()
