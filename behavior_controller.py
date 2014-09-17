@@ -90,13 +90,14 @@ class BehaviorController(object):
         self.params['trial_generator'] = 'standard'
 
         # trial
-        self.params['stimset_occurance'] = None
+        self.params['stimset_occurance'] = [0.5, 0.5]
         self.params['probe_occurance'] = 0
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
 
         # parameters for playback mode
+        self.params['delay_time'] = 5
         self.params['isi_distribution'] = 'exponential'
         self.params['isi_parameter'] = 10
 
@@ -579,17 +580,17 @@ def main_loop(controller, box):
             # exit routine:
         pass
     except st.SerialError as e:
-         # crash handeling
-         controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
-         box.serial_c.close() 
-         box.connect_to_serial_port() # reconnect to box
-         box.light_on()
-         controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
+        # crash handeling for serial errors
+        controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
+        box.serial_c.close() 
+        box.connect_to_serial_port() # reconnect to box
+        box.light_on()
+        controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
+         # renter loop
+        main_loop(controller, box)
     except Exception as e:
-        raise e
-        
-    #     # renter loop
-    #     main_loop(controller, box)
+        raise 
+
 
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
@@ -679,7 +680,7 @@ if __name__=='__main__':
             controller.params[param] = config.getboolean('run_params', param)
 
     # set (overwrite) float parameters
-    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance','isi_parameter']:
+    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance','isi_parameter', 'delay_time']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
