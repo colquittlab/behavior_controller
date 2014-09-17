@@ -630,7 +630,7 @@ def playback_and_count_iteration(controller, box, events_since_last):
             else:
                 controller.current_trial['reward'] = 'no'
     # if the state is feed period
-    elif controller.task_state == 'feed_period'
+    elif controller.task_state == 'feed_period':
         if box.current_time > controller.current_trial['start_time'] + controller.params['feed_time'] + controller.params['delay_time']:
             controller.task_state = 'isi'
             controller.current_trial['reward_end'] = box.current_time
