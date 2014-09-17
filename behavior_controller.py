@@ -397,8 +397,8 @@ class BehaviorBox(object):
                 self.serial_c.timeout = timeout
             # read any new input into the buffer
             self.serial_buffer += self.serial_io.read()
-        except st.SerialException as e:
-            raise e
+        except:
+            raise st.SerialError
 
         # read any exigent events out of the serial buffer and add them to events_since_last
         while True:
@@ -471,7 +471,7 @@ class BehaviorBox(object):
             self.last_sync_time = self.current_time;
             return True
         else:
-            raise(Exception('Sync not successful'))
+            raise(st.SerialError('Sync not successful'))
         return True
 
     def play_stim(self, stimset, stimulus):
@@ -545,8 +545,7 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
-    #try:
-    if 1:
+    try:
         # generate the first trial and set that as the state
         controller.que_next_trial()
         controller.task_state = 'prepare_trial'
@@ -579,13 +578,15 @@ def main_loop(controller, box):
 
             # exit routine:
         pass
-    # except Exception as e:
-    #     # crash handeling
-    #     controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
-    #     box.serial_c.close() 
-    #     box.connect_to_serial_port() # reconnect to box
-    #     box.light_on()
-    #     controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
+    except st.SerialError as e:
+         # crash handeling
+         controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
+         box.serial_c.close() 
+         box.connect_to_serial_port() # reconnect to box
+         box.light_on()
+         controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
+    except Exception as e:
+        raise e
         
     #     # renter loop
     #     main_loop(controller, box)
@@ -635,22 +636,7 @@ def load_and_verify_stimset(stimuli_dir, stim_name):
         raise e 
     return stimset_out 
 
-# def return_list_of_usb_serial_ports():
-#     if os.name == 'nt':
-#         list_of_ports = []
-#         # windows
-#         for i in range(256):
-#             try:
-#                 s = serial.Serial(i)
-#                 s.close()
-#                 list_of_ports.append('COM' + str(i + 1))
-#             except serial.SerialException:
-#                 pass
-#     else:
-#         # unix
-#         list_of_ports = [port[0] for port in list_ports.comports()]
-#     # for port in list_of_ports: print port
-#     return filter(lambda x: 'ACM' in x, list_of_ports)
+
 
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
