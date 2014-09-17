@@ -611,42 +611,42 @@ def playback_and_count_iteration(controller, box, events_since_last):
     # if no trial has been initiatied
     if controller.task_state == 'waiting_for_trial': 
         box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
-        controller.task_state = 'playing_song'
+        controller.task_state = 'delay_period'
         events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
-
         # prepair trial 
         controller.current_trial['start_time'] = box.current_time
+        controller.current_trial['stimulus_start'] = box.current_time
         controller.current_trial['response_times'] = []
         controller.current_trial['response_triggers'] = []
-        if controller.current_trial['stimset_idx'] == 0:
-            controller.current_trial['trial_type'] = 'rewarded'
-            box.feeder_on()
-            events_since_last.append((box.current_time, 'reward_start'))
-        else:
-            controller.current_trial['trial_type'] = 'not_rewarded'
-
-    elif controller.task_state == 'playing_song':
-        # record events
-        if True in ['trigger' in event for event in events_since_last_names]:
-            event_idx = ['trigger' in event for event in events_since_last_names].index(True)
-            controller.current_trial['response_times'].append(box.current_time-controller.current_trial['start_time'])
-            controller.current_trial['response_triggers'].append(events_since_last_names[event_idx])
-            controller.current_trial['response_count'] += 1
-        if box.current_time > controller.current_trial['start_time'] + controller.params['feed_time']:
+    # if the state is delay period
+    elif controller.task_state == 'delay_period':
+        if box.current_time > controller.current_trial['start_time'] + controller.params['delay_time']:
+            controller.task_state = 'feed_period'
+            if controller.current_trial['stimset_idx'] == 0:
+                controller.current_trial['reward'] = 'yes'
+                box.feeder_on()
+                controller.current_trial['reward_start_time'] = box.current_time
+                events_since_last.append((box.current_time, 'reward_start'))
+            else:
+                controller.current_trial['reward'] = 'no'
+    # if the state is feed period
+    elif controller.task_state == 'feed_period'
+        if box.current_time > controller.current_trial['start_time'] + controller.params['feed_time'] + controller.params['delay_time']:
             controller.task_state = 'isi'
-            controller.current_trial['stimulus_end'] = box.current_time
-            if controller.current_trial['trial_type'] == 'rewarded':
+            controller.current_trial['reward_end'] = box.current_time
+            if controller.current_trial['reward'] == 'yes':
                 box.feeder_off()
                 events_since_last.append((box.current_time, 'reward_end'))
-
+    # if in interstimulus interval
     elif controller.task_state == 'isi':
-        if True in ['trigger' in event for event in events_since_last_names]:
-            event_idx = ['trigger' in event for event in events_since_last_names].index(True)
-            controller.current_trial['response_times'].append(box.current_time-controller.current_trial['start_time'])
-            controller.current_trial['response_triggers'].append(events_since_last_names[event_idx])
-            controller.current_trial['isi_response_count'] += 1
-        if box.current_time > controller.current_trial['stimulus_end'] + controller.current_trial['isi']:
+        if box.current_time > controller.current_trial['reward_end'] + controller.current_trial['isi']:
             trial_ended = True
+    # during all states record all triggers
+    if True in ['trigger' in event for event in events_since_last_names]:
+        event_idx = ['trigger' in event for event in events_since_last_names].index(True)
+        controller.current_trial['response_times'].append(box.current_time-controller.current_trial['start_time'])
+        controller.current_trial['response_triggers'].append(events_since_last_names[event_idx])
+
     return events_since_last, trial_ended
 iterations['playback_and_count'] = playback_and_count_iteration
 
