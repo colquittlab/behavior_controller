@@ -627,6 +627,14 @@ def playback_and_count_iteration(controller, box, events_since_last):
                 box.feeder_on()
                 controller.current_trial['reward_start_time'] = box.current_time
                 events_since_last.append((box.current_time, 'reward_start'))
+            elif controller.current_trial['stimset_idx'] == 2:
+                if len(controller.current_trial['response_times']) > 0:
+                    controller.current_trial['reward'] = 'yes'
+                    box.feeder_on()
+                    controller.current_trial['reward_start_time'] = box.current_time
+                    events_since_last.append((box.current_time, 'reward_start'))
+                else:
+                    controller.current_trial['reward'] = 'no'
             else:
                 controller.current_trial['reward'] = 'no'
     # if the state is feed period
