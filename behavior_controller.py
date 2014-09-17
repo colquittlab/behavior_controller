@@ -398,8 +398,10 @@ class BehaviorBox(object):
                 self.serial_c.timeout = timeout
             # read any new input into the buffer
             self.serial_buffer += self.serial_io.read()
+        except KeyboardInterrupt:
+            raise
         except:
-            raise st.SerialError
+            raise st.SerialError('serial connection lost')
 
         # read any exigent events out of the serial buffer and add them to events_since_last
         while True:
