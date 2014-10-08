@@ -698,7 +698,16 @@ if __name__=='__main__':
     else:
         box.select_sound_card()
         box.select_serial_port()
+
+    # set any box params
+    for param in ['trigger_value']:
+        if config.has_option('run_params', param):
+            attr = config.getfloat('run_params',param)
+            setattr(box,param,attr)
+    # run the box
     run_box(controller, box)
+
+
     # import cProfile
     # command = """run_box(controller,box)"""
     # cProfile.runctx(command, globals(), locals(), filename = 'test.profile')
