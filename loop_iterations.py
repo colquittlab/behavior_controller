@@ -53,7 +53,7 @@ def discrimination_iteration(controller, box, events_since_last):
         if 'response_trigger' in events_since_last_names:
             event_idx = events_since_last_names.index('response_trigger')
             controller.current_trial['response_time'] = box.current_time
-            if 'trail_type' in controller.current_trial.keys() and controller.current_trial['trial_type'] == 'probe':
+            if 'trial_type' in controller.current_trial.keys() and controller.current_trial['trial_type'] == 'probe':
                 controller.current_trial['result'] = 'correct'
                 events_since_last.append((box.current_time, 'probe_trial - no reward'))
                 trial_ended = True
