@@ -3,6 +3,7 @@ import  glob
 import  os
 import  re
 import serial
+import alsaaudio as aa
 # from serial.tools import list_ports
 
 import serial_tools as st 
@@ -22,6 +23,10 @@ def return_list_of_boxes():
                     sc_num = sc.split('_')[1]
                     if sc_num == ad_num:
                         boxes_present.append(('box_' + ad_num, ad, sc))
+    if len(list_of_arduinos)>0 and len(boxes_present)==0:
+	boxes_present.append(('box_1',list_of_arduinos[0], aa.cards()[0]))
+
+
     return boxes_present                
 
 def return_list_of_usb_serial_ports():
