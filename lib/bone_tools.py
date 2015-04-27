@@ -17,12 +17,15 @@ for pin in pindef.input_definitions.keys():
 	call(command)
 
 ## initialize the event buffer
+## Create event buffer and create callback function
 event_buffer = []
 ## create function to add to events to buffer
 def event_callback(arg):
 	event_buffer.append((time.time(), arg))
 
 ## initialize all input pins
+## activate all inpuyt GPIOS
+
 GPIO.cleanup()
 for pin in pindef.input_definitions.keys():
 	GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP, 1)
@@ -32,4 +35,5 @@ for pin in pindef.output_definitions.values():
 	GPIO.setup(pin, GPIO.OUT)
 
 
-
+## activate all PWMS
+PWM.cleanup()

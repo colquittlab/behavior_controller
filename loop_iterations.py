@@ -89,7 +89,8 @@ def discrimination_iteration(controller, box, events_since_last):
     # if the reward period is over
     elif controller.task_state == 'reward':
         if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
-            box.feeder_off()
+            #box.feeder_off()
+            box.feeder_off(controller.params['warn_feeder_off']) # GK
             events_since_last.append((box.current_time, 'reward_end'))
             trial_ended = True
     return events_since_last, trial_ended
@@ -303,13 +304,12 @@ def song_plus_food_iteration(controller, box, events_since_last):
         if 'response_trigger' in events_since_last_names:
             controller.task_state = 'reward'
             events_since_last.append((box.current_time, 'reward_start'))
-            controller.current_trial['response_time'] = box.current_time
-             
+            controller.current_trial['response_time'] = box.current_time             
             box.feeder_on()
     # if the reward period is over
     elif controller.task_state == 'reward':
         if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
-            box.feeder_off()
+            box.feeder_off(controller.params['warn_feeder_off'])
             events_since_last.append((box.current_time, 'reward_end'))
             trial_ended = True
     return events_since_last, trial_ended
