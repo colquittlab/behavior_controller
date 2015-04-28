@@ -42,7 +42,7 @@ def return_list_of_named_arduinos():
 
 
 
-class SerialException(Exception):
+class SerialError(Exception):
     pass
 
 

@@ -7,7 +7,6 @@ import scipy as sp
 
 # the iterations and for each mode are loded into the mode dict
 iterations = {}
-
 def discrimination_iteration(controller, box, events_since_last):
     """ This function runs int the main loop in discrimination mode"""
     # record any events that have happened on the box     
@@ -54,22 +53,27 @@ def discrimination_iteration(controller, box, events_since_last):
         if 'response_trigger' in events_since_last_names:
             event_idx = events_since_last_names.index('response_trigger')
             controller.current_trial['response_time'] = box.current_time
-            ## if anwser is correct
-            if  events_since_last[event_idx][2] == controller.current_trial['correct_answer']:
+            if 'trial_type' in controller.current_trial.keys() and controller.current_trial['trial_type'] == 'probe':
                 controller.current_trial['result'] = 'correct'
-                controller.task_state = 'reward'
-                 
-                
-                events_since_last.append((box.current_time, 'reward_start'))
-                box.feeder_on()
-            ## otherwise anwser is incorrect 
+                events_since_last.append((box.current_time, 'probe_trial - no reward'))
+                trial_ended = True
             else:
-                controller.current_trial['result'] = 'incorrect'
-                controller.task_state = 'time_out'
-                events_since_last.append((box.current_time, 'timeout_start'))
-                if controller.params['timeout_light']:
-                    box.light_off()
-                    events_since_last.append((box.current_time, 'light_off'))
+                ## if anwser is correct
+                if  events_since_last[event_idx][2] == controller.current_trial['correct_answer']:
+                    controller.current_trial['result'] = 'correct'
+                    controller.task_state = 'reward'
+                     
+                    
+                    events_since_last.append((box.current_time, 'reward_start'))
+                    box.feeder_on()
+                ## otherwise anwser is incorrect 
+                else:
+                    controller.current_trial['result'] = 'incorrect'
+                    controller.task_state = 'time_out'
+                    events_since_last.append((box.current_time, 'timeout_start'))
+                    if controller.params['timeout_light']:
+                        box.light_off()
+                        events_since_last.append((box.current_time, 'light_off'))
 
         # if no response and trial has timed out
         elif box.current_time > timeout_time:
@@ -596,3 +600,62 @@ def discrimination_laser_iteration(controller, box, events_since_last):
             trial_ended = True
     return events_since_last, trial_ended
 iterations['discrimination_laser'] = discrimination_laser_iteration
+
+
+def playback_and_count_iteration(controller, box, events_since_last):
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # make any initial parameters
+    if controller.task_state == 'prepare_trial':
+        controller.task_state = 'waiting_for_trial'
+    # if no trial has been initiatied
+    if controller.task_state == 'waiting_for_trial': 
+        box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
+        controller.task_state = 'delay_period'
+        events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+        # prepair trial 
+        controller.current_trial['start_time'] = box.current_time
+        controller.current_trial['stimulus_start'] = box.current_time
+        controller.current_trial['response_times'] = []
+        controller.current_trial['response_triggers'] = []
+    # if the state is delay period
+    elif controller.task_state == 'delay_period':
+        if box.current_time > controller.current_trial['start_time'] + controller.params['delay_time']:
+            controller.task_state = 'feed_period'
+            if controller.current_trial['stimset_idx'] == 0:
+                controller.current_trial['reward'] = 'yes'
+                box.feeder_on()
+                controller.current_trial['reward_start_time'] = box.current_time
+                events_since_last.append((box.current_time, 'reward_start'))
+            elif controller.current_trial['stimset_idx'] == 2:
+                if len(controller.current_trial['response_times']) > 0:
+                    controller.current_trial['reward'] = 'yes'
+                    box.feeder_on()
+                    controller.current_trial['reward_start_time'] = box.current_time
+                    events_since_last.append((box.current_time, 'reward_start'))
+                else:
+                    controller.current_trial['reward'] = 'no'
+            else:
+                controller.current_trial['reward'] = 'no'
+    # if the state is feed period
+    elif controller.task_state == 'feed_period':
+        if box.current_time > controller.current_trial['start_time'] + controller.params['feed_time'] + controller.params['delay_time']:
+            controller.task_state = 'isi'
+            controller.current_trial['reward_end'] = box.current_time
+            if controller.current_trial['reward'] == 'yes':
+                box.feeder_off()
+                events_since_last.append((box.current_time, 'reward_end'))
+    # if in interstimulus interval
+    elif controller.task_state == 'isi':
+        if box.current_time > controller.current_trial['reward_end'] + controller.current_trial['isi']:
+            trial_ended = True
+    # during all states record all triggers
+    if True in ['trigger' in event for event in events_since_last_names]:
+        event_idx = ['trigger' in event for event in events_since_last_names].index(True)
+        controller.current_trial['response_times'].append(box.current_time-controller.current_trial['start_time'])
+        controller.current_trial['response_triggers'].append(events_since_last_names[event_idx])
+
+    return events_since_last, trial_ended
+iterations['playback_and_count'] = playback_and_count_iteration
+
+

@@ -83,11 +83,17 @@ class BehaviorController(object):
         self.params['trial_generator'] = 'standard'
 
         # trial
-        self.params['stimset_occurance'] = None
+        self.params['stimset_occurance'] = [0.5, 0.5]
         self.params['probe_occurance'] = 0
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
+
+        # parameters for playback mode
+        self.params['delay_time'] = 5
+        self.params['isi_distribution'] = 'exponential'
+        self.params['isi_parameter'] = 10
+
         
         # stimset occurance
         self.Aocc = 0.5
@@ -279,44 +285,7 @@ class BehaviorBox(object):
             # self.select_serial_port(box_data[1])
             self.select_sound_card(box_data[2])
             self.box_name = box_data[0]
-# <<<<<<< HEAD
 
-# =======
-#             print 'Connected to %s' % box_data[0]
-#             #print box_data[1] # GK
-#             #print box_data[2] # GK
-#         else:
-#             raise(Exception('%s not connected' % box))
-
-#     def select_serial_port(self, port = None):
-#         list_of_ports = st.return_list_of_usb_serial_ports()
-#         if port == None:
-#             print 'Select desired port from list below:'
-#             for k,port in enumerate(list_of_ports):
-#                 print '[%d] port: %s serial# %s' % (k,port[0], port[1])
-#             # x = input('Enter Number: ')
-#             x = 0
-#             self.serial_port = list_of_ports[x][0]
-#             self.serial_device_id = list_of_ports[x][1]
-#         else:
-#             self.serial_port = port;
-#         result = self.connect_to_serial_port()
-#         return result
-
-#     def connect_to_serial_port(self):
-#         try:
-#             self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
-#             self.serial_c.setDTR(False)
-#             self.serial_c.flushInput()
-#             self.serial_c.flushOutput()
-#             self.serial_c.setDTR(True)
-#             self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
-#             time.sleep(2)
-#             return self.sync()
-#         except:
-#             self.reload_arduino_firmware()
-#             return self.connect_to_serial_port()
-# >>>>>>> master
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
 
@@ -342,22 +311,9 @@ class BehaviorBox(object):
             events_since_last.append(tuple(event_out))
         return events_since_last
     def feeder_on(self):
-# <<<<<<< HEAD
         bt.GPIO.output(pindef.output_definitions['feeder_port'], 1)
     def feeder_off(self):
-        bt.GPIO.output(pindef.output_definitions['feeder_port'], 0)
-# =======
-#         command = '<o%d=1>'%self.output_definitions['reward_port']
-#         self.write_command(command)
-
-#     def feeder_off(self, do_warning=False):
-#     	if do_warning:
-#     		self.beep_warning()
-#     		time.sleep(1)
-#         command = '<o%d=0>'%self.output_definitions['reward_port']
-#         self.write_command(command)
-        
-# >>>>>>> master
+        bt.GPIO.output(pindef.output_definitions['feeder_port'], 0) 
     def light_on(self):
         bt.GPIO.output(pindef.output_definitions['light_port'], 0)
     def light_off(self):
@@ -366,7 +322,6 @@ class BehaviorBox(object):
         bt.GPIO.output(pindef.output_definitions['light_port'], duty, freq)
     def pulse_off(self):
         bt.PWM.stop(pindef.output_definitions['laser_port'])
-
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
         filename =  '%s%s/%s%s'%(self.stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
@@ -464,15 +419,12 @@ def main_loop(controller, box):
                 controller.que_next_trial()
         # exit routine:
         pass
-    except Exception as e:
-        # crash handeling
+    except st.SerialError as e:
+        # crash handeling for serial errors
         controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
         # box.serial_c.close() 
         # box.connect_to_serial_port() # reconnect to box
         box.light_on()
-        # renter loop
-        # main_loop(controller, box)
-
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that
@@ -559,7 +511,7 @@ if __name__=='__main__':
             controller.params[param] = config.getboolean('run_params', param)
 
     # set (overwrite) float parameters
-    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period']:
+    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance','isi_parameter', 'delay_time']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
@@ -575,7 +527,16 @@ if __name__=='__main__':
     else:
         box.select_sound_card()
         box.select_serial_port()
+
+    # set any box params
+    for param in ['trigger_value']:
+        if config.has_option('run_params', param):
+            attr = config.getfloat('run_params',param)
+            setattr(box,param,attr)
+    # run the box
     run_box(controller, box)
+
+
     # import cProfile
     # command = """run_box(controller,box)"""
     # cProfile.runctx(command, globals(), locals(), filename = 'test.profile')
