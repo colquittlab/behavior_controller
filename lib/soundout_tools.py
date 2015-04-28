@@ -13,7 +13,7 @@ else:
 def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"):
 
 	# make sure volume is max
-	mixer = aa.Mixer(control='PCM', cardindex = cardidx)
+	mixer = aa.Mixer(control='Speaker', cardindex = cardidx)
 	try:
    		mixer.setvolume(100)
 	except:
