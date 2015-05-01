@@ -312,7 +312,11 @@ class BehaviorBox(object):
         return events_since_last
     def feeder_on(self):
         bt.set_output_list(pindef.output_definitions['feeder_port'], 1)
-    def feeder_off(self):
+    def feeder_off(self, do_warning=False):
+        if do_warning:
+            self.beep_warning()
+            time.sleep(1)
+            pass
         bt.set_output_list(pindef.output_definitions['feeder_port'], 0) 
     def light_on(self):
         bt.set_output_list(pindef.output_definitions['light_port'], 0)
