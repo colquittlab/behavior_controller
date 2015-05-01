@@ -58,7 +58,7 @@ PWM.cleanup()
 def set_output_list(pin_list, value):
         if type(pin_list) is str:
                 GPIO.output(pin_list, value)
-        elif type(pin) is list:
+        elif type(pin_list) is list:
         	for pin in pin_list:
         	        GPIO.output(pin,value)
 
