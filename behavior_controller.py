@@ -311,9 +311,12 @@ class BehaviorBox(object):
             events_since_last.append(tuple(event_out))
         return events_since_last
     def feeder_on(self):
-	import ipdb; ipdb.set_trace()
         bt.GPIO.output(pindef.output_definitions['feeder_port'], 1)
-    def feeder_off(self):
+    def feeder_off(self, do_warning=False):
+        if do_warning:
+            self.beep_warning()
+            time.sleep(1)
+            pass
         bt.GPIO.output(pindef.output_definitions['feeder_port'], 0) 
     def light_on(self):
         bt.GPIO.output(pindef.output_definitions['light_port'], 0)
