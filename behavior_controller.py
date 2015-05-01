@@ -427,8 +427,7 @@ def main_loop(controller, box):
 
             if ['force_feed_up'] in pindef.input_definitions.values():
                 key = pindef.input_definitions.keys()[pindef.input_definitions.values().index(['force_feed_up'])]
-                print key
-                if box.force_feed_up is True:
+                if box.force_feed_up is False:
                     if bt.GPIO.input(key)==1:
                         box.force_feed_up = True
                         box.feeder_on()
