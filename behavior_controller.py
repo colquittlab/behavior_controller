@@ -259,6 +259,7 @@ class BehaviorBox(object):
         self.box_name = None
         self.so_workers = []
         self.pulse_state = 0
+        self.force_feed_up = False
 
     def ready_to_run(self):
         if not self.serial_status:
@@ -422,12 +423,23 @@ def main_loop(controller, box):
                 controller.task_state = 'prepare_trial'
                 controller.store_current_trial()
                 controller.que_next_trial()
+
+            if 'force_feed_up' in pindef.output_definitions.keys():
+                if box.force_feed_up is False:
+                    if bt.GPIO.input(pin_def.input_definitions['force_feed_up'])==True:
+                        box.force_feed_up = True
+                        box.feeder_on()
+                else:
+                    if bt.GPIO.input(pin_dev.input_definitions['force_feed_up'])==False:
+                        box.force_feed_up = False
+                        box.feeder_off()
+
         # exit routine:
         pass
 
 
     except Exception as e:
-	raise(e)
+	    raise(e)
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that
