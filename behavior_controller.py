@@ -21,7 +21,7 @@ import lib.bone_tools as bt
 import lib.pin_definitions as pindef
 
 # from pyfirmata import Arduino, util
-time_tollerance = 50e-2
+time_tollerance = 50e-3
 debug = True
 beep = False
 ## Settings 
