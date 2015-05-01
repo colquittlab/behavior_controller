@@ -311,14 +311,13 @@ class BehaviorBox(object):
             events_since_last.append(tuple(event_out))
         return events_since_last
     def feeder_on(self):
-	import ipdb; ipdb.set_trace()
-        bt.GPIO.output(pindef.output_definitions['feeder_port'], 1)
+        bt.set_output_list(pindef.output_definitions['feeder_port'], 1)
     def feeder_off(self):
-        bt.GPIO.output(pindef.output_definitions['feeder_port'], 0) 
+        bt.set_output_list(pindef.output_definitions['feeder_port'], 0) 
     def light_on(self):
-        bt.GPIO.output(pindef.output_definitions['light_port'], 0)
+        bt.set_output_list(pindef.output_definitions['light_port'], 0)
     def light_off(self):
-        bt.GPIO.output(pindef.output_definitions['light_port'], 1)
+        bt.set_output_list(pindef.output_definitions['light_port'], 1)
     def pulse_on(self, freq=100, duty=50):
         bt.PWM.start(pindef.output_definitions['laser_port'], duty, freq, 1)
     def pulse_off(self):

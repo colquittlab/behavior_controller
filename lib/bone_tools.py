@@ -22,6 +22,8 @@ for pin in pindef.input_definitions.keys():
 command = ["node", "-e", script]
 call(command)
 
+
+
 ## initialize the event buffer
 ## Create event buffer and create callback function
 event_buffer = []
@@ -29,17 +31,35 @@ event_buffer = []
 def event_callback(arg):
 	event_buffer.append((time.time(), arg))
 
+
 ## initialize all input pins
 ## activate all inpuyt GPIOS
-
 GPIO.cleanup()
 for pin in pindef.input_definitions.keys():
 	GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP, 1)
 	GPIO.add_event_detect(pin, GPIO.FALLING, callback = event_callback, bouncetime = int(bouncetime))
 ## initialize all output pins
 for pin in pindef.output_definitions.values():
-	GPIO.setup(pin, GPIO.OUT)
+	if type(pin) is str:
+		GPIO.setup(pin, GPIO.OUT)
+	elif type(pin) is list:
+		for pinname in pin:
+			GPIO.setup(pinname, GPIO.OUT)
+
 
 
 ## activate all PWMS
 PWM.cleanup()
+
+
+
+
+## function to hit all dersired outputs for a write
+def set_output_list(pin_list, value):
+        if type(pin_list) is str:
+                GPIO.output(pin_list, value)
+        elif type(pin) is list:
+        	for pin in pin_list:
+        	        GPIO.output(pin,value)
+
+
