@@ -424,14 +424,15 @@ def main_loop(controller, box):
                 controller.store_current_trial()
                 controller.que_next_trial()
 
-            if 'force_feed_up' in pindef.output_definitions.values():
+            if 'force_feed_up' in pindef.input_definitions.values():
                 key = pindef.input_definitions.keys(pindef.input_definitions.values().index('force_feed_up'))
-                if box.force_feed_up is False:
-                    if bt.GPIO.input(key)==True:
+                print key
+                if box.force_feed_up is True:
+                    if bt.GPIO.input(key)==1:
                         box.force_feed_up = True
                         box.feeder_on()
                 else:
-                    if bt.GPIO.input(key)==False:
+                    if bt.GPIO.input(key)==0:
                         box.force_feed_up = False
                         box.feeder_off()
 
