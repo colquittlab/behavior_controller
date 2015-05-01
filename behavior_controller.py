@@ -392,6 +392,7 @@ def run_box(controller, box):
     box.stimuli_dir = controller.params['stimuli_dir']
     box.query_events()
     box.light_on()
+    box.feeder_off()
     # send loop
     main_loop(controller, box)
     pass
