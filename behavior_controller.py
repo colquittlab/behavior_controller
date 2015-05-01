@@ -311,6 +311,7 @@ class BehaviorBox(object):
             events_since_last.append(tuple(event_out))
         return events_since_last
     def feeder_on(self):
+	import ipdb; ipdb.set_trace()
         bt.GPIO.output(pindef.output_definitions['feeder_port'], 1)
     def feeder_off(self):
         bt.GPIO.output(pindef.output_definitions['feeder_port'], 0) 
@@ -420,12 +421,10 @@ def main_loop(controller, box):
                 controller.que_next_trial()
         # exit routine:
         pass
-    except st.SerialError as e:
-        # crash handeling for serial errors
-        controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
-        # box.serial_c.close() 
-        # box.connect_to_serial_port() # reconnect to box
-        box.light_on()
+
+
+    except Exception as e:
+	raise(e)
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that

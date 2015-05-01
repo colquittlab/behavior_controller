@@ -10,6 +10,9 @@ import pin_definitions as pindef
 bouncetime = 250 # bouncetime in ms 
 
 
+
+
+
 ## set all inputs to pullup by default using bonescript (this sucks)
 pud = "pullup"
 mux = 7

@@ -8,12 +8,24 @@ if os.uname()[0]=='Linux': # this allows for development on non-linux systems
 else:
 	pass
 
+# find mixer name
+for control_name in ['PCM', 'Speaker','Master']:
+	try:
+		mixer = aa.Mixer(control=control_name, cardindex = cardidx)
+	except:
+		pass
+try:
+    mixer.setvolume(100)
+except:
+    pass
+try:
+    mixer.setmute(0)
+except:
+    pass
+
 
 #functions
 def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"):
-
-	# make sure volume is max
-	mixer = aa.Mixer(control='Speaker', cardindex = cardidx)
 	try:
    		mixer.setvolume(100)
 	except:
@@ -22,7 +34,7 @@ def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, pulse_type
 		mixer.setmute(0)
 	except:
 		pass
-	# pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='hw:%d,0'%cardidx)
+
 	pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='plughw:%d,0'%cardidx)
 	frame_size = 320
 	if filetype == '.wav':
