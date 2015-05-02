@@ -320,7 +320,7 @@ class BehaviorBox(object):
             time.sleep(1)
             pass
         bt.set_output_list(pindef.output_definitions['feeder_port'], 1) 
-        bt.PWM.start(pindef.output_definitions['pwm_pin'],42,300)
+        bt.PWM.start(pindef.output_definitions['pwm_pin'],50,300)
     def light_on(self):
         bt.set_output_list(pindef.output_definitions['light_port'], 0)
     def light_off(self):
