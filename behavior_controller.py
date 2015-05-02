@@ -427,7 +427,7 @@ def main_loop(controller, box):
                 controller.store_current_trial()
                 controller.que_next_trial()
 
-            if 'toggle_force_feed' in events_since_last
+            if 'toggle_force_feed' in events_since_last:
                 if box.force_feed_up is False:
                     box.force_feed_up = True
                     box.feeder_on()
