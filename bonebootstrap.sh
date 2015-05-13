@@ -24,14 +24,14 @@ while true; do
         [Yy]* ) read -p "Enter address" staticaddress;
                 netmask=255.255.254.0;
                 gateway=169.230.190.1;
-                dns-nameservers=169.230.190.10;
-                dns-search=cin.ucsf.edu;
+                dnsnameservers=169.230.190.10;
+                dnssearch=cin.ucsf.edu;
                 awk -f lib/changeInterface.awk /etc/network/interfaces device=eth0 adress=$staticaddress netmask=$netmask gateway=$gateway
                 break;;
         [Nn]* ) break;;
     esac
 done
-
+exit
 # setup usb0 interface
 
 APTPACKAGES="python-scipy python-alsaaudio"
