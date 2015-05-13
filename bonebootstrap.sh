@@ -17,22 +17,22 @@ while true; do
     esac
 done
 
-# setup eth0 interface
-while true; do
-    read -p "Do you wish to setup eth0 as static ip? [Y/N]  " yn
-    case $yn in
-        [Yy]* ) read -p "Enter address" staticaddress;
-                netmask=255.255.254.0;
-                gateway=169.230.190.1;
-                dnsnameservers=169.230.190.10;
-                dnssearch=cin.ucsf.edu;
-                awk -f lib/changeInterface.awk /etc/network/interfaces device=eth0 adress=$staticaddress netmask=$netmask gateway=$gateway
-                break;;
-        [Nn]* ) break;;
-    esac
-done
-exit
-# setup usb0 interface
+# # setup eth0 interface
+# while true; do
+#     read -p "Do you wish to setup eth0 as static ip? [Y/N]  " yn
+#     case $yn in
+#         [Yy]* ) read -p "Enter address" staticaddress;
+#                 netmask=255.255.254.0;
+#                 gateway=169.230.190.1;
+#                 dnsnameservers=169.230.190.10;
+#                 dnssearch=cin.ucsf.edu;
+#                 awk -f lib/changeInterface.awk /etc/network/interfaces device=eth0 adress=$staticaddress netmask=$netmask gateway=$gateway
+#                 break;;
+#         [Nn]* ) break;;
+#     esac
+# done
+# exit
+# # setup usb0 interface
 
 APTPACKAGES="python-scipy python-alsaaudio"
 PIPPACKAGES="pyexecjs pyserial"
@@ -46,3 +46,8 @@ for PACK in $PIPPACKAGES
 do
     sudo pip install $PACK --upgrade
 done
+
+mkdir /root/data
+mkdir /root/data/stimuli
+mkdir /root/data/behavior
+
