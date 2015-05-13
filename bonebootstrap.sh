@@ -4,7 +4,7 @@
 while true; do
     read -p "Do you wish to set password for root? [Y/N] (you should!!)\n" yn
     case $yn in
-        [Yy]* ) echo "set password for root"; passwd root;;
+        [Yy]* ) echo "set password for root"; passwd root; break;;
         [Nn]* ) exit;;
     esac
 done
