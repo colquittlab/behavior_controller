@@ -280,12 +280,10 @@ class BehaviorBox(object):
 
     def select_box(self, box):
         list_of_boxes = ut.return_list_of_boxes()
-        if box in [b[0] for b in list_of_boxes]:
-            idx = [b[0] for b in list_of_boxes].index(box)
-            box_data = list_of_boxes[idx]
-            # self.select_serial_port(box_data[1])
-            self.select_sound_card(box_data[2])
-            self.box_name = box_data[0]
+        idx = 0 # box is hardcoded for arduino
+        box_data = list_of_boxes[idx] 
+        self.select_sound_card(box_data[2])
+        self.box_name = box_data[0]}
 
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
