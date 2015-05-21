@@ -283,7 +283,7 @@ class BehaviorBox(object):
         idx = 0 # box is hardcoded for arduino
         box_data = list_of_boxes[idx] 
         self.select_sound_card(box_data[2])
-        self.box_name = box_data[0]}
+        self.box_name = box_data[0]
 
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
