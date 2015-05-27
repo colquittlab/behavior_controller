@@ -278,14 +278,12 @@ class BehaviorBox(object):
     def current_time(self):
         return time.time()
 
-    def select_box(self, box):
+    def activate_box(self, box_name):
         list_of_boxes = ut.return_list_of_boxes()
-        if box in [b[0] for b in list_of_boxes]:
-            idx = [b[0] for b in list_of_boxes].index(box)
-            box_data = list_of_boxes[idx]
-            # self.select_serial_port(box_data[1])
-            self.select_sound_card(box_data[2])
-            self.box_name = box_data[0]
+        box_data = list_of_boxes[0]
+        box_data[0] = box_name
+        self.select_sound_card(box_data[2])
+        self.box_name = box_data[0]
 
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
@@ -539,7 +537,7 @@ if __name__=='__main__':
     controller.load_stimsets()
     box = BehaviorBox()
     if config.has_option('run_params','box'):
-        box.select_box(config.get('run_params','box'))
+        box.activate_box(config.get('run_params','box'))
     else:
         box.select_sound_card()
         box.select_serial_port()

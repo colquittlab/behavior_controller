@@ -30,7 +30,7 @@ def return_list_of_boxes():
             cardout = card
     if cardout is None:
         raise(Exception('No usb sound card connected'))
-    boxes_present = [('box_1', None, cardout)]
+    boxes_present = [('box', None, cardout)]
     return boxes_present                
 
 # def return_list_of_usb_serial_ports():

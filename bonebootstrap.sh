@@ -34,6 +34,8 @@ done
 # exit
 # # setup usb0 interface
 
+
+# install existing packages
 APTPACKAGES="python-scipy python-alsaaudio"
 PIPPACKAGES="pyexecjs pyserial"
 apt-get update
@@ -47,7 +49,26 @@ do
     sudo pip install $PACK --upgrade
 done
 
+# download and install latest adafruit_gpio
+
+
+# install screen script
+TEST=`~/.bashrc | grep "# Auto-screen invocation" -q`
+if [ $TEST ]
+then
+    echo "screen invocation in bash script already"
+else
+    echo "adding screen invocation to bash script"
+    cat lib/screen_invocation_script >> ~/.bashrc
+end
+done
+
+
+
+
+# make data directories (if they don't already exist)
 mkdir /root/data
 mkdir /root/data/stimuli
 mkdir /root/data/behavior
+
 
