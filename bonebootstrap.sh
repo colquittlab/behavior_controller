@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# set hostname
+while true; do
+    read -p "Do you wish to set the hostname? [Y/N] " yn
+    case $yn in
+        [Yy]* ) read -p "Enter new hostname" hn; hostname -v -b $hn; break;;
+        [Nn]* ) break;;
+    esac
+done
+
 # set password for root
 while true; do
     read -p "Do you wish to set password for root? [Y/N] (you should!!)  " yn
