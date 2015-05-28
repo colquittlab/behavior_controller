@@ -50,8 +50,8 @@ do
 done
 
 # install screen script
-TEST=`cat ~/.bashrc | grep "# Auto-screen invocation" -q`
-if [ $TEST ]
+cat ~/.bashrc | grep "# Auto-screen invocation" -q
+if [ $? ]
 then
     echo "screen invocation in bash script already"
 else
