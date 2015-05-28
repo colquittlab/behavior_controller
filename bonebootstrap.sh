@@ -37,7 +37,7 @@ done
 
 # install existing packages
 APTPACKAGES="python-scipy python-alsaaudio"
-PIPPACKAGES="pyexecjs pyserial"
+PIPPACKAGES="pyexecjs pyserial Afafruit-BBIO ipython"
 apt-get update
 for PACK in $APTPACKAGES
 do
@@ -49,11 +49,8 @@ do
     sudo pip install $PACK --upgrade
 done
 
-# download and install latest adafruit_gpio
-
-
 # install screen script
-TEST=`~/.bashrc | grep "# Auto-screen invocation" -q`
+TEST=`cat ~/.bashrc | grep "# Auto-screen invocation" -q`
 if [ $TEST ]
 then
     echo "screen invocation in bash script already"
@@ -61,9 +58,7 @@ else
     echo "adding screen invocation to bash script"
     cat lib/screen_invocation_script >> ~/.bashrc
 end
-done
-
-
+fi
 
 
 # make data directories (if they don't already exist)
