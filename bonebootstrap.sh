@@ -57,7 +57,6 @@ then
 else
     echo "adding screen invocation to bash script"
     cat lib/screen_invocation_script >> ~/.bashrc
-end
 fi
 
 
