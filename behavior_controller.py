@@ -282,9 +282,8 @@ class BehaviorBox(object):
         list_of_boxes = ut.return_list_of_boxes()
 
         box_data = list_of_boxes[0]
-        box_data[0] = box_name
         self.select_sound_card(box_data[2])
-        self.box_name = box_data[0]
+        self.box_name = box_name
 
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()

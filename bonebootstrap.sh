@@ -37,7 +37,7 @@ done
 
 # install existing packages
 APTPACKAGES="python-scipy python-alsaaudio"
-PIPPACKAGES="pyexecjs pyserial Afafruit-BBIO ipython"
+PIPPACKAGES="pyexecjs pyserial Adafruit-BBIO ipython"
 apt-get update
 for PACK in $APTPACKAGES
 do
