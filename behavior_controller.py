@@ -26,8 +26,8 @@ debug = True
 beep = False
 ## Settings 
 mode_definitions = loop.iterations.keys()
-default_stimuli_dir = '/home/doupelab/data/stimuli/'
-default_data_dir = '/home/doupelab/data/behavior/'
+default_stimuli_dir = '/data/stimuli/'
+default_data_dir = '/data/behavior/'
 
 class BehaviorController(object):
     def __init__(self):
