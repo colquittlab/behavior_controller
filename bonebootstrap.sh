@@ -59,9 +59,9 @@ else
 fi
 
 
-# make data directories (if they don't already exist)
-mkdir /root/data
-mkdir /root/data/stimuli
-mkdir /root/data/behavior
-
+# make data directories (if they don't already exist) and set permissions
+mkdir /data
+mkdir /data/stimuli
+mkdir /data/behavior
+chmod -R 777 /data
 
