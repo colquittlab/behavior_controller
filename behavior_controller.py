@@ -280,13 +280,9 @@ class BehaviorBox(object):
 
     def activate_box(self, box_name):
         list_of_boxes = ut.return_list_of_boxes()
-<<<<<<< HEAD
+
         box_data = list_of_boxes[0]
         box_data[0] = box_name
-=======
-        idx = 0 # box is hardcoded for arduino
-        box_data = list_of_boxes[idx] 
->>>>>>> 3b374fce5cb3b94b609207e08c7c1e823094893e
         self.select_sound_card(box_data[2])
         self.box_name = box_data[0]
 
