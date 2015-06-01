@@ -22,7 +22,11 @@ try:
     mixer.setmute(0)
 except:
     pass
-
+try:
+	mixer.close()
+except:
+	pass
+	
 
 #functions
 def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"):
