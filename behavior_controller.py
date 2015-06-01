@@ -29,6 +29,8 @@ mode_definitions = loop.iterations.keys()
 default_stimuli_dir = '/data/stimuli/'
 default_data_dir = '/data/behavior/'
 
+
+
 class BehaviorController(object):
     def __init__(self):
         self.birdname = None
@@ -163,15 +165,17 @@ class BehaviorController(object):
         self.current_trial = None
         pass
 
-    def return_log_fid(self):
-        if self.log_fid == None:
-            self.log_fid = open('%s%s.log'% (self.params['data_dir'],self.base_filename), 'w')
-        return self.log_fid
+    def return_log_fname(self):
+        #if self.log_fid == None:
+         #   self.log_fid = open('%s%s.log'% (self.params['data_dir'],self.base_filename), 'w')
+        #return self.log_fid
+        return '%s%s.log' % (self.params['data_dir'], self.base_filename)
 
-    def return_events_fid(self):
-        if self.trial_fid == None:
-            self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'w')
-        return self.trial_fid
+    def return_events_fname(self):
+    #     if self.trial_fid == None:
+    #         self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'w')
+    #     return self.trial_fid 
+        return '%s%s.trial'% (self.params['data_dir'],self.base_filename)
 
     def save_config_file(self):
         config_fname = '%s%s.config'% (self.params['data_dir'],self.base_filename)
@@ -187,29 +191,29 @@ class BehaviorController(object):
         pass
 
     def save_events_to_log_file(self,  events_since_last):
-        fid = self.return_log_fid()
-        for event in events_since_last:
-            # tally counts from events
-            self.event_count += 1
-            if event[1] == "reward_start":
-                self.reward_count += 1
-            if event[1] == "timeout_start":
-                self.timeout_count += 1
+        with open(self.return_log_fname(),'w') as fid:
+            for event in events_since_last:
+                # tally counts from events
+                self.event_count += 1
+                if event[1] == "reward_start":
+                    self.reward_count += 1
+                if event[1] == "timeout_start":
+                    self.timeout_count += 1
 
-            fid.write("%d:%s\n"%(self.event_count, str(event)))
-            if debug:
-                #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
-                print "%s events:%d, trials:%d, rewards:%d, tos:%d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, self.timeout_count, str(event)) #GK
-                if beep:
-                    so.beep()
-        fid.flush()
+                fid.write("%d:%s\n"%(self.event_count, str(event)))
+                if debug:
+                    #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
+                    print "%s events:%d, trials:%d, rewards:%d, tos:%d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, self.timeout_count, str(event)) #GK
+                    if beep:
+                        so.beep()
+            fid.flush()
         pass
 
     def save_trial_to_file(self, trial):
         trial['mode'] = self.params['mode']
-        fid = self.return_events_fid()
-        fid.write('%s\n' % json.dumps(trial))
-        fid.flush()
+        with open(self.return_events_fname(),'w') as fid:
+            fid.write('%s\n' % json.dumps(trial))
+            fid.flush()
         pass
 
     def calculate_performance_statistics(self, n_trials_back = None):
