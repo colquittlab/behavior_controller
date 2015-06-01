@@ -52,6 +52,7 @@ while true; do
         [Nn]* ) DOPACKAGES=false; break;;
     esac
 done
+echo $DOPACKAGES
 if [ $DOPACKAGES ]
 then
     # install existing packages
