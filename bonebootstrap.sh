@@ -44,29 +44,49 @@ done
 # # setup usb0 interface
 
 
-# install existing packages
-APTPACKAGES="python-scipy python-alsaaudio"
-PIPPACKAGES="pyexecjs pyserial Adafruit-BBIO ipython"
-apt-get update
-for PACK in $APTPACKAGES
-do
-    apt-get --assume-yes install $PACK
-done
 
-for PACK in $PIPPACKAGES
-do
-    sudo pip install $PACK --upgrade
+while true; do
+    read -p "Do you wish to update all required packages [Y/N] " yn
+    case $yn in
+        [Yy]* ) DOPACKAGES=true;  break;;
+        [Nn]* ) DOPACKAGES=false; break;;
+    esac
 done
-
-# install screen script
-if  grep -q "# Auto-screen invocation" ~/.bashrc
+if [ $DOPACKAGES ]
 then
-    echo "screen invocation in bash script already"
-else
-    echo "adding screen invocation to bash script"
-    cat lib/screen_invocation_script >> ~/.bashrc
+    # install existing packages
+    APTPACKAGES="python-scipy python-alsaaudio"
+    PIPPACKAGES="pyexecjs pyserial Adafruit-BBIO ipython"
+    apt-get update
+    for PACK in $APTPACKAGES
+    do
+        apt-get --assume-yes install $PACK
+    done
+
+    for PACK in $PIPPACKAGES
+    do
+        sudo pip install $PACK --upgrade
+    done
 fi
 
+while true; do
+    read -p "Do you wish to install automatic screen invocation for root? [Y/N] " yn
+    case $yn in
+        [Yy]* ) DOSCREEN=true;  break;;
+        [Nn]* ) DOSCREEN=false; break;;
+    esac
+done
+if [ $DOSCREEN ]
+then
+    # install screen script
+    if  grep -q "# Auto-screen invocation" ~/.bashrc
+    then
+        echo "screen invocation in bash script already"
+    else
+        echo "adding screen invocation to bash script"
+        cat lib/screen_invocation_script >> ~/.bashrc
+    fi
+fi
 
 # make data directories (if they don't already exist) and set permissions
 mkdir /data
