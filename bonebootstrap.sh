@@ -52,7 +52,7 @@ while true; do
         [Nn]* ) DOPACKAGES=false; break;;
     esac
 done
-if [ "$DOPACKAGES" ]
+if $DOPACKAGES
 then
     # install existing packages
     APTPACKAGES="python-scipy python-alsaaudio"
@@ -76,7 +76,7 @@ while true; do
         [Nn]* ) DOSCREEN=false; break;;
     esac
 done
-if [ "$DOSCREEN" ]
+if $DOSCREEN
 then
     # install screen script
     if  grep -q "# Auto-screen invocation" ~/.bashrc
