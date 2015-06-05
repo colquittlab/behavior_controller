@@ -23,7 +23,7 @@ try:
 except:
     pass
 try:
-	mixer.close()
+    mixer.close()
 except:
 	pass
 	
