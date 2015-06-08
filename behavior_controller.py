@@ -264,7 +264,7 @@ class BehaviorBox(object):
         self.so_workers = []
         self.pulse_state = 0
         self.force_feed_up = False
-	bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
+        bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
         if not self.serial_status:
