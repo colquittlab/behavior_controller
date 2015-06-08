@@ -180,7 +180,7 @@ class BehaviorController(object):
     def save_config_file(self):
         config_fname = '%s%s.config'% (self.params['data_dir'],self.base_filename)
         if self.config_file_contents is not None:
-            config_fid = open(config_fname, 'w')
+            config_fid = open(config_fname, 'a')
             config_fid.write(self.config_file_contents)
         else:
             config = ConfigParser.ConfigParser()
@@ -191,7 +191,7 @@ class BehaviorController(object):
         pass
 
     def save_events_to_log_file(self,  events_since_last):
-        with open(self.return_log_fname(),'w') as fid:
+        with open(self.return_log_fname(),'a') as fid:
             for event in events_since_last:
                 # tally counts from events
                 self.event_count += 1
