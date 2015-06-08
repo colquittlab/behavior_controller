@@ -332,7 +332,6 @@ class BehaviorBox(object):
         bt.PWM.start(pindef.output_definitions['laser_port'], duty, freq, 1)
     def pulse_off(self):
         bt.PWM.stop(pindef.output_definitions['laser_port'])
-        bt.PWM.cleanup()
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
         filename =  '%s%s/%s%s'%(self.stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
