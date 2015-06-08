@@ -316,14 +316,22 @@ class BehaviorBox(object):
         return events_since_last
     def feeder_on(self):
         bt.set_output_list(pindef.output_definitions['feeder_port'], 1)    
-        bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'], 85)
+        try:
+            bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'], 85)
+        except:
+            print 'unable to set pwm port'
     def feeder_off(self, do_warning=False):
         if do_warning:
             self.beep_warning()
             time.sleep(1)
             pass
         bt.set_output_list(pindef.output_definitions['feeder_port'], 0) 
-        bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'],15)
+       
+        try:
+	    bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'],15)
+        except:
+            print 'unable to set pwm port'
+
     def light_on(self):
         bt.set_output_list(pindef.output_definitions['light_port'], 0)
     def light_off(self):
