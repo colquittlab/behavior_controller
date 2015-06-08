@@ -211,7 +211,7 @@ class BehaviorController(object):
 
     def save_trial_to_file(self, trial):
         trial['mode'] = self.params['mode']
-        with open(self.return_events_fname(),'w') as fid:
+        with open(self.return_events_fname(),'a') as fid:
             fid.write('%s\n' % json.dumps(trial))
             fid.flush()
         pass
