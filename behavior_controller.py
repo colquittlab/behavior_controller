@@ -264,6 +264,7 @@ class BehaviorBox(object):
         self.so_workers = []
         self.pulse_state = 0
         self.force_feed_up = False
+	bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
         if not self.serial_status:
@@ -314,19 +315,15 @@ class BehaviorBox(object):
             events_since_last.append(tuple(event_out))
         return events_since_last
     def feeder_on(self):
-        bt.set_output_list(pindef.output_definitions['feeder_port'], 1)
-        bt.PWM.stop(pindef.output_definitions['pwm_pin'])
-        bt.PWM.cleanup()
-        bt.PWM.start(pindef.output_definitions['pwm_pin'],80,500)
+        bt.set_output_list(pindef.output_definitions['feeder_port'], 1)    
+        bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'], 85)
     def feeder_off(self, do_warning=False):
         if do_warning:
             self.beep_warning()
             time.sleep(1)
             pass
         bt.set_output_list(pindef.output_definitions['feeder_port'], 0) 
-        bt.PWM.stop(pindef.output_definitions['pwm_pin'])
-        bt.PWM.cleanup()
-        bt.PWM.start(pindef.output_definitions['pwm_pin'],55,500)
+        bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'],15)
     def light_on(self):
         bt.set_output_list(pindef.output_definitions['light_port'], 0)
     def light_off(self):
