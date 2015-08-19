@@ -2,7 +2,6 @@ from subprocess import call, Popen
 import os
 import time
 
-
 def build_and_upload(arduino_port):
 	o_cwd = os.getcwd()
 	ino_project_dir = o_cwd + '/arduino_code/ino_project'

@@ -12,12 +12,12 @@ import ConfigParser
 import sys
 
 import lib.soundout_tools as so
-# import lib.serial_tools as st
+import lib.serial_tools as st
 # import lib.arduino_tools as at
 import lib.usb_tools as ut
 import loop_iterations as loop
 import trial_generators as trial
-import lib.bone_tools as bt
+#import lib.bone_tools as bt
 import lib.pin_definitions as pindef
 import lib.audiorecord as ar
 
@@ -29,8 +29,6 @@ beep = False
 mode_definitions = loop.iterations.keys()
 default_stimuli_dir = '/data/stimuli/'
 default_data_dir = '/data/behavior/'
-
-
 
 class BehaviorController(object):
     def __init__(self):
@@ -573,7 +571,7 @@ if __name__=='__main__':
 
     # set recording params
     for option in config.options('record_params'):
-        attr = config.get('run_params', option):
+        attr = config.get('run_params', option)
         setattr(box.recorder, option, attr)
 
     # run the box

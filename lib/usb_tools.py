@@ -3,7 +3,11 @@ import  glob
 import  os
 import  re
 import serial
-import alsaaudio as aa
+if os.uname()[0]=='Linux': # this allows for development on non-linux systems 
+	import alsaaudio as aa
+else:
+	pass
+#import alsaaudio as aa
 # from serial.tools import list_ports
 
 import serial_tools as st 
