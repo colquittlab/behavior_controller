@@ -19,6 +19,7 @@ import loop_iterations as loop
 import trial_generators as trial
 import lib.bone_tools as bt
 import lib.pin_definitions as pindef
+import lib.audiorecord as ar
 
 # from pyfirmata import Arduino, util
 time_tollerance = 50e-3
@@ -256,14 +257,13 @@ class BehaviorBox(object):
     """this object holds the present state of the behavior Arduino
     and contains the methods to change the pins of the box"""
     def __init__(self):
-        # 
-
         self.stimuli_dir = None
         self.serial_buffer = ""
         self.box_name = None
         self.so_workers = []
         self.pulse_state = 0
         self.force_feed_up = False
+        self.recorder = aa.AudioRecord()
         bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
@@ -306,6 +306,9 @@ class BehaviorBox(object):
         self.sc_idx = idx
         self.beep()
 
+    def start_recording(self):
+        self.recording_process = aa.record_song()
+
     def query_events(self, timeout = 0):
         events_since_last = []
         while len(bt.event_buffer) > 0:
@@ -336,7 +339,7 @@ class BehaviorBox(object):
         # stimset_name = stimset['name']
         filename =  '%s%s/%s%s'%(self.stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
         self.play_sound(filename)
-        pass  
+        pass
 
     def play_sound(self, filename):
         # kill any workers
@@ -350,6 +353,13 @@ class BehaviorBox(object):
         p = so.sendwf(self.sc_idx, filename, filetype, 44100)
         self.so_workers.append(p)
         pass
+    def play_sound_restart_record(self, filename):
+        # release recording lock on PCM
+        self.instream.close()
+        # play sound
+        self.play_sound(filename)
+        # restart recording
+        self.start_recording()
 
     def beep(self):
         self.play_sound('sounds/beep.wav')
@@ -397,6 +407,10 @@ def run_box(controller, box):
     box.query_events()
     box.light_on()
     box.feeder_off()
+
+    #### Start recording song
+    box.start_recording()
+
     try:
         # send loop
         main_loop(controller, box)
@@ -418,6 +432,7 @@ def main_loop(controller, box):
     controller.has_run = True
     # enter the loop
     last_time = box.current_time
+
     while controller.box_state == 'go':
         current_time = box.current_time
         loop_time = current_time - last_time
@@ -555,6 +570,12 @@ if __name__=='__main__':
         if config.has_option('run_params', param):
             attr = config.getfloat('run_params',param)
             setattr(box,param,attr)
+
+    # set recording params
+    for option in config.options('record_params'):
+        attr = config.get('run_params', option):
+        setattr(box.recorder, option, attr)
+
     # run the box
     run_box(controller, box)
 
