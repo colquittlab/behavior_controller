@@ -11,6 +11,8 @@ import json
 import ConfigParser
 import sys
 
+import pdb 
+
 import lib.soundout_tools as so
 import lib.serial_tools as st
 # import lib.arduino_tools as at
@@ -261,8 +263,8 @@ class BehaviorBox(object):
         self.so_workers = []
         self.pulse_state = 0
         self.force_feed_up = False
-        self.recorder = aa.AudioRecord()
-        bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
+        self.recorder = ar.AudioRecord(self)
+        #bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
         if not self.serial_status:
@@ -341,6 +343,7 @@ class BehaviorBox(object):
 
     def play_sound(self, filename):
         # kill any workers
+        #pdb.set_trace()
         while len(self.so_workers)>0:
             worker = self.so_workers.pop()
             if worker[0].is_alive():
@@ -351,6 +354,7 @@ class BehaviorBox(object):
         p = so.sendwf(self.sc_idx, filename, filetype, 44100)
         self.so_workers.append(p)
         pass
+
     def play_sound_restart_record(self, filename):
         # release recording lock on PCM
         self.instream.close()

@@ -29,8 +29,20 @@ else:
 #OUTPUT_DIR='rd58pu12'
 
 class AudioRecord:
-    def __init__(self, box, config):
+    def __init__(self, box):
         self.box = weakref.ref(box)
+        self.chunk = None
+        self.format = None
+        self.channels = None
+        self.rate = None
+        self.threshold = None
+        self.silence_limit = None
+        self.prev_audio = None
+        self.min_dur = None
+        self.outdir = None
+        self.stream = None
+
+    def init_config(self, config):
         self.chunk = config.getint('record_params', 'chunk')
         self.format = None
         self.channels = None
@@ -47,11 +59,10 @@ class AudioRecord:
         self.prev_audio = config.getfloat('record_params', 'prev_audio')
         self.min_dur = config.getfloat('record_params', 'min_dur')
         self.outdir = config.get('record_params', 'outdir')
-        self.stream = None
 
         if self.threshold == "auto":
             self.set_threshold()    
-
+        
     def audio_int(self, num_samples=64):
         """ Gets max audio intensity for a bunch of chunks of data. Useful for setting threshold.
         """
