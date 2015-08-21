@@ -3,6 +3,7 @@ import serial
 from serial.tools import list_ports
 from os.path import join
 import subprocess
+import pdb
 
 def return_list_of_usb_serial_ports():
     if os.name == 'nt':
@@ -18,8 +19,9 @@ def return_list_of_usb_serial_ports():
     else:
         # unix
         list_of_ports = [port[0] for port in list_ports.comports()]
-
-    list_of_ports = filter(lambda x: 'ACM' in x, list_of_ports)
+    #pdb.set_trace()
+    #list_of_ports = filter(lambda x: 'ACM' in x, list_of_ports)
+    list_of_ports = filter(lambda x: 'USB' in x, list_of_ports)
     list_of_ports_and_ids = []
     for port in list_of_ports:
         command = "udevadm info -a -n %s | grep '{serial}' | head -n1" % port

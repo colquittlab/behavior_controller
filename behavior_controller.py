@@ -10,7 +10,7 @@ import io
 import json
 import ConfigParser
 import sys
-
+import pdb
 import lib.soundout_tools as so
 import lib.serial_tools as st
 import lib.usb_tools as ut
@@ -33,8 +33,10 @@ mode_definitions = loop.iterations.keys()
 
 # output_definitions = {'reward_port': 12}
 # trigger_value = 1
-default_stimuli_dir = '/home/doupelab/data/stimuli/'
-default_data_dir = '/home/doupelab/data/behavior/'
+#default_stimuli_dir = '/home/doupelab/data/stimuli/'
+#default_data_dir = '/home/doupelab/data/behavior/'
+default_stimuli_dir = '/home/brad/behavior/stimuli'
+default_data_dir = '/home/brad/behavior/data'
 
 class BehaviorController(object):
     def __init__(self):
@@ -305,6 +307,7 @@ class BehaviorBox(object):
         return time.time()
 
     def select_box(self, box):
+        pdb.set_trace()
         list_of_boxes = ut.return_list_of_boxes()
         if box in [b[0] for b in list_of_boxes]:
             idx = [b[0] for b in list_of_boxes].index(box)
@@ -335,6 +338,7 @@ class BehaviorBox(object):
 
     def connect_to_serial_port(self):
         try:
+            pdb.set_trace()
             self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
             self.serial_c.setDTR(False)
             self.serial_c.flushInput()
@@ -346,6 +350,7 @@ class BehaviorBox(object):
         except:
             self.reload_arduino_firmware()
             return self.connect_to_serial_port()
+
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
 
@@ -419,6 +424,7 @@ class BehaviorBox(object):
 
 
     def write_command(self, command):
+        pdb.set_trace()
         self.serial_io.write(unicode(command))
         self.serial_io.flush()
 
@@ -459,7 +465,7 @@ class BehaviorBox(object):
         self.write_command(command)
 
     def sync(self):
-
+        #pdb.set_trace()
         send_time = self.current_time
         self.write_command('<sync>')
         events = []
@@ -691,7 +697,7 @@ if __name__=='__main__':
         if config.has_option('run_params', param):
                 controller.params[param] = json.loads(config.get('run_params',param))
 
-    controller.load_stimsets()
+    #controller.load_stimsets()
     box = BehaviorBox()
     if config.has_option('run_params','box'):
         box.select_box(config.get('run_params','box'))

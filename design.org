@@ -1,0 +1,23 @@
+* Classes
+** Supervisor
+*** holds dictionary of tuples(Controller, Box)
+*** holds representation of arduino
+**** currently implented at level of BehaviorBox
+*** monitors signals from arduino
+*** sends playback signal to given box
+*** methods
+**** activate box
+**** stop box
+**** query_events
+** BehaviorController
+** BehaviorBox
+** AudioRecord
+** Arduino
+
+* Original setup 
+** BehaviorBox
+*** run_box
+**** initialized box
+**** calls main_loop()
+***** calls query_events to read events from serial device (Arduino)
+***** 
