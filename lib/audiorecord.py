@@ -1,9 +1,11 @@
 import wave
 import audioop
 import os
+import sys
 import time
 import math
 import weakref
+import pdb
 import numpy as np
 import multiprocessing as mp
 from collections import deque
@@ -183,14 +185,14 @@ def start_recording(queue, pcm, channels, rate, format, chunk,
         if(sum([x > threshold for x in slid_win]) > 0):
             if(not started):
                 # start recording
-                print "recording"
-                print time.ctime()
+                sys.stdout.write(time.ctime() + ": ")
+                sys.stdout.write("recording ... ")
+                sys.stdout.flush()
                 started = True
             audio2send.append(cur_data)
-            print len(audio2send)
         elif (started is True and len(audio2send)>min_dur*rel):
             # write out
-            print "finished"
+            print "writing to file"
             filename = save_audio(list(prev_audio) + audio2send, outdir, rate)
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
