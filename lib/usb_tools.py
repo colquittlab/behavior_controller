@@ -4,6 +4,7 @@ import  os
 import  re
 import serial
 import alsaaudio as aa
+import pdb
 # from serial.tools import list_ports
 
 import serial_tools as st 
@@ -12,7 +13,7 @@ import soundout_tools as so
 
 
 def return_list_of_boxes():
-    pdb.set_trace()
+    #pdb.set_trace()
     list_of_sound_cards = so.list_sound_cards()
     #list_of_sound_cards = filter(lamdba x: 'iLuv' in x, list_of_ports)
     list_of_arduinos = st.return_list_of_named_arduinos()
@@ -20,9 +21,9 @@ def return_list_of_boxes():
     for ad in list_of_arduinos:
         if '_' in ad:
             ad_num = ad.split('_')[1]
-            for sc in list_of_sound_cards:
+            for idx,sc in enumerate(list_of_sound_cards):
                 if '_' in sc:
-                    sc_num = sc.split('_')[1]
+                    #sc_num = sc.split('_')[1]
                     #if sc_num == ad_num:
                     boxes_present.append(('box_' + ad_num, ad, sc))
     if len(list_of_arduinos)>0 and len(boxes_present)==0:

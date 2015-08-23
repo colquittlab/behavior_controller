@@ -3,6 +3,7 @@ import wave
 from multiprocessing import Process, Value
 import subprocess
 import numpy as np
+import pdb
 if os.uname()[0]=='Linux': # this allows for development on non-linux systems 
 	import alsaaudio as aa
 else:
@@ -13,17 +14,21 @@ else:
 def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, pulse_type = "high"):
 
 	# make sure volume is max
-	mixer = aa.Mixer(control='Speaker', cardindex = cardidx)
-	try:
-   		mixer.setvolume(100)
-	except:
-		pass
-	try:
-		mixer.setmute(0)
-	except:
-		pass
-	# pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='hw:%d,0'%cardidx)
-	pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='plughw:%d,0'%cardidx)
+        #mixer = aa.Mixer(control='Speaker', cardindex = cardidx)
+        #pdb.set_trace()
+        #mixer = aa.Mixer(control='PCM', cardindex = cardidx)
+        # try:
+        # 	mixer.setvolume(100)
+        # except:
+        # 	pass
+        # try:
+        # 	mixer.setmute(0)
+        # except:
+        #         pass
+
+        #pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='hw:%d,0'%cardidx)
+        #pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, card='plughw:%d,0'%cardidx)
+        pcm = aa.PCM(type=aa.PCM_PLAYBACK, mode=aa.PCM_NORMAL, device='plughw:%d,0'%cardidx)
 	frame_size = 320
 	if filetype == '.wav':
 		song=wave.open(filename)
@@ -60,7 +65,7 @@ def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, pulse_type
 				pcm.write(data)
 				
 				# data = np.concatinate(np.array(data), np.one
-			else:
+                        else:
 				pcm.write(data)
 			data=song.readframes(frame_size)
 	elif filetype == '.sng':

@@ -270,6 +270,11 @@ def song_only_iteration(controller, box, events_since_last):
     # examine what events have happened and trigger new ones, depending on box state
     if controller.task_state == 'waiting_for_trial':
         if 'song_trigger' in events_since_last_names:
+            # stop recorder
+            box.recorder.stop()
+            events_since_last.append((box.current_time,'recording_stopped'))
+
+            # play stimulus
             box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
@@ -278,6 +283,10 @@ def song_only_iteration(controller, box, events_since_last):
         if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             events_since_last.append((box.current_time,'playback_ended'))
             trial_ended = True
+
+            #start recorder
+            box.recorder.start()
+            events_since_last.append((box.current_time,'recording_started'))
     return events_since_last, trial_ended
 iterations['song_only'] = song_only_iteration
 
@@ -659,3 +668,11 @@ def playback_and_count_iteration(controller, box, events_since_last):
 iterations['playback_and_count'] = playback_and_count_iteration
 
 
+# def_triggered_playback(controller, box, events_since_last):
+#     events_since_last_names = [event[1] for event in events_since_last]
+#     trial_ended = False
+
+#     if True in ['trigger' in event for event in events_since_last_names]:
+#         if controllor.current_trial['trigger_start_time'] + controller.current_trial['']
+
+# iterations['triggered_playback'] = triggered_playback_iteration

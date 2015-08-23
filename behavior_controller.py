@@ -17,7 +17,7 @@ import lib.usb_tools as ut
 import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
-
+import lib.audiorecord as ar
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
@@ -278,6 +278,7 @@ class BehaviorBox(object):
         self.sync_period = 60*30
         self.serial_port = None
         self.serial_device_id = None
+        self.arduino_model = None
         self.serial_c = None
         self.serial_io = None
         self.sc_idx = None
@@ -288,6 +289,8 @@ class BehaviorBox(object):
 
         self.so_workers = []
         self.pulse_state = 0
+
+        self.recorder = ar.AudioRecord(self)
 
     def ready_to_run(self):
         if not self.serial_status:
@@ -307,7 +310,7 @@ class BehaviorBox(object):
         return time.time()
 
     def select_box(self, box):
-        pdb.set_trace()
+        #pdb.set_trace()
         list_of_boxes = ut.return_list_of_boxes()
         if box in [b[0] for b in list_of_boxes]:
             idx = [b[0] for b in list_of_boxes].index(box)
@@ -338,7 +341,7 @@ class BehaviorBox(object):
 
     def connect_to_serial_port(self):
         try:
-            pdb.set_trace()
+            #pdb.set_trace()
             self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
             self.serial_c.setDTR(False)
             self.serial_c.flushInput()
@@ -355,6 +358,7 @@ class BehaviorBox(object):
         return so.list_sound_cards()
 
     def select_sound_card(self, cardname = None):
+        #pdb.set_trace()
         list_of_cards = self.return_list_of_sound_cards()
         if cardname == None:
             print 'Select desired card from list below:'
@@ -424,7 +428,7 @@ class BehaviorBox(object):
 
 
     def write_command(self, command):
-        pdb.set_trace()
+        #pdb.set_trace()
         self.serial_io.write(unicode(command))
         self.serial_io.flush()
 
@@ -527,7 +531,8 @@ class BehaviorBox(object):
 
 
     def reload_arduino_firmware(self):
-        at.build_and_upload(self.serial_port)
+        #at.build_and_upload(self.serial_port)
+        at.build_and_upload(self.serial_port, self.arduino_model)
 
 ##
 def run_box(controller, box):
@@ -545,10 +550,16 @@ def run_box(controller, box):
     if debug:
         for key in sorted(controller.params.keys()):
             print key + ': ' + str(controller.params[key])
+
     # initialize box
     box.stimuli_dir = controller.params['stimuli_dir']
     box.query_events()
-    box.light_on()
+    #box.light_on()
+
+    # initilize recorder
+    box.recorder.set_threshold()
+    box.recorder.start()
+
     # send loop
     main_loop(controller, box)
     pass
@@ -559,6 +570,7 @@ def main_loop(controller, box):
         controller.que_next_trial()
         controller.task_state = 'prepare_trial'
         controller.has_run = True
+
         # enter the loop
         last_time = box.current_time
         while controller.box_state == 'go':
@@ -659,6 +671,7 @@ if __name__=='__main__':
     config.read(cfpath)
     config_fid = open(cfpath)
 
+    #------------------Set up Supervisor
     # set required parameters
     controller = BehaviorController()
     controller.config_file_contents = config_fid.read()
@@ -697,7 +710,7 @@ if __name__=='__main__':
         if config.has_option('run_params', param):
                 controller.params[param] = json.loads(config.get('run_params',param))
 
-    #controller.load_stimsets()
+    controller.load_stimsets()
     box = BehaviorBox()
     if config.has_option('run_params','box'):
         box.select_box(config.get('run_params','box'))
@@ -705,11 +718,28 @@ if __name__=='__main__':
         box.select_sound_card()
         box.select_serial_port()
 
+    if config.has_option('run_params', 'arduino_model'):
+        setattr(box,'arduino_model',config.get('run_params', 'arduino_model'))
+
     # set any box params
     for param in ['trigger_value']:
         if config.has_option('run_params', param):
             attr = config.getfloat('run_params',param)
             setattr(box,param,attr)
+
+    # set recording params
+    for option in config.options('record_params'):
+        if option == "sound_card":
+            attr = config.get('record_params', option)
+            box.recorder.set_sound_card(attr)
+        elif option == "outdir":
+            attr = config.get('record_params', option)
+            setattr(box.recorder, option, attr)
+        else:
+            attr = config.getfloat('record_params', option)
+            setattr(box.recorder, option, attr)
+
+
     # run the box
     run_box(controller, box)
 

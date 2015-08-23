@@ -4,7 +4,8 @@ import time
 
 
 # Possibly add in arduino_model to config file
-def build_and_upload(arduino_port):
+#def build_and_upload(arduino_port):
+def build_and_upload(arduino_port, arduino_model):
         arduino_model = 'nano328'
 	o_cwd = os.getcwd()
 	ino_project_dir = o_cwd + '/arduino_code/ino_project'
