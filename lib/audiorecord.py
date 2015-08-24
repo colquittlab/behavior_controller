@@ -34,7 +34,7 @@ class AudioRecord:
         #self.box = weakref.ref(box)
         self.box = None
         self.pcm = None
-        self.chunk = 256
+        self.chunk = 1024
         self.format = aa.PCM_FORMAT_S16_LE
         self.channels = 1
         self.rate = 44100
