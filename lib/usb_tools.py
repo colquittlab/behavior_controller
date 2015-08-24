@@ -23,9 +23,9 @@ def return_list_of_boxes():
             ad_num = ad.split('_')[1]
             for idx,sc in enumerate(list_of_sound_cards):
                 if '_' in sc:
-                    #sc_num = sc.split('_')[1]
-                    #if sc_num == ad_num:
-                    boxes_present.append(('box_' + ad_num, ad, sc))
+                    sc_num = sc.split('_')[1]
+                    if sc_num == ad_num:
+                        boxes_present.append(('box_' + ad_num, ad, sc))
     if len(list_of_arduinos)>0 and len(boxes_present)==0:
 	boxes_present.append(('box_1',list_of_arduinos[0], aa.cards()[0]))
 
