@@ -110,7 +110,7 @@ class AudioRecord:
 
     def set_threshold(self):
         values = self.audio_int()
-        values_thresh = np.max(values) * 1.5
+        values_thresh = np.max(values) * 1.1
         print "threshold set to: " + str(values_thresh)
         self.threshold = values_thresh
         return values_thresh
