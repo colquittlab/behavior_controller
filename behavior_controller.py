@@ -65,6 +65,7 @@ class BehaviorController(object):
         # initialize tallies 
         self.reward_count = 0 
         self.timeout_count = 0
+        self.event_time = 0
 
         # initialize the stimset holders
         self.stimsets = []
@@ -102,7 +103,7 @@ class BehaviorController(object):
         self.params['delay_time'] = 5
         self.params['isi_distribution'] = 'exponential'
         self.params['isi_parameter'] = 10
-
+        self.params['set_times'] = 0
         
         # stimset occurance
         self.Aocc = 0.5
