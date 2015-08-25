@@ -196,8 +196,8 @@ class BehaviorController(object):
             for key in self.params.keys():
                 config.set('run_params', key, self.params[key])
             config.add_section('record_params')
-#            for key in self.
-
+            for key in self.recorder.params.keys():
+                config.set('record_params', key, self.recorder.params[key])
         pass
 
     def save_events_to_log_file(self,  events_since_last):
@@ -296,7 +296,7 @@ class BehaviorBox(object):
         self.so_workers = []
         self.pulse_state = 0
 
-        self.recorder = ar.AudioRecord(self)
+        self.recorder = ar.AudioRecord()
 
     def ready_to_run(self):
         if not self.serial_status:
