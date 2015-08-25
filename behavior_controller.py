@@ -99,6 +99,7 @@ class BehaviorController(object):
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
+        self.params['allowed_songs_per_session'] = 10
 
         # parameters for playback mode
         self.params['delay_time'] = 5
@@ -144,8 +145,8 @@ class BehaviorController(object):
         return len(self.completed_trials)
 
     def load_stimsets(self):
-        if len(self.stimset_names) < 2:
-            raise Exception('Error: less than 2 stimset names set')
+        #if len(self.stimset_names) < 2:
+        #    raise Exception('Error: less than 2 stimset names set')
         self.stimsets = []
         for name in self.stimset_names:
             self.stimsets.append(load_and_verify_stimset(self.params['stimuli_dir'], name))
@@ -194,6 +195,8 @@ class BehaviorController(object):
             config.add_section('run_params')
             for key in self.params.keys():
                 config.set('run_params', key, self.params[key])
+            config.add_section('record_params')
+#            for key in self.
 
         pass
 
@@ -572,7 +575,10 @@ def main_loop(controller, box):
     try:
         # generate the first trial and set that as the state
         controller.que_next_trial()
-        controller.task_state = 'prepare_trial'
+        if controller.params['mode'] == 'song_only':
+            controller.task_state = 'playback_pause'
+        else:
+            controller.task_state = 'prepare_trial'
         controller.has_run = True
 
         # enter the loop
@@ -588,8 +594,8 @@ def main_loop(controller, box):
             # query serial events since the last itteration
             events_since_last = box.query_events()
             # save loop times greator than tollerance as events
-            if loop_time > time_tollerance:
-               events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
+            #if loop_time > time_tollerance:
+            #   events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
             # run throgh loop itteration state machine
             events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
             # save all the events that have happened in this loop to file
@@ -685,11 +691,14 @@ if __name__=='__main__':
     controller.config_file_contents = config_fid.read()
     controller.set_bird_name(config.get('run_params','birdname'))
     controller.params['mode'] = config.get('run_params','mode')
-    controller.params['trial_generator'] = config.get('run_params','trial_generator')
+    if config.has_option('run_params', 'trial_generator'):
+        controller.params['trial_generator'] = config.get('run_params','trial_generator')
     
     controller.stimset_names = []
     controller.stimset_names.append(config.get('run_params','stimset_0'))
-    controller.stimset_names.append(config.get('run_params','stimset_1'))
+
+    if config.has_option('run_params', 'stimset_1'):
+        controller.stimset_names.append(config.get('run_params','stimset_1'))
     
     # set optional paramters
     if config.has_option('run_params','stimset_2'):
@@ -713,8 +722,13 @@ if __name__=='__main__':
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
+    # set (overwrite) int parameters:
+    for param in ['allowed_songs_per_session']:
+        if config.has_option('run_params', param):
+            controller.params[param] = config.getint('run_params', param)
+
     # set (overwrite) list parameters
-    for param in ['stimset_occurance']:
+    for param in ['stimset_occurance', 'set_times']:
         if config.has_option('run_params', param):
                 controller.params[param] = json.loads(config.get('run_params',param))
 
