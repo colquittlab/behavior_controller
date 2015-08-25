@@ -765,10 +765,10 @@ if __name__=='__main__':
             setattr(box.recorder, option, attr)
 
     # run the box
-    #run_box(controller, box)
+    run_box(controller, box)
 
 
-    import cProfile
-    command = """run_box(controller,box)"""
-    cProfile.runctx(command, globals(), locals(), filename = 'test.profile')
+#    import cProfile
+#    command = """run_box(controller,box)"""
+#    cProfile.runctx(command, globals(), locals(), filename = 'test.profile')
 
