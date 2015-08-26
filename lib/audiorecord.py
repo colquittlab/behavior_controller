@@ -19,6 +19,7 @@ else:
 class AudioRecord:
     def __init__(self):
         self.pcm = None
+        self.event_queue = None
         self.recording_queue = None
 
         self.params = {}
@@ -35,7 +36,7 @@ class AudioRecord:
     def test_config(self):
         self.pcm = 'hw:CARD=Set,DEV=0'
 
-        self.params['chunk'] = 256
+        self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
         self.params['channels'] = 1
         self.params['rate'] = 44100
@@ -104,8 +105,8 @@ class AudioRecord:
         return values_thresh
 
     def start(self):
-        self.recording_queue = mp.Queue()
-        self.proc = mp.Process(target = start_recording, args= (self.recording_queue,
+        self.event_queue = mp.Queue()
+        self.proc = mp.Process(target = start_recording, args= (self.event_queue,
                                                                 self.pcm,
                                                                 self.params['channels'],
                                                                 self.params['rate'],
@@ -118,8 +119,21 @@ class AudioRecord:
                                                                 self.params['outdir']))
         self.proc.start()
 
+    def start_return_data(self):
+        self.event_queue = mp.Queue()
+        self.recording_queue = mp.Queue()
+        self.proc = mp.Process(target = start_recording_return_data, args= (self.event_queue,
+                                                                self.recording_queue,
+                                                                self.pcm,
+                                                                self.params['channels'],
+                                                                self.params['rate'],
+                                                                self.params['format'],
+                                                                self.params['chunk']))
+
+        self.proc.start()
+
     def stop(self):
-        self.recording_queue.put(1)
+        self.event_queue.put(1)
 
 def start_recording(queue, pcm, channels, rate, format, chunk,
                     silence_limit, prev_audio_time, min_dur, threshold, outdir):
@@ -155,8 +169,8 @@ def start_recording(queue, pcm, channels, rate, format, chunk,
     slid_win.append(math.sqrt(abs(audioop.max(cur_data, 4))))
 
     while queue.empty():
-#            if len(slid_win)>0:
-#                print max(slid_win) #uncomment if you want to print intensity values
+        #if len(slid_win)>0:
+        #    print max(slid_win) #uncomment if you want to print intensity values
         if uname == "Linux":
             cur_data=stream.read()[1]
         else:
@@ -199,6 +213,49 @@ def start_recording(queue, pcm, channels, rate, format, chunk,
         stream.close()
         return
 
+def start_recording_return_data(event_queue, recording_queue, pcm, channels, rate, format, chunk):
+    stream = None
+    if uname == "Linux":
+        stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, device=pcm)
+        stream.setchannels(channels)
+        stream.setrate(rate)
+        stream.setformat(format)
+        stream.setperiodsize(chunk)
+    else:
+        pass
+        # p = pa.PyAudio()
+        # stream = p.open(rate=self.params['rate'],
+        #                  format=self.params['format'],
+        #                  channels=self.params['channels'],
+        #                  frames_per_buffer=self.params['chunk'],
+        #                  input=True)
+
+    print "listening..."
+    audio2send = []
+    cur_data = '' # current chunk of audio data
+    rel = rate/chunk
+    started = False
+
+    if uname == "Linux":
+        cur_data=stream.read()[1]
+        recording_queue.put(cur_data)
+    else:
+        pass
+        #cur_data=self.stream.read(self.params['chunk'])
+
+    while event_queue.empty():
+#            if len(slid_win)>0:
+#                print max(slid_win) #uncomment if you want to print intensity values
+        if uname == "Linux":
+            cur_data=stream.read()[1]
+            recording_queue.put(cur_data)
+        else:
+            pass
+            #cur_data=self.stream.read(self.params['chunk'])
+    else:
+        stream.close()
+        return
+
 def save_audio(data, outdir, rate):
     """ Saves mic data to  WAV file. Returns filename of saved file """
     filname = "/".join([str(outdir), 'output_'+str(int(time.time()))])
@@ -212,7 +269,11 @@ def save_audio(data, outdir, rate):
     wavout.close()
     return filname + '.wav'
 
+def get_audio_power(data):
+    return math.sqrt(abs(audioop.max(data, 4)))
+
 if(__name__ == '__main__'):
+    pass
  #if not os.path.exists(OUTPUT_DIR): os.makedirs(OUTPUT_DIR)
- audio_int()
- record_song()
+# audio_int()
+# record_song()
