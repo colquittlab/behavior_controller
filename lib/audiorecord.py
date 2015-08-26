@@ -4,8 +4,9 @@ import os
 import sys
 import time
 import math
-import weakref
+#import weakref
 import pdb
+import ConfigParser
 import numpy as np
 import multiprocessing as mp
 sys.path.append("/home/brad/src/behavior_controller")
@@ -47,24 +48,24 @@ class AudioRecord:
         self.params['min_dur'] = 1
         self.params['outdir'] = "."
 
-    def init_config(self, config):
-        self.params['chunk'] = config.getint('record_params', 'chunk')
-        if uname == "Linux":
-            self.params['format'] = aa.PCM_FORMAT_S16_LE
-            self.params['channels'] = 1
-        else:
-            self.params['format'] = pa.paInt16
-            self.params['channels'] = 1
-
-        self.params['rate'] = 44100
-        self.threshold = config.get('record_params', 'threshold')
-        self.silence_limit = config.getfloat('record_params', 'silence_limit')
-        self.prev_audio = config.getfloat('record_params', 'prev_audio')
-        self.min_dur = config.getfloat('record_params', 'min_dur')
-        self.outdir = config.get('record_params', 'outdir')
-
-        #if self.threshold == "auto":
-        #    self.set_threshold()
+    def init_config(self, config_file):
+        config = ConfigParser.ConfigParser() 
+        config.read(config_file)
+#        pdb.set_trace()
+        for option in config.options('record_params'):
+            if option == "sound_card":
+                attr = config.get('record_params', option)
+                self.set_sound_card(attr)
+            elif option == "outdir":
+                attr = config.get('record_params', option)
+                self.params[option] = attr
+                os.makedirs(attr)
+            elif option == "chunk":
+                attr = config.getint('record_params', option)
+                self.params[option] = attr
+            else:
+                attr = config.getfloat('record_params', option)
+                self.params[option] = attr
 
     def set_sound_card(self, attr):
         self.pcm = "hw:CARD=%s,DEV=0" % attr
@@ -297,8 +298,10 @@ def save_audio(data, outdir, rate):
 def get_audio_power(data):
     return math.sqrt(abs(audioop.max(data, 4)))
 
+def main(argv):
+    recorder = AudioRecord()
+    recorder.init_config(argv[1])
+    recorder.start()
+
 if(__name__ == '__main__'):
-    pass
- #if not os.path.exists(OUTPUT_DIR): os.makedirs(OUTPUT_DIR)
-# audio_int()
-# record_song()
+    main(sys.argv)

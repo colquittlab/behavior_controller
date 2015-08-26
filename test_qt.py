@@ -1,5 +1,4 @@
 import sys
-
 from PyQt4.QtGui import QApplication,QDialog
 from PyQt4 import QtCore, QtGui
 from qt.liveaudio import Ui_LiveAudio
@@ -9,14 +8,14 @@ from qt.liveaudio import Ui_LiveAudio
 
 #     def closeEvent(self, event):
 
-def main():
+def main(argv):
     app = QApplication(sys.argv)
     window = QtGui.QMainWindow()
 #    window = MainWindow()
-    ui = Ui_LiveAudio()
+    ui = Ui_LiveAudio(argv[1])
     ui.setupUi(window)
     window.show()
     sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

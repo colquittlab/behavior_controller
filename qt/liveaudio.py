@@ -151,6 +151,10 @@ class SpecManager:
 class Ui_LiveAudio(object):
     def __del__(self):
         self.recorder.stop()
+        
+    def __init__(self, config):
+        super(Ui_LiveAudio, self).__init__()
+        self.config = config
 
     def setupUi(self, LiveAudio):
         LiveAudio.setObjectName(_fromUtf8("LiveAudio"))
@@ -191,7 +195,8 @@ class Ui_LiveAudio(object):
 
         self.audio_manager = AudioManager(self)
         self.spec_manager = SpecManager(self)
-
+        
+        #-------- Connections --------#
         self.start_recording_button.connect(self.start_recording_button, QtCore.SIGNAL("clicked()"), self.start_recording)
         self.stop_recording_button.connect(self.stop_recording_button, QtCore.SIGNAL("clicked()"), self.stop_recording)
         self.cancel_button.connect(self.cancel_button, QtCore.SIGNAL("clicked()"), sys.exit)
@@ -208,19 +213,17 @@ class Ui_LiveAudio(object):
 
     def setup_audio_recorder(self):
         self.recorder = ar.AudioRecord()
-        self.recorder.set_sound_card('3') #FIXME
-        self.recorder.test_config()
+#        self.recorder.set_sound_card('3') #FIXME
+        self.recorder.init_config(self.config)
 
     def start_recording(self):
-
         try:
             self.recorder.start_return_data()
-            #pass
         except:
             self.message_box.setText(QtCore.QString("Error starting recording. Try another soundcard."))
             return
         self.message_box.setText(QtCore.QString("Recording..."))
-        time.sleep(1)
+#        time.sleep(1)
         self.audio_manager.start()
         self.spec_manager.start()
 
