@@ -8,6 +8,8 @@ import weakref
 import pdb
 import numpy as np
 import multiprocessing as mp
+sys.path.append("/home/brad/src/behavior_controller")
+import lib.soundout_tools as so
 from collections import deque
 
 uname = os.uname()[0]
@@ -67,6 +69,9 @@ class AudioRecord:
     def set_sound_card(self, attr):
         self.pcm = "hw:CARD=%s,DEV=0" % attr
 
+    def list_sound_cards(self):
+        return so.list_sound_cards()
+
     def audio_int(self, num_samples=64):
         """ Gets max audio intensity for a bunch of chunks of data. Useful for setting threshold.
         """
@@ -122,15 +127,25 @@ class AudioRecord:
     def start_return_data(self):
         self.event_queue = mp.Queue()
         self.recording_queue = mp.Queue()
+        error_queue = mp.Queue()
         self.proc = mp.Process(target = start_recording_return_data, args= (self.event_queue,
                                                                 self.recording_queue,
+                                                                            error_queue,
                                                                 self.pcm,
                                                                 self.params['channels'],
                                                                 self.params['rate'],
                                                                 self.params['format'],
                                                                 self.params['chunk']))
 
+
         self.proc.start()
+
+        ### Check if mic connection good ###
+        current_time = time.time()
+        max_time = 1
+        while (time.time() - current_time) < max_time:
+            if not error_queue.empty():
+                raise Exception
 
     def stop(self):
         self.event_queue.put(1)
@@ -213,14 +228,24 @@ def start_recording(queue, pcm, channels, rate, format, chunk,
         stream.close()
         return
 
-def start_recording_return_data(event_queue, recording_queue, pcm, channels, rate, format, chunk):
+def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, channels, rate, format, chunk):
     stream = None
     if uname == "Linux":
-        stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, device=pcm)
-        stream.setchannels(channels)
-        stream.setrate(rate)
-        stream.setformat(format)
-        stream.setperiodsize(chunk)
+        try:
+            stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, device=pcm)
+            stream.setchannels(channels)
+            stream.setrate(rate)
+            stream.setformat(format)
+            stream.setperiodsize(chunk)
+        except:
+            print "here2"
+            error_queue.put(1)
+            return
+            #error_queue.put(1)
+            #raise aa.ALSAAudioError
+            #raise
+            #print "recording2"
+            #return
     else:
         pass
         # p = pa.PyAudio()
