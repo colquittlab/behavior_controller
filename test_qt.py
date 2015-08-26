@@ -1,0 +1,22 @@
+import sys
+
+from PyQt4.QtGui import QApplication,QDialog
+from PyQt4 import QtCore, QtGui
+from qt.liveaudio import Ui_LiveAudio
+
+# def MainWindow(QtGui.QMainWindow):
+#     QtGui.QMainWindow.__init__(self)
+
+#     def closeEvent(self, event):
+
+def main():
+    app = QApplication(sys.argv)
+    window = QtGui.QMainWindow()
+#    window = MainWindow()
+    ui = Ui_LiveAudio()
+    ui.setupUi(window)
+    window.show()
+    sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()
