@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'liveaudio.ui'
-#
-# Created: Mon Aug 24 18:52:44 2015
-#      by: PyQt4 UI code generator 4.10.4
-#
-# WARNING! All changes made in this file will be lost!
-
 import sys
 import time
 import pylab
@@ -148,13 +141,34 @@ class SpecManager:
     def stop(self):
         self.thread.stop()
 
+class SoundCardBox(QtGui.QSpinBox):
+    def __init__(self, parent, recorder):
+        super(SoundCardBox, self).__init__(parent)
+        soundcard_names = recorder.list_sound_cards()
+        self.setStrings(soundcard_names)
+
+    def strings(self):
+        return self._strings
+
+    def setStrings(self, strings):
+        self._strings = tuple(strings)
+        self._values = dict(zip(strings, range(len(strings))))
+        self.setRange(0, len(strings) - 1)
+
+    def textFromValue(self, value):
+        return self._strings[value]
+
+    def valueFromText(self, text):
+        return self._values[text]
+
 class Ui_LiveAudio(object):
     def __del__(self):
         self.recorder.stop()
-        
+
     def __init__(self, config):
         super(Ui_LiveAudio, self).__init__()
         self.config = config
+        self.audio_recording = False
 
     def setupUi(self, LiveAudio):
         LiveAudio.setObjectName(_fromUtf8("LiveAudio"))
@@ -168,27 +182,27 @@ class Ui_LiveAudio(object):
         self.stop_recording_button = QtGui.QPushButton(LiveAudio)
         self.stop_recording_button.setGeometry(QtCore.QRect(150, 270, 141, 27))
         self.stop_recording_button.setObjectName(_fromUtf8("stop_recording_button"))
-        self.soundcard_idx = QtGui.QSpinBox(LiveAudio)
-        self.soundcard_idx.setGeometry(QtCore.QRect(470, 270, 48, 27))
-        self.soundcard_idx.setObjectName(_fromUtf8("soundcard_idx"))
         self.label = QtGui.QLabel(LiveAudio)
         self.label.setGeometry(QtCore.QRect(380, 270, 81, 17))
         self.label.setObjectName(_fromUtf8("label"))
+
+        #-------- Message box --------#
         self.message_box = QtGui.QTextEdit(LiveAudio)
         self.message_box.setGeometry(QtCore.QRect(10, 240, 521, 21))
         self.message_box.setObjectName(_fromUtf8("message_box"))
         self.message_box.setReadOnly(True)
-        self.retranslateUi(LiveAudio)
-        QtCore.QMetaObject.connectSlotsByName(LiveAudio)
 
         self.setup_audio_recorder()
-        self.soundcard_idx.setMaximum(len(self.recorder.list_sound_cards()))
+
+        #-------- Soundcard selection --------#
+        self.soundcard_idx = SoundCardBox(LiveAudio, self.recorder)
+        self.soundcard_idx.setGeometry(QtCore.QRect(470, 270, 100, 27))
+        self.soundcard_idx.setObjectName(_fromUtf8("soundcard_idx"))
 
         #-------- Graphing Widgets --------#
         self.audio_plot = AudioPlotWidget(LiveAudio, self.recorder)
         self.audio_plot.setGeometry(QtCore.QRect(10, 20, 381, 211))
         self.audio_plot.setObjectName(_fromUtf8("graphicsView"))
-
         self.spectrogram = pg.PlotWidget(LiveAudio)
         self.spectrogram.setGeometry(QtCore.QRect(395, 20, 361, 211))
         self.spectrogram.setObjectName(_fromUtf8("spectrogram"))
@@ -200,9 +214,11 @@ class Ui_LiveAudio(object):
         self.start_recording_button.connect(self.start_recording_button, QtCore.SIGNAL("clicked()"), self.start_recording)
         self.stop_recording_button.connect(self.stop_recording_button, QtCore.SIGNAL("clicked()"), self.stop_recording)
         self.cancel_button.connect(self.cancel_button, QtCore.SIGNAL("clicked()"), self.quit_program)
-        #self.audio_thread.connect(self.audio_thread, QtCore.SIGNAL("finished()"), self.updateUi)
-        #self.audio_thread.connect(self.audio_thread, QtCore.SIGNAL("terminated()"), self.updateUi)
         self.soundcard_idx.connect(self.soundcard_idx, QtCore.SIGNAL("valueChanged(int)"), self.update_selected_soundcard)
+
+        self.retranslateUi(LiveAudio)
+        QtCore.QMetaObject.connectSlotsByName(LiveAudio)
+
 
     def retranslateUi(self, LiveAudio):
         LiveAudio.setWindowTitle(_translate("LiveAudio", "LiveAudio", None))
@@ -213,7 +229,6 @@ class Ui_LiveAudio(object):
 
     def setup_audio_recorder(self):
         self.recorder = ar.AudioRecord()
-#        self.recorder.set_sound_card('3') #FIXME
         self.recorder.init_config(self.config)
 
     def start_recording(self):
@@ -223,7 +238,7 @@ class Ui_LiveAudio(object):
             self.message_box.setText(QtCore.QString("Error starting recording. Try another soundcard."))
             return
         self.message_box.setText(QtCore.QString("Recording..."))
-#        time.sleep(1)
+        self.audio_recording = True
         self.audio_manager.start()
         self.spec_manager.start()
 
@@ -232,7 +247,6 @@ class Ui_LiveAudio(object):
         self.message_box.setText(QtCore.QString("Mic off."))
         self.audio_manager.stop()
         self.spec_manager.stop()
-        #print "here"
 
     def updateUi(self):
         self.start_recording_button.setEnabled(True)
@@ -243,5 +257,6 @@ class Ui_LiveAudio(object):
         self.recorder.set_sound_card(i)
     
     def quit_program(self):
-        self.stop_recording()
+        if self.audio_recording:
+            self.stop_recording()
         sys.exit()
