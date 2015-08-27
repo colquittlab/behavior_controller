@@ -199,7 +199,7 @@ class Ui_LiveAudio(object):
         #-------- Connections --------#
         self.start_recording_button.connect(self.start_recording_button, QtCore.SIGNAL("clicked()"), self.start_recording)
         self.stop_recording_button.connect(self.stop_recording_button, QtCore.SIGNAL("clicked()"), self.stop_recording)
-        self.cancel_button.connect(self.cancel_button, QtCore.SIGNAL("clicked()"), sys.exit)
+        self.cancel_button.connect(self.cancel_button, QtCore.SIGNAL("clicked()"), self.quit_program)
         #self.audio_thread.connect(self.audio_thread, QtCore.SIGNAL("finished()"), self.updateUi)
         #self.audio_thread.connect(self.audio_thread, QtCore.SIGNAL("terminated()"), self.updateUi)
         self.soundcard_idx.connect(self.soundcard_idx, QtCore.SIGNAL("valueChanged(int)"), self.update_selected_soundcard)
@@ -241,3 +241,7 @@ class Ui_LiveAudio(object):
     def update_selected_soundcard(self, i):
         print i
         self.recorder.set_sound_card(i)
+    
+    def quit_program(self):
+        self.stop_recording()
+        sys.exit()

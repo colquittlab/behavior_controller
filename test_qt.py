@@ -12,7 +12,10 @@ def main(argv):
     app = QApplication(sys.argv)
     window = QtGui.QMainWindow()
 #    window = MainWindow()
-    ui = Ui_LiveAudio(argv[1])
+    if len(argv) > 1:
+        ui = Ui_LiveAudio(argv[1])
+    else:
+        ui = Ui_LiveAudio(None)
     ui.setupUi(window)
     window.show()
     sys.exit(app.exec_())

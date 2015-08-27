@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import wave
 import audioop
 import os
@@ -37,7 +39,7 @@ class AudioRecord:
         self.params['outdir'] = None
 
     def test_config(self):
-        self.pcm = 'hw:CARD=Set,DEV=0'
+        self.pcm = 'hw:CARD=usbaudio_2,DEV=0'
 
         self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
@@ -49,6 +51,10 @@ class AudioRecord:
         self.params['outdir'] = "."
 
     def init_config(self, config_file):
+#        pdb.set_trace()
+        if config_file is None:
+            self.test_config()
+            return
         config = ConfigParser.ConfigParser() 
         config.read(config_file)
 #        pdb.set_trace()
@@ -59,7 +65,8 @@ class AudioRecord:
             elif option == "outdir":
                 attr = config.get('record_params', option)
                 self.params[option] = attr
-                os.makedirs(attr)
+                if not os.path.exists(attr):
+                    os.makedirs(attr)
             elif option == "chunk":
                 attr = config.getint('record_params', option)
                 self.params[option] = attr
@@ -300,7 +307,10 @@ def get_audio_power(data):
 
 def main(argv):
     recorder = AudioRecord()
-    recorder.init_config(argv[1])
+    if len(argv) > 1:
+        recorder.init_config(argv[1])
+    else:
+        recorder.test_config()
     recorder.start()
 
 if(__name__ == '__main__'):
