@@ -13,7 +13,6 @@ import soundout_tools as so
 def return_list_of_boxes():
     #pdb.set_trace()
     list_of_sound_cards = so.list_sound_cards()
-    #list_of_sound_cards = filter(lamdba x: 'iLuv' in x, list_of_ports)
     list_of_arduinos = st.return_list_of_named_arduinos()
     boxes_present = []
     for ad in list_of_arduinos:
