@@ -262,7 +262,7 @@ iterations['discrimination_singleport'] = discrimination_singleport_iteration
 # iterations['probes'] = probes_iteration
 
 
-def song_only_iteration(controller, box, events_since_last):
+def tutoring_iteration(controller, box, events_since_last):
     # record any events that have happened on the box     
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
@@ -271,6 +271,7 @@ def song_only_iteration(controller, box, events_since_last):
         controller.task_state = 'waiting_for_trial'
     # examine what events have happened and trigger new ones, depending on box state
     if controller.task_state == 'waiting_for_trial':
+#        print ("waiting")
         #---------- Playback on, waiting for trigger ----------#
         if 'song_trigger' in events_since_last_names and controller.reward_count < controller.params['allowed_songs_per_session']:
             controller.reward_count += 1
@@ -312,14 +313,20 @@ def song_only_iteration(controller, box, events_since_last):
             events_since_last.append((box.current_time,'end_timeout'))
 
     elif controller.task_state == "playback_pause":
+#        print "here"
+        
         #-------- Session is finished. Waiting for next session ---------#
-        time.sleep(60)
+
         current_hour = datetime.datetime.now().hour
+#        print current_hour
         if current_hour in controller.params['set_times']:
             controller.task_state = "waiting_for_trial"
+        time.sleep(2)
+#        print "here2"
+
 
     return events_since_last, trial_ended
-iterations['song_only'] = song_only_iteration
+iterations['tutoring'] = tutoring_iteration
 
 def song_plus_food_iteration(controller, box, events_since_last):
     # record any events that have happened on the box     

@@ -564,7 +564,7 @@ def run_box(controller, box):
     #box.light_on()
 
     # initilize recorder
-    box.recorder.set_threshold()
+#    box.recorder.set_threshold()
     box.recorder.start()
 
     # send loop
@@ -575,8 +575,8 @@ def main_loop(controller, box):
     try:
         # generate the first trial and set that as the state
         controller.que_next_trial()
-        if controller.params['mode'] == 'song_only':
-            controller.task_state = 'playback_pause'
+        if controller.params['mode'] == 'tutoring':
+           controller.task_state = 'playback_pause'
         else:
             controller.task_state = 'prepare_trial'
         controller.has_run = True
@@ -685,7 +685,6 @@ if __name__=='__main__':
     config.read(cfpath)
     config_fid = open(cfpath)
 
-    #------------------Set up Supervisor
     # set required parameters
     controller = BehaviorController()
     controller.config_file_contents = config_fid.read()
@@ -731,7 +730,11 @@ if __name__=='__main__':
     for param in ['stimset_occurance', 'set_times']:
         if config.has_option('run_params', param):
                 controller.params[param] = json.loads(config.get('run_params',param))
-
+                
+    # modify data_dir
+    controller.params['data_dir'] = "/".join([controller.params['data_dir'], controller.birdname]) + "/"
+    if not os.path.exists(controller.params['data_dir']):
+        os.makedirs(controller.params['data_dir'])
     controller.load_stimsets()
     box = BehaviorBox()
     if config.has_option('run_params','box'):
@@ -749,20 +752,23 @@ if __name__=='__main__':
             attr = config.getfloat('run_params',param)
             setattr(box,param,attr)
 
-    # set recording params
-    for option in config.options('record_params'):
-        if option == "sound_card":
-            attr = config.get('record_params', option)
-            box.recorder.set_sound_card(attr)
-        elif option == "outdir":
-            attr = config.get('record_params', option)
-            setattr(box.recorder, option, attr)
-        elif option == "chunk":
-            attr = config.getint('record_params', option)
-            setattr(box.recorder, option, attr)
-        else:
-            attr = config.getfloat('record_params', option)
-            setattr(box.recorder, option, attr)
+
+    if controller.params['mode'] == "tutoring":
+        # set recording params
+        for option in config.options('record_params'):
+            if option == "sound_card":
+                attr = config.get('record_params', option)
+                box.recorder.set_sound_card(attr)
+            elif option in ["outdir"]:
+                box.recorder.params[option] = config.get('record_params',option)
+            elif option == "chunk":
+                box.recorder.params[option] = config.getint('record_params',option)
+            else:
+                box.recorder.params[option] = config.getfloat('record_params',option)
+        box.recorder.params['birdname'] = controller.birdname
+        box.recorder.params['outdir'] = "/".join([controller.params['data_dir'], "recordings"])
+        if not os.path.exists(box.recorder.params['outdir']):
+            os.makedirs(box.recorder.params['outdir'])
 
     # run the box
     run_box(controller, box)

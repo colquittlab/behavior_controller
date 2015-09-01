@@ -6,11 +6,11 @@ import os
 import sys
 import time
 import math
-#import weakref
 import pdb
 import ConfigParser
 import numpy as np
 import multiprocessing as mp
+
 sys.path.append("/home/brad/src/behavior_controller")
 import lib.soundout_tools as so
 from collections import deque
@@ -28,7 +28,7 @@ class AudioRecord:
         self.recording_queue = None
 
         self.params = {}
-        self.params['bird'] = None
+        self.params['birdname'] = None
         self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
         self.params['channels'] = 1
@@ -42,12 +42,12 @@ class AudioRecord:
     def test_config(self):
         self.pcm = 'hw:CARD=usbaudio_2,DEV=0'
 
-        self.params['chunk'] = 1024
+        self.params['chunk'] = 256
         self.params['format'] = aa.PCM_FORMAT_S16_LE
         self.params['channels'] = 1
         self.params['rate'] = 44100
         self.params['silence_limit'] = 0.5
-        self.params['prev_audio'] = 0.5
+        self.params['prev_audio'] = 1
         self.params['min_dur'] = 1
         self.params['outdir'] = "."
 
@@ -123,7 +123,7 @@ class AudioRecord:
         self.event_queue = mp.Queue()
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
                                                                 self.pcm,
-                                                                self.params['bird'],
+                                                                self.params['birdname'],
                                                                 self.params['channels'],
                                                                 self.params['rate'],
                                                                 self.params['format'],
