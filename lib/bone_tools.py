@@ -7,7 +7,7 @@ from subprocess import call
 import pin_definitions as pindef
 
 ## set any enduring parameteres
-bouncetime = 250 # bouncetime in ms 
+bouncetime = 500 # bouncetime in ms 
 
 
 
@@ -37,7 +37,7 @@ def event_callback(arg):
 GPIO.cleanup()
 for pin in pindef.input_definitions.keys():
 	GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP, 1)
-	GPIO.add_event_detect(pin, GPIO.FALLING, callback = event_callback, bouncetime = int(bouncetime))
+	GPIO.add_event_detect(pin, GPIO.RISING, callback = event_callback, bouncetime = int(bouncetime))
 ## initialize all output pins
 for pin in pindef.output_definitions.values():
 	if type(pin) is str:
