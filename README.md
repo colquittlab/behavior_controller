@@ -44,10 +44,14 @@ task specific modes are constructed as python functions that run as loop iterati
 task specific trials are generated using a trial generator.  These are defined in the module trial_generators.py. Trials are produced as trial blocks, which may be useful for statistical regularity.  
 
 ## Configuration ##
-there is plenty of information on setting up a beaglebone black.  See: http://beagleboard.org/getting-started to connect the first time using usb from your workstation.  
+there is plenty of information on setting up a beaglebone black.  See: http://beagleboard.org/getting-started to connect the first time using usb from your workstation.
 
 deploying boc (should be) easy on a debbian beaglebone using the script bonebootstrap.sh:
 
+This covers the basics.  Additional security measures may be advisable on institutional networks.  
+
+Once the bbb is online, I typically ssh in and operate and watch the system using screen.  The deploy script sets up an automatic screen invocation if you like.  
+  
 ```
 #!bash
 
@@ -59,8 +63,8 @@ sh ./bonebootstrap.sh
 
 
 ## Parts List: ##
-beaglebone black ~$50
-usb soundcard ~$10 
+* beaglebone black ~$50
+* usb soundcard ~$10 
 
 optional:
-breakout cape
+* breakout cape
