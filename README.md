@@ -1,5 +1,5 @@
 ## Behavior Operant Controller ##
-Jeff Knowles 2013 
+Jeff Knowles, Doube Lab, 2013 
 
 
 Behavior Operant Controller (BOC) is a python rolled system to control behavior experiments. It is built to run on a beaglebone black (master branch), but may also be implemented on a host computer communicating with arduinos over usb serial connections (branch gk_stable and arduino).  
