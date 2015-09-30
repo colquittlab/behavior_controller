@@ -1,7 +1,9 @@
 import scipy as sp
 import numpy as np 
 import random 
-
+"""
+task specific generators are defined here and loaded into the library generators.  This is hand spun and the convention is genorators['name']=name_generator
+"""
 
 generators = {}
 
