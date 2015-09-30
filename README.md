@@ -38,7 +38,18 @@ task specific modes are constructed as python functions that run as loop iterati
 task specific trials are generated using a trial generator.  These are defined in the module trial_generators.py. Trials are produced as trial blocks, which may be useful for statistical regularity.  
 
 ## Configuration ##
-deploying (should be) easy on a debbian beaglebone using the script bonebootstrap.sh
+there is plenty of information on setting up a beaglebone black.  See: http://beagleboard.org/getting-started to connect the first time using usb from your workstation.  
+
+deploying boc (should be) easy on a debbian beaglebone using the script bonebootstrap.sh:
+
+```
+#!bash
+
+git clone bitbucket.org/spikeCoder/behavior_controller.git
+cd behavior controller
+sh ./bonebootstrap.sh
+```
+
 
 
 ## Parts List: ##
