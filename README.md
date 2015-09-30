@@ -1,10 +1,10 @@
-Behavior Operant Controller
+## Behavior Operant Controller ##
 Jeff Knowles 2013 
 
 
 Behavior Operant Controller (BOC) is a python rolled system to control behavior experiments. It is built to run on a beaglebone black (master branch), but may also be implemented on a host computer communicating with arduinos over usb serial connections (branch gk_stable and arduino).  
 
-Usage:
+## Usage: ##
 python behavior_controller.py config/bird.config 
 
 config files are stored in config/
@@ -38,4 +38,4 @@ task specific modes are constructed as python functions that run as loop iterati
 task specific trials are generated using a trial generator.  These are defined in the module trial_generators.py. Trials are produced as trial blocks, which may be useful for statistical regularity.  
 
  
-Parts List:
+## Parts List: ##
