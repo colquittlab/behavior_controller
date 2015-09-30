@@ -1,14 +1,18 @@
-Behavior Controller to Doupe Lab Opperant Conditioning Boxes
+Behavior Operant Controller
 Jeff Knowles 2013 
 
 
-Behavior Controller (BOC) is a python rolled system to control behavior experiments. It is built to run on a beaglebone black (master branch) or a host computercommunicating with arduinos over usb serial connections (branch gk_stable and arduino).  
+Behavior Operant Controller (BOC) is a python rolled system to control behavior experiments. It is built to run on a beaglebone black (master branch), but may also be implemented on a host computer communicating with arduinos over usb serial connections (branch gk_stable and arduino).  
 
 Usage:
 python behavior_controller.py config/bird.config 
 
 config files are stored in config/
 Here is an example:
+
+```
+#!python
+
 
 %%%%%%%%%%%%%%%%%%%%%% example config 
 [run_params]
@@ -29,6 +33,8 @@ feed_time = 5
 
 %%%%%%%%%%%%%%%%%%%%%%  
 
+```
+
 Mode:
 task specific modes are constructed as python functions that run as loop iterations in a "mainloop". Modes are defined and loaded into a dictionary in the module loop_iterations.py
 
@@ -37,9 +43,4 @@ task specific trials are generated using a trial generator.  These are defined i
 
  
 
-Parts List:  
-
-
-
-
-
+Parts List:
