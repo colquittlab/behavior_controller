@@ -12,9 +12,7 @@ Here is an example:
 
 ```
 #!python
-
-
-%%%%%%%%%%%%%%%%%%%%%% example config 
+##### example config 
 [run_params]
 data_dir = /data/behavior/
 stimuli_dir = /data/stimuli/
@@ -30,9 +28,7 @@ withold_response = False
 timeout_period = 30
 max_trial_time = 5
 feed_time = 5
-
-%%%%%%%%%%%%%%%%%%%%%%  
-
+###
 ```
 
 Mode:
