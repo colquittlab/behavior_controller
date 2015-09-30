@@ -44,9 +44,17 @@ task specific modes are constructed as python functions that run as loop iterati
 task specific trials are generated using a trial generator.  These are defined in the module trial_generators.py. Trials are produced as trial blocks, which may be useful for statistical regularity.  
 
 ## Data: ##
-Records are kept in Json format. When boc is set running, the an events file and a trials file are created.  The config file is also copied to the data directory. 
+Records are kept in Json format. When boc is set running, a log file and a trials file are created with the birdname, date and an index.  
+###.log###
+the log file keeps a record of all events as they happen. the .log file is an absolute record of all input events and output events. These correspond to the python tuples passed as events.   
+  
+###.trials###
+the .trials file includes parameters and results of each trial. Each entry correspons to the python dict generated in a trial generator and modified during the loop iteration.  
 
-There are parsers for matlab in matlab_parsers. 
+###.config###
+The config file is also replicated with each run. This can be used to keep notes and refer to settings.  
+
+There are parsers for each datafile type in matlab_readers. 
 
 ## Configuration ##
 there is plenty of information on setting up a beaglebone black.  See: http://beagleboard.org/getting-started to connect the first time using usb from your workstation.
@@ -70,4 +78,4 @@ Once the bbb is online, I typically ssh in and operate and watch the system usin
 
 ###optional:###
 * relay/breakout cape ($29) http://www.logicsupply.com/cbb-relay/
-the logic supply relay is kind of buggy!  
+the logic supply relay is kind of buggy!
