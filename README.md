@@ -69,4 +69,5 @@ Once the bbb is online, I typically ssh in and operate and watch the system usin
 * usb soundcard <$10     must be alsa compatible 
 
 ###optional:###
-* breakout cape
+* relay/breakout cape ($29) http://www.logicsupply.com/cbb-relay/
+the logic supply relay is kind of buggy!  
