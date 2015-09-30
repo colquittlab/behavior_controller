@@ -63,8 +63,8 @@ sh ./bonebootstrap.sh
 
 
 ## Parts List: ##
-* beaglebone black ~$50
-* usb soundcard ~$10 
+* beaglebone black ~$50  [http://beagleboard.org/black]()
+* usb soundcard <$10     must be alsa compatible 
 
 ###optional:###
-* breakout cape
+* breakout cape 
