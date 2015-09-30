@@ -47,11 +47,6 @@ task specific trials are generated using a trial generator.  These are defined i
 there is plenty of information on setting up a beaglebone black.  See: http://beagleboard.org/getting-started to connect the first time using usb from your workstation.
 
 deploying boc (should be) easy on a debbian beaglebone using the script bonebootstrap.sh:
-
-This covers the basics.  Additional security measures may be advisable on institutional networks.  
-
-Once the bbb is online, I typically ssh in and operate and watch the system using screen.  The deploy script sets up an automatic screen invocation if you like.  
-  
 ```
 #!bash
 
@@ -59,12 +54,14 @@ git clone bitbucket.org/spikeCoder/behavior_controller.git
 cd behavior controller
 sh ./bonebootstrap.sh
 ```
+This covers the basics.  Additional security measures may be advisable on institutional networks.  
 
-
+Once the bbb is online, I typically ssh in and operate and watch the system using screen.  The deploy script sets up an automatic screen invocation if you like.  
+  
 
 ## Parts List: ##
 * beaglebone black ~$50  [http://beagleboard.org/black]()
 * usb soundcard <$10     must be alsa compatible 
 
 ###optional:###
-* breakout cape 
+* breakout cape
