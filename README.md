@@ -66,5 +66,5 @@ sh ./bonebootstrap.sh
 * beaglebone black ~$50
 * usb soundcard ~$10 
 
-optional:
+#optional:#
 * breakout cape
