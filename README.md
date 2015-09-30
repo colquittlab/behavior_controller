@@ -31,12 +31,11 @@ feed_time = 5
 ###
 ```
 
-Mode:
+## Mode: ##
 task specific modes are constructed as python functions that run as loop iterations in a "mainloop". Modes are defined and loaded into a dictionary in the module loop_iterations.py
 
-Trials:
+## Trials: ##
 task specific trials are generated using a trial generator.  These are defined in the module trial_generators.py. Trials are produced as trial blocks, which may be useful for statistical regularity.  
 
  
-
 Parts List:
