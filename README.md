@@ -4,6 +4,21 @@ Jeff Knowles, Doube Lab, 2013
 
 Behavior Operant Controller (BOC) is a python rolled system to control behavior experiments. It is built to run on a beaglebone black (master branch), but may also be implemented on a host computer communicating with arduinos over usb serial connections (branch gk_stable and arduino).  
 
+## Configuration ##
+there is plenty of information on setting up a beaglebone black.  See: http://beagleboard.org/getting-started to connect the first time using usb from your workstation.
+
+deploying boc (should be) easy on a debbian beaglebone using the script bonebootstrap.sh:
+```
+#!bash
+
+git clone bitbucket.org/spikeCoder/behavior_controller.git
+cd behavior controller
+sh ./bonebootstrap.sh
+```
+This covers the basics.  Additional security measures may be advisable on institutional networks.  
+
+Once the bbb is online, I typically ssh in and operate and watch the system using screen.  The deploy script sets up an automatic screen invocation if you like.  
+  
 ## Usage: ##
 
 ```
@@ -56,21 +71,6 @@ The config file is also replicated with each run. This can be used to keep notes
 
 There are parsers for each datafile type in matlab_readers. 
 
-## Configuration ##
-there is plenty of information on setting up a beaglebone black.  See: http://beagleboard.org/getting-started to connect the first time using usb from your workstation.
-
-deploying boc (should be) easy on a debbian beaglebone using the script bonebootstrap.sh:
-```
-#!bash
-
-git clone bitbucket.org/spikeCoder/behavior_controller.git
-cd behavior controller
-sh ./bonebootstrap.sh
-```
-This covers the basics.  Additional security measures may be advisable on institutional networks.  
-
-Once the bbb is online, I typically ssh in and operate and watch the system using screen.  The deploy script sets up an automatic screen invocation if you like.  
-  
 
 ## Parts List: ##
 * beaglebone black ~$50  [http://beagleboard.org/black]()
