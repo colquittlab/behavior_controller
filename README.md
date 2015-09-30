@@ -43,6 +43,11 @@ task specific modes are constructed as python functions that run as loop iterati
 ## Trials: ##
 task specific trials are generated using a trial generator.  These are defined in the module trial_generators.py. Trials are produced as trial blocks, which may be useful for statistical regularity.  
 
+## Data: ##
+Records are kept in Json format. When boc is set running, the an events file and a trials file are created.  The config file is also copied to the data directory. 
+
+There are parsers for matlab in matlab_parsers. 
+
 ## Configuration ##
 there is plenty of information on setting up a beaglebone black.  See: http://beagleboard.org/getting-started to connect the first time using usb from your workstation.
 
