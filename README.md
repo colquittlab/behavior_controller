@@ -53,10 +53,10 @@ feed_time = 5
 ```
 
 ## Mode: ##
-task specific modes are constructed as python functions that run as loop iterations in a "mainloop". Modes are defined and loaded into a dictionary in the module loop_iterations.py
+task specific modes are constructed as python functions that run on each loop iteration in the "main loop". A loop iteration function takes the BehaviorBox() and BehaviorController() objects and the events_since_last list as arguments and returns them as outputs. Modes are defined and loaded into a dictionary in the module loop_iterations.py
 
 ## Trials: ##
-task specific trials are generated using a trial generator.  These are defined in the module trial_generators.py. Trials are produced as trial blocks, which may be useful for statistical regularity.  
+task specific trials are generated using a trial generator.  These are defined in the module trial_generators.py. Trials are produced as trial blocks, which may be useful for statistical considerations. Users may implement adaptive trial generation.  
 
 ## Data: ##
 Records are kept in Json format. When boc is set running, a log file and a trials file are created with the birdname, date and an index.  
