@@ -220,7 +220,10 @@ def start_recording(queue, pcm, bird, channels, rate, format, chunk,
         elif (started is True and len(audio2send)>min_dur*rel):
             # write out
             print "writing to file"
-            filename = save_audio(list(prev_audio) + audio2send, outdir, rate)
+            today = datetime.date.today().isoformat()
+            outdir_date = "/".join([outdir, today])
+            if not os.path.exists(outdir_date): os.makedirs(outdir_date)
+            filename = save_audio(list(prev_audio) + audio2send, outdir_date, rate)
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
             prev_audio = deque(maxlen=prev_audio_time * rel)
