@@ -7,6 +7,7 @@ import sys
 import time
 import math
 import pdb
+import datetime
 import ConfigParser
 import numpy as np
 import multiprocessing as mp
@@ -28,7 +29,7 @@ class AudioRecord:
         self.recording_queue = None
 
         self.params = {}
-        self.params['birdname'] = None
+        self.params['bird'] = None
         self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
         self.params['channels'] = 1
@@ -123,7 +124,7 @@ class AudioRecord:
         self.event_queue = mp.Queue()
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
                                                                 self.pcm,
-                                                                self.params['birdname'],
+                                                                self.params['bird'],
                                                                 self.params['channels'],
                                                                 self.params['rate'],
                                                                 self.params['format'],
