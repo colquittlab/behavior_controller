@@ -7,11 +7,12 @@ import sys
 import time
 import math
 import pdb
+import datetime
 import ConfigParser
 import numpy as np
 import multiprocessing as mp
 
-sys.path.append("/home/brad/src/behavior_controller")
+sys.path.append(os.path.expanduser("~") + "/src/behavior_controller")
 import lib.soundout_tools as so
 from collections import deque
 
@@ -72,6 +73,12 @@ class AudioRecord:
             else:
                 attr = config.getfloat('record_params', option)
                 self.params[option] = attr
+        for option in config.options('run_params'):
+            if option in ["data_dir", "birdname"]:
+                attr = config.get("run_params", option)
+                self.params[option] = attr
+
+        self.params['outdir'] = "/".join([self.params['data_dir'], self.params['birdname']])
 
         if not os.path.exists(self.params['outdir']):
             os.makedirs(self.params['outdir'])
@@ -223,6 +230,7 @@ def start_recording(queue, pcm, bird, channels, rate, format, chunk,
             today = datetime.date.today().isoformat()
             outdir_date = "/".join([outdir, today])
             if not os.path.exists(outdir_date): os.makedirs(outdir_date)
+            #print outdir_date
             filename = save_audio(list(prev_audio) + audio2send, outdir_date, rate)
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
@@ -299,6 +307,7 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
 def save_audio(data, outdir, rate):
     """ Saves mic data to  WAV file. Returns filename of saved file """
     filname = "/".join([str(outdir), 'output_'+str(int(time.time()))])
+    #print filname
     # writes data to WAV file
     data = ''.join(data)
     wavout = wave.open(filname + '.wav', 'wb')

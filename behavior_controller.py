@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import scipy as sp
 import numpy as np
 from scipy import io as spio
@@ -65,6 +67,7 @@ class BehaviorController(object):
 
         # initialize tallies 
         self.reward_count = 0 
+        self.rewards_per_session = {}
         self.timeout_count = 0
         self.event_time = 0
 
@@ -177,12 +180,14 @@ class BehaviorController(object):
 
     def return_log_fid(self):
         if self.log_fid == None:
-            self.log_fid = open('%s%s.log'% (self.params['data_dir'],self.base_filename), 'w')
+#            self.log_fid = open('%s%s.log'% (self.params['data_dir'],self.base_filename), 'w')
+            self.log_fid = open('%s%s.log'% (self.params['data_dir'],self.base_filename), 'a')
         return self.log_fid
 
     def return_events_fid(self):
         if self.trial_fid == None:
-            self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'w')
+#            self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'w')
+            self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'a')
         return self.trial_fid
 
     def save_config_file(self):
@@ -316,9 +321,11 @@ class BehaviorBox(object):
         return time.time()
 
     def select_box(self, box):
-        #pdb.set_trace()
+        
         list_of_boxes = ut.return_list_of_boxes()
+        
         if box in [b[0] for b in list_of_boxes]:
+
             idx = [b[0] for b in list_of_boxes].index(box)
             box_data = list_of_boxes[idx]
             self.select_serial_port(box_data[1])
@@ -376,7 +383,10 @@ class BehaviorBox(object):
         else:
             idx = list_of_cards.index(cardname)
         self.sc_idx = idx
-        self.beep()
+        try:
+            self.beep()
+        except:
+            pass
 
     # def connect_to_sound_card(self, cardidx):
     #     self.sc_object = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK, mode=alsaaudio.PCM_NORMAL, card='hw:%d,0'%cardidx)
@@ -730,12 +740,16 @@ if __name__=='__main__':
     for param in ['stimset_occurance', 'set_times']:
         if config.has_option('run_params', param):
                 controller.params[param] = json.loads(config.get('run_params',param))
-                
+
+    if controller.params['set_times'] != None:
+        for set_time in controller.params['set_times']:
+            controller.rewards_per_session[set_time] = 0
     # modify data_dir
     controller.params['data_dir'] = "/".join([controller.params['data_dir'], controller.birdname]) + "/"
     if not os.path.exists(controller.params['data_dir']):
         os.makedirs(controller.params['data_dir'])
     controller.load_stimsets()
+
     box = BehaviorBox()
     if config.has_option('run_params','box'):
         box.select_box(config.get('run_params','box'))
