@@ -608,6 +608,7 @@ def main_loop(controller, box):
             #   events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
             # run throgh loop itteration state machine
             events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
+
             # save all the events that have happened in this loop to file
             controller.save_events_to_log_file(events_since_last)
             # if a trial eneded in this loop then store event, save events, generate new trial
@@ -633,6 +634,8 @@ def main_loop(controller, box):
          # renter loop
         main_loop(controller, box)
     except Exception as e:
+        controller.save_events_to_log_file([(box.current_time, "Error: %s, " % (str(e)))])
+        
         raise 
 
 

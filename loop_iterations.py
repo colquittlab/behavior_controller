@@ -288,9 +288,6 @@ def tutoring_iteration(controller, box, events_since_last):
         if controller.rewards_per_session[current_hour] >= controller.params['allowed_songs_per_session']:
             #--------- Session finished. Pause playback until next session ---------#
             controller.task_state = 'playback_pause'
-#            controller.reward_count = 0
-            #controller.timeout_count += 1
-            #controller.event_time = box.current_time
             events_since_last.append((box.current_time, 'playback_paused'))
 
     elif controller.task_state == 'playing_song':
@@ -311,8 +308,9 @@ def tutoring_iteration(controller, box, events_since_last):
     elif controller.task_state == "time_out":
         #-------- In timeout, switch deactivated --------#
         if box.current_time > controller.event_time + controller.params['timeout_period']:
-            controller.task_state = 'waiting_for_trial'
-            events_since_last.append((box.current_time,'end_timeout'))
+            if current_hour in controller.params['set_times']:
+                controller.task_state = 'waiting_for_trial'
+                events_since_last.append((box.current_time,'end_timeout'))
 
     elif controller.task_state == "playback_pause":
         #-------- Session is finished. Waiting for next session ---------#

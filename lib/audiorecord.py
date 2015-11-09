@@ -29,7 +29,7 @@ class AudioRecord:
         self.recording_queue = None
 
         self.params = {}
-        self.params['bird'] = None
+        self.params['birdname'] = None
         self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
         self.params['channels'] = 1
@@ -64,7 +64,7 @@ class AudioRecord:
             if option == "sound_card":
                 attr = config.get('record_params', option)
                 self.set_sound_card(attr)
-            elif option in ["outdir", "bird"]:
+            elif option in ["outdir", "birdname"]:
                 attr = config.get('record_params', option)
                 self.params[option] = attr
             elif option == "chunk":
@@ -130,7 +130,7 @@ class AudioRecord:
         self.event_queue = mp.Queue()
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
                                                                 self.pcm,
-                                                                self.params['bird'],
+                                                                self.params['birdname'],
                                                                 self.params['channels'],
                                                                 self.params['rate'],
                                                                 self.params['format'],
@@ -168,7 +168,7 @@ class AudioRecord:
     def stop(self):
         self.event_queue.put(1)
 
-def start_recording(queue, pcm, bird, channels, rate, format, chunk,
+def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
                     silence_limit, prev_audio_time, min_dur, threshold, outdir):
     stream = None
     if uname == "Linux":
@@ -218,7 +218,7 @@ def start_recording(queue, pcm, bird, channels, rate, format, chunk,
         if(sum([x > threshold for x in slid_win]) > 0):
             if(not started):
                 # start recording
-                sys.stdout.write(bird + ", ")
+                sys.stdout.write(birdname + ", ")
                 sys.stdout.write(time.ctime() + ": ")
                 sys.stdout.write("recording ... ")
                 sys.stdout.flush()
