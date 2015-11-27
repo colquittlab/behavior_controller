@@ -272,7 +272,7 @@ def tutoring_iteration(controller, box, events_since_last):
         if current_hour in controller.params['set_times']:
             controller.task_state = 'waiting_for_trial'
     # examine what events have happened and trigger new ones, depending on box state
-    if controller.task_state == 'waiting_for_trial':
+    if controller.task_state == 'waiting_for_trial' and current_hour in controller.params['set_times']:
         #---------- Playback on, waiting for trigger ----------#
         if 'song_trigger' in events_since_last_names and controller.rewards_per_session[current_hour] < controller.params['allowed_songs_per_session']:
             controller.rewards_per_session[current_hour] += 1
@@ -315,17 +315,18 @@ def tutoring_iteration(controller, box, events_since_last):
     elif controller.task_state == "playback_pause":
         #-------- Session is finished. Waiting for next session ---------#
 #        print current_hour
+        if not box.recorder.running:
+            box.recorder.start()
         if current_hour in controller.params['set_times']:
             if controller.rewards_per_session[current_hour] == 0:
                 controller.task_state = "waiting_for_trial"
-        if current_hour == 0:
-            # reset reward counts
-            for key in controller.rewards_per_session.iterkeys():
-                controller.rewards_per_session[key] = 0
-            
+        
         time.sleep(2)
-#        print "here2"
 
+    if current_hour == 0:
+        #-------- New day, reset reward counts --------#
+        for key in controller.rewards_per_session.iterkeys():
+            controller.rewards_per_session[key] = 0
 
     return events_since_last, trial_ended
 iterations['tutoring'] = tutoring_iteration
