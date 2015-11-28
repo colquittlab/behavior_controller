@@ -1,11 +1,7 @@
 #! /usr/bin/env python
 
-import scipy as sp
-import numpy as np
-from scipy import io as spio
 import os
 import serial
-from serial.tools import list_ports
 import time
 import datetime
 import io
@@ -13,7 +9,10 @@ import json
 import ConfigParser
 import sys
 import pdb
-from multiprocessing import Process
+import signal
+import traceback as tb
+import scipy as sp
+import numpy as np
 import lib.soundout_tools as so
 import lib.serial_tools as st
 import lib.usb_tools as ut
@@ -21,6 +20,9 @@ import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
 import lib.audiorecord as ar
+from scipy import io as spio
+from multiprocessing import Process
+from serial.tools import list_ports
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
@@ -41,6 +43,16 @@ mode_definitions = loop.iterations.keys()
 default_stimuli_dir = '/home/brad/behavior/stimuli'
 default_data_dir = '/home/brad/behavior/data'
 
+class GracefulKiller:
+    # http://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully/31464349#31464349
+    kill_now = False
+    def __init__(self):
+      signal.signal(signal.SIGINT, self.exit_gracefully)
+      signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self,signum, frame):
+      self.kill_now = True
+
 class BehaviorController(object):
     def __init__(self):
         self.birdname = None
@@ -52,9 +64,10 @@ class BehaviorController(object):
         self.has_run = False
         self.log_fid = None
         self.trial_fid = None
+        self.errlog_fid = None
 
         self.config_file_contents = None
-
+        
         # initialize the state variables
         self.task_state = None
         self.box_state = 'stop'
@@ -115,7 +128,7 @@ class BehaviorController(object):
         self.Bocc = 1.0 - self.Aocc
 
 
-
+    
     def set_bird_name(self, birdname):
         if not self.has_run:
             self.birdname = birdname
@@ -190,6 +203,13 @@ class BehaviorController(object):
             self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'a')
         return self.trial_fid
 
+    def return_errlog_fid(self):
+        if self.errlog_fid == None:
+#            self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'w')
+            self.errlog_fid = open('%s%s.errlog'% (self.params['data_dir'],self.base_filename), 'a')
+        return self.errlog_fid
+    
+
     def save_config_file(self):
         config_fname = '%s%s.config'% (self.params['data_dir'],self.base_filename)
         if self.config_file_contents is not None:
@@ -230,7 +250,12 @@ class BehaviorController(object):
         fid.write('%s\n' % json.dumps(trial))
         fid.flush()
         pass
-
+    
+    def write_error(self, e):
+        errlog_fid = self.return_errlog_fid()
+        errlog_fid.write(time.ctime() + " ")
+        tb.print_exc(file=errlog_fid)
+        
     def calculate_performance_statistics(self, n_trials_back = None):
         stats = {}
         stats['by_stimset'] = []
@@ -582,6 +607,8 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
+    killer = GracefulKiller()
+
     try:
         # generate the first trial and set that as the state
         controller.que_next_trial()
@@ -593,16 +620,23 @@ def main_loop(controller, box):
 
         # enter the loop
         last_time = box.current_time
+        start_time = box.current_time
         while controller.box_state == 'go':
 
             time.sleep(.05) # to prevent excessive CPU usage
-
+#            if controller.task_state == "waiting_for_trial": print "here"
             current_time = box.current_time
             loop_time = current_time - last_time
             last_time = current_time
 
+
+                
             # query serial events since the last itteration
             events_since_last = box.query_events()
+#            if current_time - start_time > 2:
+#                box.recorder.stop()
+#                pdb.set_trace()
+#                events_since_last.append((box.current_time, 'song_trigger'))
             # save loop times greator than tollerance as events
             #if loop_time > time_tollerance:
             #   events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
@@ -616,7 +650,8 @@ def main_loop(controller, box):
                 controller.task_state = 'prepare_trial'
                 controller.store_current_trial()
                 controller.que_next_trial()
-
+                
+#            controller.task_state + 1
             # other housecleaning:
             if current_time - box.last_sync_time > box.sync_period:
                 box.sync()
@@ -634,11 +669,14 @@ def main_loop(controller, box):
          # renter loop
         main_loop(controller, box)
     except Exception as e:
-        controller.save_events_to_log_file([(box.current_time, "Error: %s, " % (str(e)))])
-        
-        raise 
+        if not box.recorder == None:
+            box.recorder.stop()
+        controller.write_error(e)
 
-
+    if killer.kill_now:
+        if not box.recorder == None:
+            box.recorder.stop()
+        print "BehaviorController killed."
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that
