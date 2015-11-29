@@ -607,7 +607,7 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
-    killer = GracefulKiller()
+    #killer = GracefulKiller()
 
     try:
         # generate the first trial and set that as the state
@@ -673,10 +673,10 @@ def main_loop(controller, box):
             box.recorder.stop()
         controller.write_error(e)
 
-    if killer.kill_now:
-        if not box.recorder == None:
-            box.recorder.stop()
-        print "BehaviorController killed."
+    # if killer.kill_now:
+    #     if not box.recorder == None:
+    #         box.recorder.stop()
+    #     print "BehaviorController killed."
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that
