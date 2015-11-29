@@ -27,7 +27,7 @@ class AudioRecord:
         self.pcm = None
         self.event_queue = None
         self.recording_queue = None
-
+        self.running = False
         self.params = {}
         self.params['birdname'] = None
         self.params['chunk'] = 1024
@@ -127,6 +127,7 @@ class AudioRecord:
         return values_thresh
 
     def start(self):
+        self.running = True
         self.event_queue = mp.Queue()
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
                                                                 self.pcm,
@@ -166,6 +167,7 @@ class AudioRecord:
                 raise Exception
 
     def stop(self):
+        self.running = False
         self.event_queue.put(1)
 
 def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
