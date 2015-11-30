@@ -8,24 +8,24 @@ if os.uname()[0]=='Linux': # this allows for development on non-linux systems
 else:
 	pass
 
-# find mixer name
-for control_name in ['PCM', 'Speaker','Master']:
-	try:
-		mixer = aa.Mixer(control=control_name, cardindex = cardidx)
-	except:
-		pass
-try:
-    mixer.setvolume(100)
-except:
-    pass
-try:
-    mixer.setmute(0)
-except:
-    pass
-try:
-	mixer.close()
-except:
-	pass
+# # find mixer name
+# for control_name in ['PCM', 'Speaker','Master']:
+# 	try:
+# 		mixer = aa.Mixer(control=control_name, cardindex = cardidx)
+# 	except:
+# 		pass
+# try:
+#     mixer.setvolume(100)
+# except:
+#     pass
+# try:
+#     mixer.setmute(0)
+# except:
+#     pass
+# try:
+#     mixer.close()
+# except:
+# 	pass
 	
 
 #functions

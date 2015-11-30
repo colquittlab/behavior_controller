@@ -111,8 +111,8 @@ class BehaviorController(object):
         self.generate_file_name()
 
     def generate_file_name(self):
-        if self.base_filename is not None:
-            return self.base_filename
+        # if self.base_filename is not None:
+        #     return self.base_filename
         basename = '%s_%04d%02d%02d' %(self.birdname,self.initial_date.year,self.initial_date.month,self.initial_date.day) 
         idx = 0
         while os.path.exists('%s%s_%d.log'%(self.params['data_dir'], basename,idx)):
@@ -182,7 +182,7 @@ class BehaviorController(object):
     def save_config_file(self):
         config_fname = '%s%s.config'% (self.params['data_dir'],self.base_filename)
         if self.config_file_contents is not None:
-            config_fid = open(config_fname, 'w')
+            config_fid = open(config_fname, 'a')
             config_fid.write(self.config_file_contents)
         else:
             config = ConfigParser.ConfigParser()
@@ -193,7 +193,7 @@ class BehaviorController(object):
         pass
 
     def save_events_to_log_file(self,  events_since_last):
-        with open(self.return_log_fname(),'w') as fid:
+        with open(self.return_log_fname(),'a') as fid:
             for event in events_since_last:
                 # tally counts from events
                 self.event_count += 1
@@ -213,7 +213,7 @@ class BehaviorController(object):
 
     def save_trial_to_file(self, trial):
         trial['mode'] = self.params['mode']
-        with open(self.return_events_fname(),'w') as fid:
+        with open(self.return_events_fname(),'a') as fid:
             fid.write('%s\n' % json.dumps(trial))
             fid.flush()
         pass
@@ -266,6 +266,7 @@ class BehaviorBox(object):
         self.so_workers = []
         self.pulse_state = 0
         self.force_feed_up = False
+        bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
         if not self.serial_status:
@@ -319,15 +320,23 @@ class BehaviorBox(object):
             events_since_last.append(tuple(event_out))
         return events_since_last
     def feeder_on(self):
-        bt.set_output_list(pindef.output_definitions['feeder_port'], 1)
-        bt.PWM.start(pindef.output_definitions['pwm_pin'],32,300)
+        bt.set_output_list(pindef.output_definitions['feeder_port'], 1)    
+        try:
+            bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'], 85)
+        except:
+            print 'unable to set pwm port'
     def feeder_off(self, do_warning=False):
         if do_warning:
             self.beep_warning()
             time.sleep(1)
             pass
         bt.set_output_list(pindef.output_definitions['feeder_port'], 0) 
-        bt.PWM.start(pindef.output_definitions['pwm_pin'],50,300)
+       
+        try:
+	    bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'],15)
+        except:
+            print 'unable to set pwm port'
+
     def light_on(self):
         bt.set_output_list(pindef.output_definitions['light_port'], 0)
     def light_off(self):
@@ -336,7 +345,6 @@ class BehaviorBox(object):
         bt.PWM.start(pindef.output_definitions['laser_port'], duty, freq, 1)
     def pulse_off(self):
         bt.PWM.stop(pindef.output_definitions['laser_port'])
-        bt.PWM.cleanup()
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
         filename =  '%s%s/%s%s'%(self.stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
@@ -402,55 +410,63 @@ def run_box(controller, box):
     box.query_events()
     box.light_on()
     box.feeder_off()
+    try:
+        # send loop
+        main_loop(controller, box)
+    except Exception as e:
+        if 'alsa' in e.str:
+            # restart alsa
+            main_loop(controller,box)
+        else:
+            raise(e)
+
     # send loop
     main_loop(controller, box)
     pass
 
 def main_loop(controller, box):
-    try:
-    
-        # generate the first trial and set that as the state
-        controller.que_next_trial()
-        controller.task_state = 'prepare_trial'
-        controller.has_run = True
-        # enter the loop
-        last_time = box.current_time
-        while controller.box_state == 'go':
-            current_time = box.current_time
-            loop_time = current_time - last_time
-            last_time = current_time
-            # query serial events since the last itteration
-            events_since_last = box.query_events()
-            # save loop times greator than tollerance as events
-            if loop_time > time_tollerance:
-                events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
-            # run throgh loop itteration state machine
-            events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
-            # save all the events that have happened in this loop to file
-            controller.save_events_to_log_file(events_since_last)
-            # if a trial eneded in this loop then store event, save events, generate new trial
-            if trial_ended:
-                controller.task_state = 'prepare_trial'
-                controller.store_current_trial()
-                controller.que_next_trial()
-                if box.current_time > last_bt_refresh + bt_refresh_interval:
-                    box.refresh_bt()
-                    last_bit_refresh = box.current_time
+    # generate the first trial and set that as the state
+    controller.que_next_trial()
+    controller.task_state = 'prepare_trial'
+    controller.has_run = True
+    # enter the loop
+    last_time = box.current_time
+    while controller.box_state == 'go':
+        current_time = box.current_time
+        loop_time = current_time - last_time
+        last_time = current_time
+        # query serial events since the last itteration
+        events_since_last = box.query_events()
+        # save loop times greator than tollerance as events
+        if loop_time > time_tollerance:
+            events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
+        # run throgh loop itteration state machine
+        events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
+        # save all the events that have happened in this loop to file
+        controller.save_events_to_log_file(events_since_last)
+        # if a trial eneded in this loop then store event, save events, generate new trial
+        if trial_ended:
+            controller.task_state = 'prepare_trial'
+            controller.store_current_trial()
+            controller.que_next_trial()
+            if box.current_time > last_bt_refresh + bt_refresh_interval:
+                box.refresh_bt()
+                last_bit_refresh = box.current_time
 
-            if 'toggle_force_feed' in [event[1] for event in events_since_last]:
-                if box.force_feed_up is False:
-                    box.force_feed_up = True
-                    box.feeder_on()
-                else:
-                    box.force_feed_up = False
-                    box.feeder_off()
+        if 'toggle_force_feed' in [event[1] for event in events_since_last]:
+            if box.force_feed_up is False:
+                box.force_feed_up = True
+                box.feeder_on()
+            else:
+                box.force_feed_up = False
+                box.feeder_off()
 
-        # exit routine:
-        pass
+    # exit routine:
+    pass
 
 
-    except Exception as e:
-	    raise(e)
+    # exit routine:
+    pass
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that
