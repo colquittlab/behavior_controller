@@ -17,6 +17,7 @@ end
 
 function trials = read_from_file(fname)
     file_data=dir(fname);
+%     trials = struct
     date_modified = file_data.datenum;
     fid = fopen(fname,'r');
     count = 0;
@@ -89,5 +90,8 @@ function trials = read_from_file(fname)
         file_line = fgets(fid);
     end
     fclose(fid);
+    if ~exist('trials')
+        trials = [];
+    end
     save([fname '.mat'],'trials','date_modified')
 end

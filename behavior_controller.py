@@ -18,6 +18,8 @@ import lib.usb_tools as ut
 import loop_iterations as loop
 import trial_generators as trial
 import lib.bone_tools as bt
+bt_refresh_interval = 60*60*24
+last_bt_refresh = time.time()
 import lib.pin_definitions as pindef
 
 # from pyfirmata import Arduino, util
@@ -305,6 +307,9 @@ class BehaviorBox(object):
         self.sc_idx = idx
         self.beep()
 
+    def refresh_bt(self):
+        bt = reload(bt)
+        pass
     def query_events(self, timeout = 0):
         events_since_last = []
         while len(bt.event_buffer) > 0:
@@ -428,6 +433,9 @@ def main_loop(controller, box):
                 controller.task_state = 'prepare_trial'
                 controller.store_current_trial()
                 controller.que_next_trial()
+                if box.current_time > last_bt_refresh + bt_refresh_interval:
+                    box.refresh_bt()
+                    last_bit_refresh = box.current_time
 
             if 'toggle_force_feed' in [event[1] for event in events_since_last]:
                 if box.force_feed_up is False:
