@@ -64,7 +64,7 @@ class AudioRecord:
             if option == "sound_card":
                 attr = config.get('record_params', option)
                 self.set_sound_card(attr)
-            elif option in ["outdir", "birdname"]:
+            elif option in ["data_dir", "birdname"]:
                 attr = config.get('record_params', option)
                 self.params[option] = attr
             elif option == "chunk":
@@ -73,14 +73,15 @@ class AudioRecord:
             else:
                 attr = config.getfloat('record_params', option)
                 self.params[option] = attr
-        for option in config.options('run_params'):
-            if option in ["data_dir", "birdname"]:
-                attr = config.get("run_params", option)
-                self.params[option] = attr
+        if config.has_section('run_params'):
+            for option in config.options('run_params'):
+                if option in ["data_dir", "birdname"]:
+                    attr = config.get("run_params", option)
+                    self.params[option] = attr
 
         self.params['outdir'] = "/".join([self.params['data_dir'], self.params['birdname']])
 
-        self.params['outdir'] = "/".join([self.params['outdir'], self.params['bird']])
+#        self.params['outdir'] = "/".join([self.params['outdir'], self.params['bird']])
         if not os.path.exists(self.params['outdir']):
             os.makedirs(self.params['outdir'])
 
