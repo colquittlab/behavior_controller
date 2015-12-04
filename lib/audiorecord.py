@@ -74,6 +74,7 @@ class AudioRecord:
                 attr = config.getfloat('record_params', option)
                 self.params[option] = attr
 
+        self.params['outdir'] = "/".join([self.params['outdir'], self.params['bird']])
         if not os.path.exists(self.params['outdir']):
             os.makedirs(self.params['outdir'])
 
