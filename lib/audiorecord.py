@@ -38,6 +38,7 @@ class AudioRecord:
         self.params['silence_limit'] = None
         self.params['prev_audio'] = None
         self.params['min_dur'] = None
+        self.params['max_dur'] = None
         self.params['outdir'] = None
 
     def test_config(self):
@@ -50,6 +51,7 @@ class AudioRecord:
         self.params['silence_limit'] = 0.5
         self.params['prev_audio'] = 1
         self.params['min_dur'] = 1
+        self.params['max_dur'] = 1
         self.params['outdir'] = "."
 
     def init_config(self, config_file):
@@ -141,6 +143,7 @@ class AudioRecord:
                                                                 self.params['silence_limit'],
                                                                 self.params['prev_audio'],
                                                                 self.params['min_dur'],
+                                                                self.params['max_dur'],
                                                                 self.params['threshold'],
                                                                 self.params['outdir']))
         self.proc.start()
@@ -173,7 +176,7 @@ class AudioRecord:
         self.event_queue.put(1)
 
 def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
-                    silence_limit, prev_audio_time, min_dur, threshold, outdir):
+                    silence_limit, prev_audio_time, min_dur, max_dur, threshold, outdir):
     stream = None
     if uname == "Linux":
         stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, device=pcm)
@@ -228,7 +231,7 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
                 sys.stdout.flush()
                 started = True
             audio2send.append(cur_data)
-        elif (started is True and len(audio2send)>min_dur*rel):
+        elif (started is True and len(audio2send)>min_dur*rel and len(audio2send)<max_dur*rel):
             # write out
             print "writing to file"
             today = datetime.date.today().isoformat()
