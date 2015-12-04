@@ -12,7 +12,7 @@ import ConfigParser
 import numpy as np
 import multiprocessing as mp
 
-sys.path.append("/home/brad/src/behavior_controller")
+sys.path.append(os.path.expanduser("~") + "/src/behavior_controller")
 import lib.soundout_tools as so
 from collections import deque
 
@@ -27,9 +27,9 @@ class AudioRecord:
         self.pcm = None
         self.event_queue = None
         self.recording_queue = None
-
+        self.running = False
         self.params = {}
-        self.params['bird'] = None
+        self.params['birdname'] = None
         self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
         self.params['channels'] = 1
@@ -64,7 +64,7 @@ class AudioRecord:
             if option == "sound_card":
                 attr = config.get('record_params', option)
                 self.set_sound_card(attr)
-            elif option in ["outdir", "bird"]:
+            elif option in ["outdir", "birdname"]:
                 attr = config.get('record_params', option)
                 self.params[option] = attr
             elif option == "chunk":
@@ -73,6 +73,12 @@ class AudioRecord:
             else:
                 attr = config.getfloat('record_params', option)
                 self.params[option] = attr
+        for option in config.options('run_params'):
+            if option in ["data_dir", "birdname"]:
+                attr = config.get("run_params", option)
+                self.params[option] = attr
+
+        self.params['outdir'] = "/".join([self.params['data_dir'], self.params['birdname']])
 
         self.params['outdir'] = "/".join([self.params['outdir'], self.params['bird']])
         if not os.path.exists(self.params['outdir']):
@@ -122,10 +128,11 @@ class AudioRecord:
         return values_thresh
 
     def start(self):
+        self.running = True
         self.event_queue = mp.Queue()
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
                                                                 self.pcm,
-                                                                self.params['bird'],
+                                                                self.params['birdname'],
                                                                 self.params['channels'],
                                                                 self.params['rate'],
                                                                 self.params['format'],
@@ -161,9 +168,10 @@ class AudioRecord:
                 raise Exception
 
     def stop(self):
+        self.running = False
         self.event_queue.put(1)
 
-def start_recording(queue, pcm, bird, channels, rate, format, chunk,
+def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
                     silence_limit, prev_audio_time, min_dur, threshold, outdir):
     stream = None
     if uname == "Linux":
@@ -213,7 +221,7 @@ def start_recording(queue, pcm, bird, channels, rate, format, chunk,
         if(sum([x > threshold for x in slid_win]) > 0):
             if(not started):
                 # start recording
-                sys.stdout.write(bird + ", ")
+                sys.stdout.write(birdname + ", ")
                 sys.stdout.write(time.ctime() + ": ")
                 sys.stdout.write("recording ... ")
                 sys.stdout.flush()
@@ -225,6 +233,7 @@ def start_recording(queue, pcm, bird, channels, rate, format, chunk,
             today = datetime.date.today().isoformat()
             outdir_date = "/".join([outdir, today])
             if not os.path.exists(outdir_date): os.makedirs(outdir_date)
+            #print outdir_date
             filename = save_audio(list(prev_audio) + audio2send, outdir_date, rate)
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
@@ -301,6 +310,7 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
 def save_audio(data, outdir, rate):
     """ Saves mic data to  WAV file. Returns filename of saved file """
     filname = "/".join([str(outdir), 'output_'+str(int(time.time()))])
+    #print filname
     # writes data to WAV file
     data = ''.join(data)
     wavout = wave.open(filname + '.wav', 'wb')
