@@ -690,10 +690,9 @@ def unrewarded_sequence_preference_assay(controller, box, events_since_last):
                 idx = random.randint(0, len(stim_list)-1)
                 controller.current_trial['response_time'] = box.current_time
                 controller.current_trial['response_idx'] = stimset_idx
-                controller.current_trial['stimset'] = controller.stimsets[stimset_idx]
+                controller.current_trial['stimset'] = controller.stimset_names[stimset_idx]
                 controller.current_trial['stimulus'] = stim_list[idx][2]
                 controller.current_trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
-                print controller.current_trial
                 box.play_stim(controller.stimsets[0], controller.current_trial['stimulus'])
                 events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
                 controller.task_state = 'playing_song'
@@ -741,8 +740,9 @@ def rewarded_sequence_preference_assay(controller, box, events_since_last):
                 idx = random.randint(0, len(stim_list)-1)
                 controller.current_trial['response_time'] = box.current_time
                 controller.current_trial['response_idx'] = stimset_idx
-                controller.current_trial['stimset'] = controller.stimsets[stimset_idx]
+                controller.current_trial['stimset'] = controller.stimset_names[stimset_idx]
                 controller.current_trial['stimulus'] = stim_list[idx][2]
+                 controller.current_trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
                 box.play_stim(controller.stimsets[0], controller.current_trial['stimulus'])
                 events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
                 if True:
