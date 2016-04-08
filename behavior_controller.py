@@ -449,9 +449,9 @@ def main_loop(controller, box):
             controller.task_state = 'prepare_trial'
             controller.store_current_trial()
             controller.que_next_trial()
-            if box.current_time > last_bt_refresh + bt_refresh_interval:
-                box.refresh_bt()
-                last_bit_refresh = box.current_time
+            # if box.current_time > last_bt_refresh + bt_refresh_interval:
+                # box.refresh_bt()
+                # last_bit_refresh = box.current_time
 
         if 'toggle_force_feed' in [event[1] for event in events_since_last]:
             if box.force_feed_up is False:

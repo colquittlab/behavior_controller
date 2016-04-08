@@ -32,6 +32,19 @@ def standard_generator(controller, trials_per_block=1):
 generators['standard'] = standard_generator
 
 
+def preference_generator(controller, trials_per_block=1):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		trial['trial_type'] = 'preference'
+		trial['reward_p'] = [1]*len(controller.stimsets)
+		# pick the stimset and the stimulus
+		trial_block.append(trial)
+	return trial_block
+generators['standard'] = standard_generator
+
+
 def stimset_occurance_generator(controller, trials_per_block=1):
 	"""Generates trial by trial with no pruning but allows you to set stimet occurance"""
 	trial_block = []

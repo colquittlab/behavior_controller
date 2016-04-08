@@ -659,3 +659,101 @@ def playback_and_count_iteration(controller, box, events_since_last):
 iterations['playback_and_count'] = playback_and_count_iteration
 
 
+def unrewarded_sequence_preference_assay(controller, box, events_since_last):
+    # record any events that have happened on the box     
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # make any initial parameters
+    if controller.task_state == 'prepare_trial':
+        controller.task_state = 'waiting_for_trial'
+
+    if controller.task_state == 'waiting_for_trial':
+        if 'song_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('song_trigger')
+            controller.current_trial['start_time'] = box.current_time
+            events_since_last.append((box.current_time, 'trial_initiated', controller.current_trial['stimulus']))
+            conrtoller.task_state = 'waiting_for_response'
+    # examine what events have happened and trigger new ones, depending on box state
+    elif controller.task_state == 'waiting_for_response':
+        timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']
+        if 'response_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('response_trigger')
+            controller.current_trial['response_time'] = box.current_time
+            if events_since_last[event_idx][2] < len(controller.stimsets):
+                stimset_idx = events_since_last[event_idx][2]
+                stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
+                # pick the stimset and the stimulus
+                idx = random.randint(0, len(stim_list)-1)
+                controller.current_trial['response_time'] = box.current_time
+                controller.current_trial['response_idx'] = stimset_idx
+                controller.current_trial['stimset'] = controller.stimsets[stimset_idx]
+                controller.current_trial['stimulus'] = stim_list[idx]
+                box.play_stim(controller.stimsets[0], controller.current_trial['stimulus'])
+                events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+                controller.task_state = 'playing_song'
+        elif box.current_time > timeout_time:
+            controller.current_trial['result'] = 'no_response'
+            events_since_last.append((box.current_time, 'no_response'))
+            trial_ended = True
+
+    elif controller.task_state == 'playing_song':
+        if box.current_time > controller.current_trial['response_time'] + controller.current_trial['stim_length']:
+            events_since_last.append((box.current_time,'playback_ended'))
+            trial_ended = True
+    return events_since_last, trial_ended
+iterations['unrewarded__sequence_preference'] = unrewarded_sequence_preference_assay
+
+
+def rewarded_sequence_preference_assay(controller, box, events_since_last):
+    # record any events that have happened on the box     
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # make any initial parameters
+    if controller.task_state == 'prepare_trial':
+        controller.task_state = 'waiting_for_trial'
+
+    if controller.task_state == 'waiting_for_trial':
+        if 'song_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('song_trigger')
+            controller.current_trial['start_time'] = box.current_time
+            events_since_last.append((box.current_time, 'trial_initiated', controller.current_trial['stimulus']))
+            conrtoller.task_state = 'waiting_for_response'
+    # examine what events have happened and trigger new ones, depending on box state
+    elif controller.task_state == 'waiting_for_response':
+        timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']
+        if 'response_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('response_trigger')
+            controller.current_trial['response_time'] = box.current_time
+            if events_since_last[event_idx][2] < len(controller.stimsets):
+                stimset_idx = events_since_last[event_idx][2]
+                stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
+                # pick the stimset and the stimulus
+                idx = random.randint(0, len(stim_list)-1)
+                controller.current_trial['response_time'] = box.current_time
+                controller.current_trial['response_idx'] = stimset_idx
+                controller.current_trial['stimset'] = controller.stimsets[stimset_idx]
+                controller.current_trial['stimulus'] = stim_list[idx]
+                box.play_stim(controller.stimsets[0], controller.current_trial['stimulus'])
+                events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+                
+                if 
+                controller.task_state = 'reward'
+        elif box.current_time > timeout_time:
+            controller.current_trial['result'] = 'no_response'
+            events_since_last.append((box.current_time, 'no_response'))
+            trial_ended = True
+
+    elif controller.task_state == "reward":
+        if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
+            #box.feeder_off()
+            box.feeder_off(controller.params['warn_feeder_off']) # GK
+            events_since_last.append((box.current_time, 'reward_end'))
+            trial_ended = True
+
+    elif controller.task_state == 'playing_song':
+        if box.current_time > controller.current_trial['response_time'] + controller.current_trial['stim_length']:
+            events_since_last.append((box.current_time,'playback_ended'))
+            trial_ended = True
+
+    return events_since_last, trial_ended
+iterations['rewarded__sequence_preference'] = rewarded_sequence_preference_assay
