@@ -414,11 +414,11 @@ def run_box(controller, box):
         # send loop
         main_loop(controller, box)
     except Exception as e:
-        if 'alsa' in e.str:
-            # restart alsa
-            main_loop(controller,box)
-        else:
-            raise(e)
+        # if 'alsa' in e.str:
+        #     # restart alsa
+        #     main_loop(controller,box)
+        # else:
+        raise(e)
 
     # send loop
     main_loop(controller, box)
