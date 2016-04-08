@@ -701,7 +701,7 @@ def unrewarded_sequence_preference_assay(controller, box, events_since_last):
             events_since_last.append((box.current_time,'playback_ended'))
             trial_ended = True
     return events_since_last, trial_ended
-iterations['unrewarded_sequence_preference'] = unrewarded_sequence_preference_assay
+iterations['unrewarded_preference_sequence'] = unrewarded_sequence_preference_assay
 
 
 def rewarded_sequence_preference_assay(controller, box, events_since_last):
@@ -755,4 +755,4 @@ def rewarded_sequence_preference_assay(controller, box, events_since_last):
             trial_ended = True
 
     return events_since_last, trial_ended
-iterations['rewarded_sequence_preference'] = rewarded_sequence_preference_assay
+iterations['rewarded_preference_sequence'] = rewarded_sequence_preference_assay
