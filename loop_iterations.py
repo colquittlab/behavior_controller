@@ -679,7 +679,11 @@ def unrewarded_sequence_preference_assay(controller, box, events_since_last):
         if 'response_trigger' in events_since_last_names:
             event_idx = events_since_last_names.index('response_trigger')
             controller.current_trial['response_time'] = box.current_time
-            if events_since_last[event_idx][2] < len(controller.stimsets):
+            if events_since_last[event_idx][2] in controller.expected_responses:
+                resp_idx = controller.expected_responses.index(events_since_last[event_idx][2])
+            else:
+                resp_idx = 100
+            if resp_idx < len(controller.stimsets):
                 stimset_idx = events_since_last[event_idx][2]
                 stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
                 # pick the stimset and the stimulus
@@ -724,7 +728,11 @@ def rewarded_sequence_preference_assay(controller, box, events_since_last):
         if 'response_trigger' in events_since_last_names:
             event_idx = events_since_last_names.index('response_trigger')
             controller.current_trial['response_time'] = box.current_time
-            if events_since_last[event_idx][2] < len(controller.stimsets):
+            if events_since_last[event_idx][2] in controller.expected_responses:
+                resp_idx = controller.expected_responses.index(events_since_last[event_idx][2])
+            else:
+                resp_idx = 100
+            if resp_idx < len(controller.stimsets):
                 stimset_idx = events_since_last[event_idx][2]
                 stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
                 # pick the stimset and the stimulus
