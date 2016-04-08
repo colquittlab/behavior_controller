@@ -684,7 +684,7 @@ def unrewarded_sequence_preference_assay(controller, box, events_since_last):
             else:
                 resp_idx = 100
             if resp_idx < len(controller.stimsets):
-                stimset_idx = events_since_last[event_idx][2]
+                stimset_idx = resp_idx
                 stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
                 # pick the stimset and the stimulus
                 idx = random.randint(0, len(stim_list)-1)
@@ -733,7 +733,7 @@ def rewarded_sequence_preference_assay(controller, box, events_since_last):
             else:
                 resp_idx = 100
             if resp_idx < len(controller.stimsets):
-                stimset_idx = events_since_last[event_idx][2]
+                stimset_idx = resp_idx
                 stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
                 # pick the stimset and the stimulus
                 idx = random.randint(0, len(stim_list)-1)
