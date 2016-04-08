@@ -42,7 +42,7 @@ def preference_generator(controller, trials_per_block=1):
 		# pick the stimset and the stimulus
 		trial_block.append(trial)
 	return trial_block
-generators['standard'] = standard_generator
+generators['preference'] = preference_generator
 
 
 def stimset_occurance_generator(controller, trials_per_block=1):
