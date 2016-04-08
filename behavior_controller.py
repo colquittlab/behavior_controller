@@ -410,15 +410,15 @@ def run_box(controller, box):
     box.query_events()
     box.light_on()
     box.feeder_off()
-    try:
+#    try:
         # send loop
-        main_loop(controller, box)
-    except Exception as e:
+    main_loop(controller, box)
+ #   except Exception as e:
         # if 'alsa' in e.str:
         #     # restart alsa
         #     main_loop(controller,box)
         # else:
-        raise(e)
+  #      raise(e)
 
     # send loop
     main_loop(controller, box)

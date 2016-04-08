@@ -672,7 +672,7 @@ def unrewarded_sequence_preference_assay(controller, box, events_since_last):
             event_idx = events_since_last_names.index('song_trigger')
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'trial_initiated', controller.current_trial['stimulus']))
-            conrtoller.task_state = 'waiting_for_response'
+            controller.task_state = 'waiting_for_response'
     # examine what events have happened and trigger new ones, depending on box state
     elif controller.task_state == 'waiting_for_response':
         timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']
@@ -717,7 +717,7 @@ def rewarded_sequence_preference_assay(controller, box, events_since_last):
             event_idx = events_since_last_names.index('song_trigger')
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'trial_initiated', controller.current_trial['stimulus']))
-            conrtoller.task_state = 'waiting_for_response'
+            controller.task_state = 'waiting_for_response'
     # examine what events have happened and trigger new ones, depending on box state
     elif controller.task_state == 'waiting_for_response':
         timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']

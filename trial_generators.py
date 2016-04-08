@@ -39,6 +39,7 @@ def preference_generator(controller, trials_per_block=1):
 		trial = {}
 		trial['trial_type'] = 'preference'
 		trial['reward_p'] = [1]*len(controller.stimsets)
+		trial['stimulus']=''
 		# pick the stimset and the stimulus
 		trial_block.append(trial)
 	return trial_block
