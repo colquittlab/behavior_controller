@@ -701,7 +701,7 @@ def unrewarded_sequence_preference_assay(controller, box, events_since_last):
             events_since_last.append((box.current_time,'playback_ended'))
             trial_ended = True
     return events_since_last, trial_ended
-iterations['unrewarded__sequence_preference'] = unrewarded_sequence_preference_assay
+iterations['unrewarded_sequence_preference'] = unrewarded_sequence_preference_assay
 
 
 def rewarded_sequence_preference_assay(controller, box, events_since_last):
@@ -735,9 +735,8 @@ def rewarded_sequence_preference_assay(controller, box, events_since_last):
                 controller.current_trial['stimulus'] = stim_list[idx]
                 box.play_stim(controller.stimsets[0], controller.current_trial['stimulus'])
                 events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
-                
-                if 
-                controller.task_state = 'reward'
+                if True:
+                    controller.task_state = 'reward'
         elif box.current_time > timeout_time:
             controller.current_trial['result'] = 'no_response'
             events_since_last.append((box.current_time, 'no_response'))
@@ -756,4 +755,4 @@ def rewarded_sequence_preference_assay(controller, box, events_since_last):
             trial_ended = True
 
     return events_since_last, trial_ended
-iterations['rewarded__sequence_preference'] = rewarded_sequence_preference_assay
+iterations['rewarded_sequence_preference'] = rewarded_sequence_preference_assay
