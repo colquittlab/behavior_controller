@@ -693,6 +693,7 @@ def unrewarded_sequence_preference_assay(controller, box, events_since_last):
                 controller.current_trial['stimset'] = controller.stimsets[stimset_idx]
                 controller.current_trial['stimulus'] = stim_list[idx][2]
                 controller.current_trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
+                print controller.current_trial
                 box.play_stim(controller.stimsets[0], controller.current_trial['stimulus'])
                 events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
                 controller.task_state = 'playing_song'
