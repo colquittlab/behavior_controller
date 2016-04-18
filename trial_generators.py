@@ -45,6 +45,22 @@ def preference_generator(controller, trials_per_block=1):
 	return trial_block
 generators['preference'] = preference_generator
 
+def adaptive_preference_generator(controller, trials_per_block=1, n_look_back=10):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		trial['trial_type'] = 'preference'
+		trial['reward_p'] = [1]*len(controller.stimsets)
+		trial['stimulus']=''
+		if len(controller.completed_trials>=n_trials_back):
+			stats = controller.calculate_performance_statistics(n_trials_back = n_trials_back)
+			import ipdb; ipdb.set_trace()
+		# pick the stimset and the stimulus
+		trial_block.append(trial)
+	return trial_block
+generators['adaptive_preference'] = adaptive_preference_generator
+
 
 def stimset_occurance_generator(controller, trials_per_block=1):
 	"""Generates trial by trial with no pruning but allows you to set stimet occurance"""
