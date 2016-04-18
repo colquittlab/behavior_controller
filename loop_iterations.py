@@ -754,9 +754,11 @@ def rewarded_sequence_preference_assay(controller, box, events_since_last):
                     controller.task_state = 'reward'
                     box.feeder_on()
                     controller.current_trial['rewarded'] = True
+                    events_since_last.append((box.current_time, 'reward_start'))
                 else:
                     controller.task_state = 'playing_song'
                     controller.current_trial['rewarded'] = False
+                    events_since_last.append((box.current_time, 'no_reward'))
 
         elif box.current_time > timeout_time:
             controller.current_trial['result'] = 'no_response'
