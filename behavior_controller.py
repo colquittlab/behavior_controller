@@ -238,17 +238,21 @@ class BehaviorController(object):
             stats['by_stimset'][stimset_idx]['n_occurances'] = 0
         # count events in trials
         for trial in relevant_trials:
-            if 'result' in trial.keys():
-                if trial['result'] == 'correct':
-                    stats['by_stimset'][trial['stimset_idx']]['n_correct'] += 1
-                elif trial['result'] == 'incorrect':
-                    stats['by_stimset'][trial['stimset_idx']]['n_incorrect'] += 1
-                elif trial['result'] == 'haulted':
-                    stats['by_stimset'][trial['stimset_idx']]['n_haulted'] += 1
-                elif trial['result'] == 'no_response':
-                    stats['by_stimset'][trial['stimset_idx']]['n_noresponse'] += 1
             if 'stimset_idx' in trial.keys():
                 stats['by_stimset'][trial['stimset_idx']]['n_occurances'] += 1
+                if 'result' in trial.keys():
+                    if trial['result'] == 'correct':
+                        stats['by_stimset'][trial['stimset_idx']]['n_correct'] += 1
+                    elif trial['result'] == 'incorrect':
+                        stats['by_stimset'][trial['stimset_idx']]['n_incorrect'] += 1
+                    elif trial['result'] == 'haulted':
+                        stats['by_stimset'][trial['stimset_idx']]['n_haulted'] += 1
+                    elif trial['result'] == 'no_response':
+                        stats['by_stimset'][trial['stimset_idx']]['n_noresponse'] += 1
+        
+        stats['nchoices'] = 0
+        for stimset_idx in range(0, len(self.stimsets)):
+            stats['nchoices'] += stats['by_stimset'][stimset_idx][n_occurances]
         # calculate statisics for each stimset
         for stimset_idx in range(0, len(self.stimsets)):
             if (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect']) == 0:
@@ -256,7 +260,7 @@ class BehaviorController(object):
             else:
                 stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
         
-            stats['by_stimset'][stimset_idx]['p_occurance'] = float(stats['by_stimset'][stimset_idx]['n_occurances']) / len(relevant_trials)
+            stats['by_stimset'][stimset_idx]['p_occurance'] = float(stats['by_stimset'][stimset_idx]['n_occurances']) / stats['nchoices']
         
         return stats    
         
