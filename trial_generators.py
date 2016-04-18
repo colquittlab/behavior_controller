@@ -58,9 +58,7 @@ def adaptive_preference_generator(controller, trials_per_block=1, n_trials_back=
 			for stimset_idx in range(0,len(controller.stimsets)):
 				bias = np.max([stats['by_stimset'][stimset_idx]['p_occurance']-0.5, 0])
 				trial['reward_p'][stimset_idx] = 1.0 - 2*bias 
-
 			# import ipdb; ipdb.set_trace()
-			
 			print stats
 
 		# pick the stimset and the stimulus
