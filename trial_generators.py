@@ -45,7 +45,7 @@ def preference_generator(controller, trials_per_block=1):
 	return trial_block
 generators['preference'] = preference_generator
 
-def adaptive_preference_generator(controller, trials_per_block=1, n_trials_back=10):
+def adaptive_preference_generator(controller, trials_per_block=1, n_trials_back=4):
 	"""Generates trial by trial with no pruning"""
 	trial_block = []
 	for k in range(0, trials_per_block):
