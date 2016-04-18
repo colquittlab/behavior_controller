@@ -53,7 +53,7 @@ def adaptive_preference_generator(controller, trials_per_block=1, n_trials_back=
 		trial['trial_type'] = 'preference'
 		trial['reward_p'] = [1]*len(controller.stimsets)
 		trial['stimulus']=''
-		if len(controller.completed_trials>=n_trials_back):
+		if len(controller.completed_trials)>=n_trials_back:
 			stats = controller.calculate_performance_statistics(n_trials_back = n_trials_back)
 			import ipdb; ipdb.set_trace()
 		# pick the stimset and the stimulus
