@@ -252,7 +252,7 @@ class BehaviorController(object):
         
         stats['nchoices'] = 0
         for stimset_idx in range(0, len(self.stimsets)):
-            stats['nchoices'] += stats['by_stimset'][stimset_idx][n_occurances]
+            stats['nchoices'] += stats['by_stimset'][stimset_idx]['n_occurances']
         # calculate statisics for each stimset
         for stimset_idx in range(0, len(self.stimsets)):
             if (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect']) == 0:
