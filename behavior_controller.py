@@ -223,7 +223,7 @@ class BehaviorController(object):
         stats['by_stimset'] = []
         if n_trials_back != None:
             if len(self.completed_trials) > n_trials_back:
-                relevant_trials = self.completed_trials[len(self.completed_trials) - n_trials_back:]
+                relevant_trials = self.completed_trials[len(self.completed_trials) - n_trials_back-1:]
             else:
                 relevant_trials = self.completed_trials
         else:
