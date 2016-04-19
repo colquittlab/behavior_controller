@@ -259,9 +259,10 @@ class BehaviorController(object):
                 stats['by_stimset'][stimset_idx]['p_correct'] = 0
             else:
                 stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
-        
-            stats['by_stimset'][stimset_idx]['p_occurance'] = float(stats['by_stimset'][stimset_idx]['n_occurances']) / stats['nchoices']
-        
+            if stats['nchoices'] > 0: 
+                stats['by_stimset'][stimset_idx]['p_occurance'] = float(stats['by_stimset'][stimset_idx]['n_occurances']) / stats['nchoices']
+            else:
+                stats['by_stimset'][stimset_idx]['p_occurance'] = 0.5
         return stats    
         
 
