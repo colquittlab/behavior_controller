@@ -25,7 +25,7 @@ def start_box(config_file):
 def stop_box():
 	global active_controller, active_box
 	active_controller.box_state = 'stop'
-	box.light_off()
+	active_box.light_off()
 
 
 def start_task1():
