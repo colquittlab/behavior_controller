@@ -29,4 +29,7 @@ def stop_box():
 
 
 
+schedule.every().day().at("20:30").do(start_box, config_file_1)
+schedule.every().day().at("20:31").do(stop_box)
+
 
