@@ -36,7 +36,15 @@ def start_task2():
 	start_box(config_file_2)
 	pass 
 
-schedule.every().day().at("20:30").do(start_task1)
-schedule.every().day().at("20:31").do(stop_box)
+
+import datetime
+
+now = datetime.datetime.utcnow()
+starttime = now+datetime.timedelta(seconds=10)
+stoptime = now+datetime.timedelta(seconds=40)
+
+
+schedule.every().day().at(starttime.strftime('%H:%M')).do(start_task1)
+schedule.every().day().at(stoptime.strftime('%H:%M')).do(stop_box)
 
 
