@@ -39,8 +39,9 @@ def start_task_randomly():
 	pass
 
 
-
-
+def initiate_box():
+	c,b = boc.parse_config(config_files[0])
+	box.light_off()
 
 now = datetime.datetime.now()
 starttime = now+datetime.timedelta(seconds=61)
@@ -51,7 +52,7 @@ stoptime = now+datetime.timedelta(seconds=101)
 schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task_randomly)
 schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
 
-
+initiate_box()
 while True:
 	schedule.run_pending()
 	time.sleep(1)
