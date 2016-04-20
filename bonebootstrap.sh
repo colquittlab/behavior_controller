@@ -78,7 +78,7 @@ while true; do
 done
 if $DOTZ
 then
-    tzselect
+    dpkg-reconfigure tzdata
 fi
 
 
