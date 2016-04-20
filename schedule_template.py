@@ -43,16 +43,23 @@ def initiate_box():
 	c,b = boc.parse_config(config_files[0])
 	b.light_off()
 
-now = datetime.datetime.now()
-starttime = now+datetime.timedelta(seconds=60)
-stoptime =starttime+datetime.timedelta(seconds=60)
-schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task_randomly)
-schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
-starttime = stoptime+datetime.timedelta(seconds=60)
-stoptime = starttime+datetime.timedelta(seconds=60)
-schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task_randomly)
-schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
 
+
+# ## tests
+# now = datetime.datetime.now()
+# starttime = now+datetime.timedelta(seconds=60)
+# stoptime =starttime+datetime.timedelta(seconds=60)
+# schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task_randomly)
+# schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
+# starttime = stoptime+datetime.timedelta(seconds=60)
+# stoptime = starttime+datetime.timedelta(seconds=60)
+# schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task_randomly)
+# schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
+
+schedule.every().day.at(starttime.strftime('10:00')).do(start_task_randomly)
+schedule.every().day.at(stoptime.strftime('12:00')).do(stop_box)
+schedule.every().day.at(starttime.strftime('14:00')).do(start_task_randomly)
+schedule.every().day.at(stoptime.strftime('16:00')).do(stop_box)
 
 initiate_box()
 while True:
