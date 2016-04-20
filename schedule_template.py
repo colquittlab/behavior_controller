@@ -41,20 +41,20 @@ def start_task2():
 
 
 
-import time
+# import time
 
-start_task1()
-time.sleep(30)
-stop_box()
-
-
-# import datetime
-# now = datetime.datetime.utcnow()
-# starttime = now+datetime.timedelta(seconds=10)
-# stoptime = now+datetime.timedelta(seconds=40)
+# start_task1()
+# time.sleep(30)
+# stop_box()
 
 
-# schedule.every().day().at(starttime.strftime('%H:%M')).do(start_task1)
-# schedule.every().day().at(stoptime.strftime('%H:%M')).do(stop_box)
+import datetime
+now = datetime.datetime.utcnow()
+starttime = now+datetime.timedelta(seconds=10)
+stoptime = now+datetime.timedelta(seconds=40)
+
+
+schedule.every().day().at(starttime.strftime('%H:%M')).do(start_task1)
+schedule.every().day().at(stoptime.strftime('%H:%M')).do(stop_box)
 
 
