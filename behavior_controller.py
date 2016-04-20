@@ -103,6 +103,8 @@ class BehaviorController(object):
         self.Aocc = 0.5
         self.Bocc = 1.0 - self.Aocc
 
+        self.box = None
+
 
 
     def set_bird_name(self, birdname):
@@ -205,7 +207,7 @@ class BehaviorController(object):
                 fid.write("%d:%s\n"%(self.event_count, str(event)))
                 if debug:
                     #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
-                    print "%s events:%d, trials:%d, rewards:%d, tos:%d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, self.timeout_count, str(event)) #GK
+                    print "%s events:%d, trials:%d, rewards:%d, tos:%d, %s"%(self.box.box_name, self.event_count, self.n_trials, self.reward_count, self.timeout_count, str(event)) #GK
                     if beep:
                         so.beep()
             fid.flush()
@@ -412,6 +414,8 @@ def run_box(controller, box):
     controller.has_run = True
     controller.generate_file_name()
     controller.save_config_file()
+
+    controller.box = box
 
     # print out params
     if debug:
