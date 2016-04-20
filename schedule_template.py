@@ -44,13 +44,15 @@ def initiate_box():
 	b.light_off()
 
 now = datetime.datetime.now()
-starttime = now+datetime.timedelta(seconds=61)
-stoptime = now+datetime.timedelta(seconds=101)
-
-
-
+starttime = now+datetime.timedelta(minute=1)
+stoptime = now+datetime.timedelta(minute=2)
 schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task_randomly)
 schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
+starttime = now+datetime.timedelta(minute=1)
+stoptime = now+datetime.timedelta(minute=2)
+schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task_randomly)
+schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
+
 
 initiate_box()
 while True:
