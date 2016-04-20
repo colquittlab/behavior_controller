@@ -70,6 +70,19 @@ then
 fi
 
 while true; do
+    read -p "Do you wish to set the timezone? [Y/N] " yn
+    case $yn in
+        [Yy]* ) DOTZ=true;  break;;
+        [Nn]* ) DOTZ=false; break;;
+    esac
+done
+if $DOTZ
+then
+    tzselect
+fi
+
+
+while true; do
     read -p "Do you wish to install automatic screen invocation for root? [Y/N] " yn
     case $yn in
         [Yy]* ) DOSCREEN=true;  break;;
