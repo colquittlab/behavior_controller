@@ -54,7 +54,7 @@ starttime = now+datetime.timedelta(seconds=10)
 stoptime = now+datetime.timedelta(seconds=40)
 
 
-schedule.every().day().at(starttime.strftime('%H:%M')).do(start_task1)
-schedule.every().day().at(stoptime.strftime('%H:%M')).do(stop_box)
+schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task1)
+schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
 
 
