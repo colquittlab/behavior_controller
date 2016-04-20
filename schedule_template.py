@@ -41,7 +41,7 @@ def start_task_randomly():
 
 def initiate_box():
 	c,b = boc.parse_config(config_files[0])
-	box.light_off()
+	b.light_off()
 
 now = datetime.datetime.now()
 starttime = now+datetime.timedelta(seconds=61)
