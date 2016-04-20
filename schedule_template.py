@@ -41,7 +41,7 @@ def start_task2():
 import time
 
 start_task1()
-time.sleep(5)
+time.sleep(30)
 stop_box()
 
 
