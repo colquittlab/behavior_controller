@@ -43,26 +43,26 @@ def start_task2():
 
 
 
-now = datetime.datetime.utcnow()
-starttime = now+datetime.timedelta(seconds=10)
-stoptime = now+datetime.timedelta(seconds=40)
+now = datetime.datetime.now()
+starttime = now+datetime.timedelta(seconds=61)
+stoptime = now+datetime.timedelta(seconds=101)
 
 
-# schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task1)
-# schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
+schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task1)
+schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
 
 
-# while True:
-# 	schedule.run_pending()
-# 	time.sleep(1)
+while True:
+	schedule.run_pending()
+	time.sleep(1)
 
 
-from apscheduler.schedulers.blocking import BlockingScheduler
+# from apscheduler.schedulers.blocking import BlockingScheduler
 
 
 
-sched = BlockingScheduler()
+# sched = BlockingScheduler()
 
-sched.add_job(start_task1, 'date', run_date=starttime)
-sched.add_job(stop_box, 'date', run_date=stoptime)
+# sched.add_job(start_task1, 'date', run_date=starttime)
+# sched.add_job(stop_box, 'date', run_date=stoptime)
 
