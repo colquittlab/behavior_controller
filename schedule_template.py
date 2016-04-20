@@ -5,11 +5,13 @@
 import behavior_controller as boc
 import schedule  
 import threading, datetime, time
+import random
 
 
+config_files = ["config_files/pref_test.config",
+				"config_files/pref_test.config"]
 
-config_file_1 = "config_files/pref_test.config"
-config_file_2 = "config_files/pref_test.config"
+
 active_box = None
 active_controller = None
 
@@ -31,25 +33,23 @@ def stop_box():
 	active_box.light_off()
 
 
-def start_task1():
-	start_box(config_file_1)
+def start_task_randomly():
+	idx = random.randint(0,len(config_files))
+	start_box(config_files[idx])
 	pass
 
-def start_task2():
-	start_box(config_file_2)
-	pass 
 
 
 
 
+# now = datetime.datetime.now()
+# starttime = now+datetime.timedelta(seconds=61)
+# stoptime = now+datetime.timedelta(seconds=101)
 
-now = datetime.datetime.now()
-starttime = now+datetime.timedelta(seconds=61)
-stoptime = now+datetime.timedelta(seconds=101)
 
 
-schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task1)
-schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
+schedule.every().day.at(starttime.strftime('%H:%M:%S')).do(start_task_randomly)
+schedule.every().day.at(stoptime.strftime('%H:%M:%S')).do(stop_box)
 
 
 while True:
