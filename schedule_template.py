@@ -24,7 +24,7 @@ def start_box(config_file):
 
 def stop_box():
 	global active_controller, active_box
-	controller.box_state = 'stop'
+	active_controller.box_state = 'stop'
 	box.light_off()
 
 
