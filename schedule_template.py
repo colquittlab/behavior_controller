@@ -18,11 +18,14 @@ def start_box(config_file):
 	c,b = boc.parse_config(config_file)
 	active_controller = c
 	active_box = b
-	threading.Thread(target = boc.run_box, args = (active_controller, active_box))
+	print "about to start box"
+	thread = threading.Thread(target = boc.run_box, args = (active_controller, active_box))
+	thread.start()
+	print "thread done"
 
 
-
-def stop_box():
+def stop_box():	
+	print "stopping box"
 	global active_controller, active_box
 	active_controller.box_state = 'stop'
 	active_box.light_off()
