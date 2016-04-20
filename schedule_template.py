@@ -8,8 +8,8 @@ import threading
 
 
 
-config_file_1 = "config/pref_test.config"
-config_file_2 = "config/pref_test.config"
+config_file_1 = "config_files/pref_test.config"
+config_file_2 = "config_files/pref_test.config"
 active_box = None
 active_controller = None
 
