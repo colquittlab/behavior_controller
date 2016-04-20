@@ -433,7 +433,7 @@ def run_box(controller, box):
   #      raise(e)
 
     # send loop
-    main_loop(controller, box)
+    # main_loop(controller, box)
     pass
 
 def main_loop(controller, box):
@@ -472,9 +472,6 @@ def main_loop(controller, box):
             else:
                 box.force_feed_up = False
                 box.feeder_off()
-
-    # exit routine:
-    pass
 
 
     # exit routine:
@@ -524,14 +521,8 @@ def load_and_verify_stimset(stimuli_dir, stim_name):
         raise e 
     return stimset_out 
 
-if __name__=='__main__':
-    ## Settings (temporary as these will be queried from GUI)
-    import sys
-    if len(sys.argv) <= 1:
-        raise(Exception('No configuration file passed'))
-    else:
-        cfpath = sys.argv[1]
 
+def parse_config(cfpath):
     config = ConfigParser.ConfigParser() 
     config.read(cfpath)
     config_fid = open(cfpath)
@@ -587,6 +578,20 @@ if __name__=='__main__':
         if config.has_option('run_params', param):
             attr = config.getfloat('run_params',param)
             setattr(box,param,attr)
+    return controller, box
+
+
+if __name__=='__main__':
+    ## Settings (temporary as these will be queried from GUI)
+    import sys
+    if len(sys.argv) <= 1:
+        raise(Exception('No configuration file passed'))
+    else:
+        cfpath = sys.argv[1]
+
+    # parse the config file
+    controller, box = parse_config(cfpath)
+
     # run the box
     run_box(controller, box)
 
