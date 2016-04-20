@@ -28,8 +28,15 @@ def stop_box():
 	box.light_off()
 
 
+def start_task1():
+	start_box(config_file_1)
+	pass
 
-schedule.every().day().at("20:30").do(start_box, config_file_1)
+def start_task2():
+	start_box(config_file_2)
+	pass 
+
+schedule.every().day().at("20:30").do(start_task1)
 schedule.every().day().at("20:31").do(stop_box)
 
 
