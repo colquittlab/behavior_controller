@@ -48,8 +48,8 @@ stoptime = now+datetime.timedelta(seconds=101)
 
 
 
-schedule.every().day.at(starttime.strftime('%H:%M:%S')).do(start_task_randomly)
-schedule.every().day.at(stoptime.strftime('%H:%M:%S')).do(stop_box)
+schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task_randomly)
+schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
 
 
 while True:
