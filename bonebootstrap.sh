@@ -55,7 +55,7 @@ done
 if $DOPACKAGES
 then
     # install existing packages
-    APTPACKAGES="python-scipy python-alsaaudio"
+    APTPACKAGES="python-scipy python-alsaaudio ntp"
     PIPPACKAGES="pyexecjs pyserial Adafruit-BBIO ipython"
     apt-get update
     for PACK in $APTPACKAGES
