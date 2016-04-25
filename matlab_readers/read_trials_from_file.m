@@ -83,6 +83,9 @@ function trials = read_from_file(fname)
         else
             trial.mode = '';
         end
+        if isfield(data,'reward_p')
+            trial.reward_p = cell2mat(data.reward_p);
+        end
         try
             trials(count) = trial;
         catch
