@@ -1,0 +1,17 @@
+[run_params]
+data_dir = /data/behavior/
+stimuli_dir = /data/stimuli/
+birdname=red46green62
+stimset_0=bsp_6p5_ss_stimset
+stimset_1=bsp_10p5_ss_stimset
+#stimset_2=exa1_song_a_decomp_probes
+mode = rewarded_preference_sequence
+trial_generator = adaptive_preference
+box = boc1
+timeout_light = True
+withold_response = False
+timeout_period = 30
+max_trial_time = 5
+feed_time = 5
+
+
