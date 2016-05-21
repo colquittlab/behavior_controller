@@ -31,8 +31,8 @@ def start_box(config_file, randomize_stimsets=False):
 		c.stimset_names = []
 		stimset_idxs = range(0,len(stimset_pool))
 		for k in range(0,2):
-			idx = random.sample(stimset_idxs,1)
-			stimset_idxs.pop(idx)
+			idx = random.sample(stimset_idxs,1)[0]
+			stimset_idxs.remove(idx)
 			c.stimset_names.append(stimset_pool[idx])
 		c.load_stimsets()
 	active_controller = c
