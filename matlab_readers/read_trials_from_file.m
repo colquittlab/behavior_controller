@@ -1,5 +1,5 @@
 function trials = read_trials_from_file(fname,varargin)
-force_regenerate = false;
+force_regenerate = true;
 matfname = [fname '.mat'];
 
 if (exist(matfname) && ~force_regenerate)
@@ -85,6 +85,8 @@ function trials = read_from_file(fname)
         end
         if isfield(data,'reward_p')
             trial.reward_p = cell2mat(data.reward_p);
+        else
+            trial.reward_p = '';
         end
         try
             trials(count) = trial;
