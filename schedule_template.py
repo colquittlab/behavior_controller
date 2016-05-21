@@ -2,7 +2,7 @@
 """
 
 
-# import behavior_controller as boc
+import behavior_controller as boc
 import schedule  
 import threading, datetime, time
 import random
