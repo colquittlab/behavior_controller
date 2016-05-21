@@ -22,7 +22,7 @@ active_controller = None
 
 def start_box(config_file, randomize_stimsets=False):
 	global active_controller, active_box, config_files, stimset_pool
-	if isinstance(config_num, Number):
+	if isinstance(config_file, Number):
 		config_file = config_files[config_file]
 	else:
 		pass
@@ -108,7 +108,7 @@ schedule.every().day.at('10:01').do(start_box,'bsp_tnull')
 schedule.every().day.at('10:02').do(eval,'active_box.light_off()')
 
 schedule.every().day.at('10:59').do(stop_box)
-schedule.every().day.at('11:45').do(start_box,0,randomize_stimsets=True)
+schedule.every().day.at('11:50').do(start_box,0,randomize_stimsets=True)
 schedule.every().day.at('12:00').do(stop_box)
 schedule.every().day.at('12:01').do(start_box,'bsp_tnull')
 schedule.every().day.at('12:02').do(eval,'active_box.light_off()')
