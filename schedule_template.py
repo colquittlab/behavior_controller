@@ -10,7 +10,7 @@ from numbers import Number
 
 
 
-config_files = ["config_files/bsp_red46green62_tbase.config", 'bsp_tnull.config']
+config_files = ["config_files/bsp_tbase.config", 'bsp_tnull.config']
 
 stimset_pool = ['bsp_v2_6p5_ss_stimset','bsp_v2_8p5_ss_stimset','bsp_v2_10p5_ss_stimset','bsp_v2_zebrasong_stimset', 'bsp_v3_silent_stimset', 'bsp_v3_whitenoise_stimset']
 
@@ -108,7 +108,7 @@ schedule.every().day.at('10:01').do(start_box,'bsp_tnull')
 schedule.every().day.at('10:02').do(eval,'active_box.light_off()')
 
 schedule.every().day.at('10:59').do(stop_box)
-schedule.every().day.at('11:50').do(start_box,0,randomize_stimsets=True)
+schedule.every().day.at('11:52').do(start_box,0,randomize_stimsets=True)
 schedule.every().day.at('12:00').do(stop_box)
 schedule.every().day.at('12:01').do(start_box,'bsp_tnull')
 schedule.every().day.at('12:02').do(eval,'active_box.light_off()')
