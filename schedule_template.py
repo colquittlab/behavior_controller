@@ -85,6 +85,8 @@ def printme(session_num=0):
 
 
 
+def initiate_null_trial():
+	pass
 
 # ## tests
 # now = datetime.datetime.now()
@@ -102,38 +104,36 @@ def printme(session_num=0):
 # schedule.every().day.at(starttime.strftime('%H:%M')).do(start_task_randomly)
 # schedule.every().day.at(stoptime.strftime('%H:%M')).do(stop_box)
 
-generate_sessions_for_day()
+schedule.every().day.at('08:59').do(stop_box)
+schedule.every().day.at('09:00').do(start_box,0,randomize_stimsets=True)
+schedule.every().day.at('10:00').do(stop_box)
+schedule.every().day.at('10:01').do(start_box,1)
+schedule.every().day.at('10:02').do(initiate_null_trial)
 
-schedule.every().day.at('00:01').do(generate_sessions_for_day)
-schedule.every().day.at('13:51').do(start_box,0,randomize_stimsets=True)
-schedule.every().day.at('13:52').do(stop_box)
-schedule.every().day.at('13:53').do(start_box,1)
-#schedule.every().day.at('13:54').do(eval,'active_box.light_off()')
-
-schedule.every().day.at('13:55').do(stop_box)
-schedule.every().day.at('13:56').do(start_box,0,randomize_stimsets=True)
-schedule.every().day.at('13:57').do(stop_box)
-schedule.every().day.at('13:58').do(start_box,1)
-#ischedule.every().day.at('13:59').do(eval,'active_box.light_off()')
+schedule.every().day.at('10:59').do(stop_box)
+schedule.every().day.at('11:00').do(start_box,0,randomize_stimsets=True)
+schedule.every().day.at('12:00').do(stop_box)
+schedule.every().day.at('12:01').do(start_box,1)
+schedule.every().day.at('12:02').do(initiate_null_trial)
 
 schedule.every().day.at('12:59').do(stop_box)
 schedule.every().day.at('13:00').do(start_box,0,randomize_stimsets=True)
 schedule.every().day.at('14:00').do(stop_box)
 schedule.every().day.at('14:01').do(start_box,1)
-schedule.every().day.at('14:02').do(eval,'active_box.light_off()')
-
+schedule.every().day.at('14:02').do(initiate_null_trial)
 
 schedule.every().day.at('14:59').do(stop_box)
 schedule.every().day.at('15:00').do(start_box,0,randomize_stimsets=True)
 schedule.every().day.at('16:00').do(stop_box)
 schedule.every().day.at('16:01').do(start_box,1)
-schedule.every().day.at('16:02').do(eval,'active_box.light_off()')
+schedule.every().day.at('16:02').do(initiate_null_trial)
 
-schedule.every().day.at('16:59').do(stop_box)
+schedule.every().day.at('16:00').do(stop_box)
 schedule.every().day.at('17:00').do(start_box,0,randomize_stimsets=True)
 schedule.every().day.at('18:00').do(stop_box)
 schedule.every().day.at('18:01').do(start_box,1)
-schedule.every().day.at('18:02').do(eval,'active_box.light_off()')
+schedule.every().day.at('18:02').do(initiate_null_trial)
+
 
 
 
