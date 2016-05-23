@@ -86,6 +86,8 @@ def printme(session_num=0):
 
 
 def initiate_null_trial():
+	global active_box
+	active_box.light_off()
 	pass
 
 # ## tests
