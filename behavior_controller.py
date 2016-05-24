@@ -142,7 +142,8 @@ class BehaviorController(object):
         if len(self.stimset_names) < 2:
             raise Exception('Error: less than 2 stimset names set')
         self.stimsets = []
-        for name in self.stimset_names:
+        for k,name in enumerate(self.stimset_names):
+            self.params['stimset_%d' % k] = name
             self.stimsets.append(load_and_verify_stimset(self.params['stimuli_dir'], name))
         pass
 
@@ -183,14 +184,12 @@ class BehaviorController(object):
 
     def save_config_file(self):
         config_fname = '%s%s.config'% (self.params['data_dir'],self.base_filename)
-        if self.config_file_contents is not None:
-            config_fid = open(config_fname, 'a')
-            config_fid.write(self.config_file_contents)
-        else:
-            config = ConfigParser.ConfigParser()
-            config.add_section('run_params')
-            for key in self.params.keys():
-                config.set('run_params', key, self.params[key])
+        config_fid = open(config_fname, 'w')
+        config = ConfigParser.ConfigParser()
+        config.add_section('run_params')
+        for key in self.params.keys():
+            config.set('run_params', key, self.params[key])
+        config.write(config_fid)
 
         pass
 
