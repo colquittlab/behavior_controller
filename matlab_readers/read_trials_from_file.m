@@ -1,5 +1,5 @@
 function trials = read_trials_from_file(fname,varargin)
-force_regenerate = true;
+force_regenerate = false;
 matfname = [fname '.mat'];
 
 if (exist(matfname) && ~force_regenerate)
