@@ -17,9 +17,15 @@ import lib.soundout_tools as so
 import lib.usb_tools as ut
 import loop_iterations as loop
 import trial_generators as trial
-import lib.bone_tools as bt
-bt_refresh_interval = 60*60*24
-last_bt_refresh = time.time()
+try:
+    import lib.bone_tools as bt
+except:
+    bt = None
+try:
+    import lib.video_tracking as vt
+except:
+    vt = None
+
 import lib.pin_definitions as pindef
 
 # from pyfirmata import Arduino, util
@@ -321,16 +327,19 @@ class BehaviorBox(object):
         self.sc_idx = idx
         self.beep()
 
-    def refresh_bt(self):
-        bt = reload(bt)
-        pass
     def query_events(self, timeout = 0):
         events_since_last = []
-        while len(bt.event_buffer) > 0:
-            event = bt.event_buffer.pop(0)
-            event_out = [event[0]]
-            event_out.extend(pindef.input_definitions[event[1]])
-            events_since_last.append(tuple(event_out))
+
+        if bt is not None:
+            while len(bt.event_buffer) > 0:
+                event = bt.event_buffer.pop(0)
+                event_out = [event[0]]
+                event_out.extend(pindef.input_definitions[event[1]])
+                events_since_last.append(tuple(event_out))
+
+        if vt is not None:
+            pass
+            
         return events_since_last
     def feeder_on(self):
         bt.set_output_list(pindef.output_definitions['feeder_port'], 1)    
