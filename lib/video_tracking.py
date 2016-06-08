@@ -15,7 +15,7 @@ class Target:
 
         ## initiatite tracking
         self.capture = cv.CaptureFromCAM(cam_idx)
-        self.window = cv.NamedWindow("Target", 1)        
+        self.window = None      
         frame = cv.QueryFrame(self.capture)
         self.frame_size = cv.GetSize(frame)
         self.color_image = cv.CreateImage(cv.GetSize(frame), 8, 3)
@@ -88,6 +88,8 @@ class Target:
 
 
     def plot(self):
+        if self.window is None:
+            self.window=cv.NamedWindow("Target", 1)  
         if self.current_pos is not None:
             cv.Circle(self.color_image, self.current_pos, 40, cv.CV_RGB(255, 255, 255), 1)
             cv.Circle(self.color_image, self.current_pos, 30, cv.CV_RGB(255, 100, 0), 1)
