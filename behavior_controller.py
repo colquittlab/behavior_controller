@@ -10,6 +10,7 @@ import io
 import json
 import ConfigParser
 import sys
+import Queue
 
 import lib.soundout_tools as so
 # import lib.serial_tools as st
@@ -27,6 +28,7 @@ except:
     vt = None
 
 import lib.pin_definitions as pindef
+
 
 # from pyfirmata import Arduino, util
 time_tollerance = 50e-3
@@ -285,7 +287,9 @@ class BehaviorBox(object):
         self.so_workers = []
         self.pulse_state = 0
         self.force_feed_up = False
-        bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
+        self.video_event_queue = None
+        self.video_tracking_process = None
+        # bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
         if not self.serial_status:
@@ -325,6 +329,7 @@ class BehaviorBox(object):
         else:
             idx = list_of_cards.index(cardname)
         self.sc_idx = idx
+        print idx
         self.beep()
 
     def query_events(self, timeout = 0):
@@ -337,43 +342,55 @@ class BehaviorBox(object):
                 event_out.extend(pindef.input_definitions[event[1]])
                 events_since_last.append(tuple(event_out))
 
-        if vt is not None:
+        if self.video_event_queue is not None:
+            while not self.video_event_queue.empty():
+                try:
+                    event = self.video_event_queue.get_nowait()
+                    events_since_last.append(event)
+                except Queue.Empty:
+                    pass
             pass
-            
+
         return events_since_last
     def feeder_on(self):
-        bt.set_output_list(pindef.output_definitions['feeder_port'], 1)    
-        try:
-            bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'], 85)
-        except:
-            print 'unable to set pwm port'
+        # bt.set_output_list(pindef.output_definitions['feeder_port'], 1)    
+        # try:
+        #     bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'], 85)
+        # except:
+        #     print 'unable to set pwm port'
+        pass
     def feeder_off(self, do_warning=False):
-        if do_warning:
-            self.beep_warning()
-            time.sleep(1)
-            pass
-        bt.set_output_list(pindef.output_definitions['feeder_port'], 0) 
+     #    if do_warning:
+     #        self.beep_warning()
+     #        time.sleep(1)
+     #        pass
+     #    bt.set_output_list(pindef.output_definitions['feeder_port'], 0) 
        
-        try:
-	    bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'],15)
-        except:
-            print 'unable to set pwm port'
+     #    try:
+	    # bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'],15)
+     #    except:
+     #        print 'unable to set pwm port'
+     pass
 
     def light_on(self):
-        bt.set_output_list(pindef.output_definitions['light_port'], 0)
+        # bt.set_output_list(pindef.output_definitions['light_port'], 0)
+        pass
     def light_off(self):
-        bt.set_output_list(pindef.output_definitions['light_port'], 1)
+        # bt.set_output_list(pindef.output_definitions['light_port'], 1)
+        pass
     def pulse_on(self, freq=100, duty=50):
-        bt.PWM.start(pindef.output_definitions['laser_port'], duty, freq, 1)
+        # bt.PWM.start(pindef.output_definitions['laser_port'], duty, freq, 1)
+        pass
     def pulse_off(self):
-        bt.PWM.stop(pindef.output_definitions['laser_port'])
-    def play_stim(self, stimset, stimulus):
+        # bt.PWM.stop(pindef.output_definitions['laser_port'])
+        pass
+    def play_stim(self, stimset, stimulus, channel=0):
         # stimset_name = stimset['name']
         filename =  '%s%s/%s%s'%(self.stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
-        self.play_sound(filename)
+        self.play_sound(filename,channel=channel)
         pass  
 
-    def play_sound(self, filename):
+    def play_sound(self, filename, channel = 0):
         # kill any workers
         while len(self.so_workers)>0:
             worker = self.so_workers.pop()
@@ -382,7 +399,7 @@ class BehaviorBox(object):
                 worker[0].join()
 
         filetype = filename[-4:]
-        p = so.sendwf(self.sc_idx, filename, filetype, 44100)
+        p = so.sendwf(self.sc_idx, filename, filetype, 44100, channel=channel)
         self.so_workers.append(p)
         pass
 
@@ -409,6 +426,11 @@ class BehaviorBox(object):
                 is_playing = True
         return is_playing
 
+    def connect_to_camera(self, camera_idx = 0, plot=False):
+        p, q = vt.start_tracking(camera_idx = camera_idx, plot = plot)
+        self.video_event_queue = q
+        self.video_event_process = p
+        pass
 
 
 ##
@@ -583,7 +605,15 @@ def parse_config(cfpath):
         box.activate_box(config.get('run_params','box'))
     else:
         box.select_sound_card()
-        box.select_serial_port()
+        # box.select_serial_port()
+
+    if config.has_option('run_params','camera_idx'):
+        camera_idx = config.getint('run_params','camera_idx')
+        if config.has_option('run_params','camera_plot'):
+            camera_plot= config.getboolean('run_params','camera_plot')
+        else:
+            camera_plot = False
+        box.connect_to_camera(camera_idx=camera_idx, plot=camera_plot)
 
     # set any box params
     for param in ['trigger_value']:
@@ -603,7 +633,6 @@ if __name__=='__main__':
 
     # parse the config file
     controller, box = parse_config(cfpath)
-
     # run the box
     run_box(controller, box)
 

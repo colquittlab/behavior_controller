@@ -32,6 +32,31 @@ def standard_generator(controller, trials_per_block=1):
 generators['standard'] = standard_generator
 
 
+
+def video_preference_generator(controller, trials_per_block=1):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		# pick the stimset and the stimulus
+		idx = random.randint(0, 1)
+		if idx == 0:
+			trial['stimset_idxs'] = [0, 1]
+		else:
+			trial['stimset_idxs'] = [1, 0]
+		trial['start_side'] = random.randint(0,1)
+		trial['current_bin'] = None
+		trial['track'] = []
+		trial['bin_entries'] = []
+		trial['last_center_bin_entry_time']=None
+		trial['trial_type'] = 'video_preference'
+		trial['playbacks'] = []
+		trial_block.append(trial)
+	return trial_block
+generators['video_preference'] = video_preference_generator
+
+
+
 def preference_generator(controller, trials_per_block=1):
 	"""Generates trial by trial with no pruning"""
 	trial_block = []
@@ -44,6 +69,9 @@ def preference_generator(controller, trials_per_block=1):
 		trial_block.append(trial)
 	return trial_block
 generators['preference'] = preference_generator
+
+
+
 
 def adaptive_preference_generator(controller, trials_per_block=1, n_trials_back=10):
 	"""Generates trial by trial with no pruning"""

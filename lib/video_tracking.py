@@ -1,20 +1,21 @@
 import cv as cv
 import time as tm
 import numpy as np
-from multiprocessing import Process, Queue
-
-
+from multiprocessing import Process
+from multiprocessing import Queue
+# from threading import Thread
+# from Queue import Queue
 
 
 class Target:
 
-    def __init__(self, cam_idx=0, bounds=None):
+    def __init__(self, camera_idx=0, bounds=None):
         self.current_pos = None
         self.current_bin = None
 
 
         ## initiatite tracking
-        self.capture = cv.CaptureFromCAM(cam_idx)
+        self.capture = cv.CaptureFromCAM(camera_idx)
         self.window = None      
         frame = cv.QueryFrame(self.capture)
         self.frame_size = cv.GetSize(frame)
@@ -80,7 +81,7 @@ class Target:
         return center_point
 
     def find_bin_of_pos(self, pos):
-        if self.bounds is not None:
+        if self.bounds is not None and pos is not None:
             oc, bins = np.histogram([pos[0]], bins = self.bounds)
             return np.argmax(oc)
         else:
@@ -102,8 +103,9 @@ class Target:
 
 
     def run(self, event_queue=None, plot = True, log_period = 1):
-        last_log = tm.time()
+        last_log_time = tm.time()
         while True:
+            tm.sleep(0.01)
             center_point = self.find_target()
             if center_point is not None:
                 self.current_pos = center_point
@@ -115,10 +117,10 @@ class Target:
                         event_queue.put((tm.time(), "enter_bin", new_bin))
                     else:
                         print "bird entered bin %d" % new_bin
-            if tm.time() > last_log + log_period:
-                last_log = tm.time()
+            if tm.time() > last_log_time + log_period:
+                last_log_time = tm.time()
                 if event_queue != None:
-                    event_queue.put((tm.time(),'pos',self.current_pos))
+                    event_queue.put((tm.time(),'pos',self.current_pos, self.find_bin_of_pos(self.current_pos)))
                 else:
                     print "current pos ", self.current_pos
 
@@ -126,22 +128,25 @@ class Target:
                 self.plot()
             
 
-def tracking_process(bounds = [200, 400], event_queue = None, plot = True, log_period = 1):
-    t = Target(bounds = [200, 400])
+def run_tracking_process(bounds = [200, 400], event_queue = None, plot = True, log_period = 1, camera_idx = 0):
+    t = Target(bounds = [200, 400], camera_idx = camera_idx)
     t.run(event_queue=event_queue, plot=plot, log_period = log_period)
     pass
 
 def start_tracking(**args):
     q = Queue()
     args['event_queue']=q
-    p=Process(target=tracking_process, kwargs=args)
+    p=Process(target=run_tracking_process, kwargs=args)
+    # p=Thread(target=run_tracking_process, kwargs=args)
     p.start()
     return p, q
     # p.join()
 
 if __name__=="__main__":
-
-    p, q = start_tracking()
+    # tracking_process()
+    p, q = start_tracking(plot=True)
+    # import ipdb; ipdb.set_trace()
     while True:
-        if q.qsize>0:
-            print q.get()
+            # import ipdb; ipdb.set_trace()
+        if not q.empty():
+            print q.get_nowait(), tm.time()
