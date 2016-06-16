@@ -12,12 +12,13 @@ class Target:
     def __init__(self, camera_idx=0, bounds=None):
         self.current_pos = None
         self.current_bin = None
-
+        self.time_of_last_confidence = 0
 
         ## initiatite tracking
         self.capture = cv.CaptureFromCAM(camera_idx)
         self.window = None      
         frame = cv.QueryFrame(self.capture)
+        
         self.frame_size = cv.GetSize(frame)
         self.color_image = cv.CreateImage(cv.GetSize(frame), 8, 3)
         self.grey_image = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_8U, 1)
@@ -25,13 +26,13 @@ class Target:
         self.temp_image =  cv.CloneImage(self.color_image)       
         self.difference = cv.CloneImage(self.color_image)
         self.find_target(first_frame=True)
-
+  
         # set up bounds
         self.bounds = [0]
         self.bounds.extend(bounds)
         self.bounds.append(self.frame_size[0])
 
-    def find_target(self, first_frame = False): 
+    def find_target(self, first_frame = False, jump_thresh = 100): 
         currtime=tm.time()
         self.color_image = cv.QueryFrame(self.capture)
         # Smooth to get rid of false positives
@@ -77,6 +78,21 @@ class Target:
             center_point = reduce(lambda a, b: ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), points)
         else: 
             center_point = None
+        
+        if center_point is not None and self.current_pos is not None:
+	    distance_since_last = np.sqrt(np.dot(np.array(center_point)-np.array(self.current_pos),np.array(center_point)-np.array(self.current_pos)))
+	else:
+	    distance_since_last = 0
+        if distance_since_last > jump_thresh:
+            if tm.time() - self.time_of_last_confidence > 2:
+                self.time_of_last_confidence = tm.time()
+                pass 
+            else:
+                center_point = self.current_pos
+        else:
+            self.time_of_last_confidence = tm.time()
+           
+        
         c = cv.WaitKey(7) % 0x100
         return center_point
 
@@ -104,12 +120,18 @@ class Target:
 
     def run(self, event_queue=None, plot = True, log_period = 1):
         last_log_time = tm.time()
-        while True:
+
+	while True:
             tm.sleep(0.01)
-            center_point = self.find_target()
-            if center_point is not None:
+	    provisional_center_point = self.find_target()
+	   
+            
+	    center_point = self.find_target()
+            
+	    if center_point is not None:
                 self.current_pos = center_point
                 new_bin = self.find_bin_of_pos(center_point)
+                
                 if new_bin != self.current_bin: 
                     self.current_bin = new_bin
                     # log as event
