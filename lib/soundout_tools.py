@@ -148,7 +148,8 @@ if __name__=="__main__":
     else:
     	cardidx = int(sys.argv[1])
         spath = sys.argv[2]
-    sendwf(cardidx, spath, '.wav',44100,pulse = False)
+    sendwf(0,'sounds/beep.wav','.wav',44100,channel=2)
+	#sendwf(cardidx, spath, '.wav',44100,pulse = False)
 	# # song1 = wave.open('/home/jknowles/test.wav')
 	# # song2 = wave.open('/home/jknowles/test1ch.wav')
 	# # import ipdb; ipdb.set_trace()

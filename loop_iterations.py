@@ -783,10 +783,10 @@ iterations['rewarded_preference_sequence'] = rewarded_sequence_preference_assay
 
 
 def video_preference_assay(controller, box, events_since_last):
-    center_bin_time = 10
+    center_bin_time = 30
     interstimulus_interval = 10
-    nplaybacks_per_side = 3
-    intertrial_interval = 10
+    nplaybacks_per_side = 10
+    intertrial_interval = 300
     # record any events that have happened on the box     
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False

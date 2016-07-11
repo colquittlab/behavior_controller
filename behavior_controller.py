@@ -222,7 +222,7 @@ class BehaviorController(object):
 
     def save_trial_to_file(self, trial):
         trial['mode'] = self.params['mode']
-        with open(self.return_events_fname(),'a') as fid:
+	with open(self.return_events_fname(),'a') as fid:
             fid.write('%s\n' % json.dumps(trial))
             fid.flush()
         pass
@@ -320,6 +320,7 @@ class BehaviorBox(object):
 
     def select_sound_card(self, cardname = None):
         list_of_cards = self.return_list_of_sound_cards()
+
         if cardname == None:
             print 'Select desired card from list below:'
             for k,card in enumerate(list_of_cards):
@@ -427,9 +428,10 @@ class BehaviorBox(object):
         return is_playing
 
     def connect_to_camera(self, camera_idx = 0, plot=False):
-        p, q = vt.start_tracking(camera_idx = camera_idx, plot = plot)
-        self.video_event_queue = q
-        self.video_event_process = p
+        if self.video_event_queue is None:
+            p, q = vt.start_tracking(camera_idx = camera_idx, plot = plot)
+            self.video_event_queue = q
+            self.video_event_process = p
         pass
 
 
@@ -604,7 +606,7 @@ def parse_config(cfpath):
     if config.has_option('run_params','box'):
         box.activate_box(config.get('run_params','box'))
     else:
-        box.select_sound_card()
+        box.select_sound_card('PCH')
         # box.select_serial_port()
 
     if config.has_option('run_params','camera_idx'):

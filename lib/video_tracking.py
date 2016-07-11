@@ -54,7 +54,7 @@ class Target:
         cv.CvtColor(self.difference, self.grey_image, cv.CV_RGB2GRAY)
 
         # Convert the image to black and white.
-        cv.Threshold(self.grey_image, self.grey_image, 70, 255, cv.CV_THRESH_BINARY)
+        cv.Threshold(self.grey_image, self.grey_image, 40, 255, cv.CV_THRESH_BINARY)
 
         # Dilate and erode to get blobs
         cv.Dilate(self.grey_image, self.grey_image, None, 18)
@@ -80,8 +80,8 @@ class Target:
             center_point = None
         
         if center_point is not None and self.current_pos is not None:
-	    distance_since_last = np.sqrt(np.dot(np.array(center_point)-np.array(self.current_pos),np.array(center_point)-np.array(self.current_pos)))
-	else:
+            distance_since_last = np.sqrt(np.dot(np.array(center_point)-np.array(self.current_pos),np.array(center_point)-np.array(self.current_pos)))
+        else:
 	    distance_since_last = 0
         if distance_since_last > jump_thresh:
             if tm.time() - self.time_of_last_confidence > 2:
@@ -99,7 +99,7 @@ class Target:
     def find_bin_of_pos(self, pos):
         if self.bounds is not None and pos is not None:
             oc, bins = np.histogram([pos[0]], bins = self.bounds)
-            return np.argmax(oc)
+            return int(np.argmax(oc))
         else:
             return None
 
@@ -112,10 +112,14 @@ class Target:
             cv.Circle(self.color_image, self.current_pos, 30, cv.CV_RGB(255, 100, 0), 1)
             cv.Circle(self.color_image, self.current_pos, 20, cv.CV_RGB(255, 255, 255), 1)
             cv.Circle(self.color_image, self.current_pos, 10, cv.CV_RGB(255, 100, 0), 1)
+            
         if self.bounds is not None:
             for bound in self.bounds:
                 cv.Line(self.color_image,(bound,0), (bound,self.frame_size[1]),(255,0,0),5)
+        
+        # cv.Copy(self.color_im,self.grey_image)
         cv.ShowImage("Target", self.color_image)
+        # import ipdb; ipdb.set_trace()
 
 
     def run(self, event_queue=None, plot = True, log_period = 1):
@@ -123,7 +127,7 @@ class Target:
 
 	while True:
             tm.sleep(0.01)
-	    provisional_center_point = self.find_target()
+	    
 	   
             
 	    center_point = self.find_target()
@@ -150,8 +154,8 @@ class Target:
                 self.plot()
             
 
-def run_tracking_process(bounds = [200, 400], event_queue = None, plot = True, log_period = 1, camera_idx = 0):
-    t = Target(bounds = [200, 400], camera_idx = camera_idx)
+def run_tracking_process(bounds = [250, 450], event_queue = None, plot = True, log_period = 1, camera_idx = 0):
+    t = Target(bounds = bounds, camera_idx = camera_idx)
     t.run(event_queue=event_queue, plot=plot, log_period = log_period)
     pass
 
@@ -165,10 +169,11 @@ def start_tracking(**args):
     # p.join()
 
 if __name__=="__main__":
+    run_tracking_process(camera_idx=1)
     # tracking_process()
-    p, q = start_tracking(plot=True)
-    # import ipdb; ipdb.set_trace()
-    while True:
-            # import ipdb; ipdb.set_trace()
-        if not q.empty():
-            print q.get_nowait(), tm.time()
+    # p, q = start_tracking(plot=True)
+    # # import ipdb; ipdb.set_trace()
+    # while True:
+    #         # import ipdb; ipdb.set_trace()
+    #     if not q.empty():
+    #         print q.get_nowait(), tm.time()
