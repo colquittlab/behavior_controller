@@ -1,5 +1,5 @@
 function trials = read_trials_from_file(fname,varargin)
-force_regenerate = false;
+force_regenerate = false; 
 matfname = [fname '.mat'];
 
 if (exist(matfname) && ~force_regenerate)
@@ -24,8 +24,8 @@ function trials = read_from_file(fname)
     file_line = fgets(fid);
     while file_line > 0
         count = count + 1;
-        [data, json] = parse_json(file_line);
-        data = data{1};
+        data = loadjson(file_line);
+%         data = data{1};
         
         if isfield(data,'stimulus')
             trial.stimulus = data.stimulus;
@@ -88,6 +88,41 @@ function trials = read_from_file(fname)
         else
             trial.reward_p = '';
         end
+        if isfield(data,'track')
+            trial.track.t = data.track(:,1);
+            trial.track.t = trial.track.t;
+            trial.track.uv = data.track(:,2:3); 
+        else
+            data.track = '';
+        end
+        if isfield(data,'start_side')
+             trial.start_side = data.start_side;
+        else 
+            trial.start_side = ''; 
+        end
+        if isfield(data,'playback_start_time')
+            trial.playback_start_time = data.playback_start_time;
+        else
+            trial.playback_start_time = '';
+        end
+        if isfield(data, 'playbacks')
+            trial.playbacks=data.playbacks;
+        else
+            trial.playbacks = '';
+        end
+        if isfield(data,'last_center_bin_entry_time')
+            trial.last_center_bin_entry_time = data.last_center_bin_entry_time; 
+        else
+            trial.last_center_bin_entry_time = '';
+        end
+        if isfield(data, 'bin_entries')
+            trial.bin_entries = cell2mat(cellfun(@(x) [x{1} x{3}],data.bin_entries,'uniformoutput',false)');
+            
+        else
+            trial.bin_entries = '';
+        end
+        
+        
         try
             trials(count) = trial;
         catch
