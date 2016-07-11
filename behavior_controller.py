@@ -147,8 +147,8 @@ class BehaviorController(object):
         return len(self.completed_trials)
 
     def load_stimsets(self):
-        if len(self.stimset_names) < 2:
-            raise Exception('Error: less than 2 stimset names set')
+        if len(self.stimset_names) < 1:
+            raise Exception('Error: less than 1 stimset names set')
         self.stimsets = []
         for k,name in enumerate(self.stimset_names):
             self.params['stimset_%d' % k] = name
@@ -569,13 +569,17 @@ def parse_config(cfpath):
     controller.params['trial_generator'] = config.get('run_params','trial_generator')
     
     controller.stimset_names = []
-    controller.stimset_names.append(config.get('run_params','stimset_0'))
-    controller.stimset_names.append(config.get('run_params','stimset_1'))
+    stimset_num = 0
+    while True:
+        if config.has_option('run_params','stimset_%d' % stimset_num):
+            controller.stimset_names.append(config.get('run_params','stimset_%d' % stimset_num))
+            stimset_num += 1
+        else:
+            break
+    if len(controller.stimset_names) is 0:
+        raise Exception('No Stimsets in config file')
     
-    # set optional paramters
-    if config.has_option('run_params','stimset_2'):
-        controller.stimset_names.append(config.get('run_params','stimset_2'))
-
+ 
     for key in controller.params.keys():
         if config.has_option('run_params', key):
             controller.params[key] = config.get('run_params', key)
