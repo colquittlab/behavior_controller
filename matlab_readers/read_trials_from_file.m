@@ -121,7 +121,12 @@ function trials = read_from_file(fname)
         else
             trial.bin_entries = '';
         end
-        
+        if isfield(data, 'stim_idxs')
+            trial.stim_idxs = data.stim_idxs;
+            
+        else
+            trial.stim_idxs = '';
+        end
         
         try
             trials(count) = trial;

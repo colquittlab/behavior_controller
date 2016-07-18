@@ -617,7 +617,12 @@ def parse_config(cfpath):
             camera_plot= config.getboolean('run_params','camera_plot')
         else:
             camera_plot = False
-        box.connect_to_camera(camera_idx=camera_idx, plot=camera_plot)
+
+        if config.has_option('run_params','camera_bounds'):
+            camera_bounds = json.loads(config.get('run_params','camera_bounds'))
+            box.connect_to_camera(camera_idx=camera_idx, plot=camera_plot, bounds = camera_bounds)
+        else:
+            box.connect_to_camera(camera_idx=camera_idx, plot=camera_plot)
 
     # set any box params
     for param in ['trigger_value']:
