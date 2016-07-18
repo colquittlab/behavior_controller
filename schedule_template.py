@@ -10,7 +10,7 @@ from numbers import Number
 
 
 
-config_files = ["config_files/bsp_tbase.config", 'config_files/bsp_tnull.config']
+config_files = ["config_files/bsp_video_tbase.config"]
 
 stimset_pool = ['bsp_v2_6p5_ss_stimset','bsp_v2_8p5_ss_stimset','bsp_v2_10p5_ss_stimset','bsp_v2_zebrasong_stimset', 'bsp_v3_silent_stimset', 'bsp_v3_whitenoise_stimset']
 

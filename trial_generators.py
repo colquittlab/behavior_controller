@@ -39,11 +39,12 @@ def video_preference_generator(controller, trials_per_block=1):
 	for k in range(0, trials_per_block):
 		trial = {}
 		# pick the stimset and the stimulus
-		idx = random.randint(0, 1)
-		if idx == 0:
-			trial['stimset_idxs'] = [0, 1]
-		else:
-			trial['stimset_idxs'] = [1, 0]
+		# idx = random.randint(0, 1)
+		# if idx == 0:
+		# 	trial['stimset_idxs'] = [0, 1]
+		# else:
+		# 	trial['stimset_idxs'] = [1, 0]
+		trial['stimset_idxs'] = [0, 1] # have the same stimset on each side
 		trial['start_side'] = random.randint(0,1)
 		trial['current_bin'] = None
 		trial['track'] = []
