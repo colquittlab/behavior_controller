@@ -793,8 +793,9 @@ def video_preference_assay(controller, box, events_since_last):
 
     for event_idx,name in enumerate(events_since_last_names): 
         if name == 'pos':
-            controller.current_trial['track'].append((events_since_last[event_idx][0], events_since_last[event_idx][2]))
-            controller.current_trial['current_bin'] = events_since_last[event_idx][3]
+            if events_since_last[2] is not None:
+                controller.current_trial['track'].append((events_since_last[event_idx][0], events_since_last[event_idx][2]))
+                controller.current_trial['current_bin'] = events_since_last[event_idx][3]
         if name == 'enter_bin': 
             controller.current_trial['current_bin'] = events_since_last[event_idx][2]
             controller.current_trial['bin_entries'].append(events_since_last[event_idx])
