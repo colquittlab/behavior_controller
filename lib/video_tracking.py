@@ -94,6 +94,8 @@ class Target:
            
         
         c = cv.WaitKey(7) % 0x100
+        if center_point is None:
+            center_point = [np.NaN, np.NaN]
         return center_point
 
     def find_bin_of_pos(self, pos):
