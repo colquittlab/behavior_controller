@@ -24,7 +24,11 @@ function trials = read_from_file(fname)
     file_line = fgets(fid);
     while file_line > 0
         count = count + 1;
-        data = loadjson(file_line);
+        try
+            data = loadjson(file_line);
+        catch
+            data = loadjson(strrep(file_line,'null','[NaN, NaN]')); 
+        end
 %         data = data{1};
         
         if isfield(data,'stimulus')
