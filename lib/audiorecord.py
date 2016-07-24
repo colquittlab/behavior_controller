@@ -244,7 +244,9 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
         #                  input=True)
 
     print "listening..."
-    audio2send = np.zeros((1,chunk))
+    #audio2send = np.zeros((1,chunk))
+    #audio2send = np.zeros(0)
+    audio2send = None
     print rate, chunk
     rel = rate/chunk
     slid_win = deque(maxlen=silence_limit * rel) #amplitude threshold running buffer
@@ -262,7 +264,7 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
     #tmp = np.array((2**23-1)*cur_data.transpose(),dtype="float",order="C")
     #slid_win.append(math.sqrt(abs(audioop.max(cur_data, 4))))
     #slid_win.append(math.sqrt(abs(audioop.max(tmp, 4))))
-
+    width = 3
     while queue.empty():
         #if len(slid_win)>0:
         #    print max(slid_win) #uncomment if you want to print intensity values
@@ -277,9 +279,9 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
             #cur_data=self.stream.read(self.params['chunk'])
 
         try:
-            #print cur_data
+            print cur_data
             #tmp = np.array((2**23-1)*cur_data.transpose(),dtype="float",order="C").transpose()
-            tmp = np.array((2**15-1)*cur_data.transpose(),dtype="int16",order="C").transpose()
+            tmp = np.array((2**(8*width-1)-1)*cur_data.transpose(),dtype="float",order="C").transpose()
             #tmp = math.sqrt(abs(audioop.max(cur_data, 2)))
             #print tmp
             tmp2 = np.max(tmp)
@@ -297,18 +299,22 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
                 sys.stdout.write("recording ... ")
                 sys.stdout.flush()
                 started = True
-            print np.shape(audio2send), np.shape(cur_data)
-            audio2send = np.append(audio2send, cur_data, axis=0)
+                audio2send = np.array(cur_data[0,:])
+            print np.shape(audio2send), np.shape(cur_data[0,:])
+            audio2send = np.append(audio2send, cur_data[0,:])
+            #audio2send = np.append(audio2send, cur_data, axis=0)
             #print np.shape(audio2send)[0], min_dur*rel
-            print np.shape(audio2send)
-        elif (started is True and np.shape(audio2send)[0]>min_dur*rel and np.shape(audio2send)[0]<max_dur*rel):
+            print np.shape(audio2send), min_dur*rate
+#        elif (started is True and np.shape(audio2send)[0]>min_dur*rel and np.shape(audio2send)[0]<max_dur*rel):
+        elif (started is True and np.shape(audio2send)[0]>min_dur*rate and np.shape(audio2send)[0]<max_dur*rate):
             # write out
             print "writing to file"
             today = datetime.date.today().isoformat()
             outdir_date = "/".join([outdir, today])
             if not os.path.exists(outdir_date): os.makedirs(outdir_date)
             #print outdir_date
-            filename = save_audio(np.append(prev_audio, audio2send), outdir_date, rate)
+#            filename = save_audio(np.append(prev_audio, audio2send), outdir_date, rate)
+            filename = save_audio(audio2send, outdir_date, rate)   
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
             prev_audio = deque(maxlen=prev_audio_time * rate)
@@ -322,7 +328,7 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
             audio2send=np.zeros((1,chunk))
             print "listening ..."
         else:
-            prev_audio.append(cur_data)
+            prev_audio.append(tmp)
             
     else:
         #print "done recording"
@@ -378,6 +384,7 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
         try:
             jack.process(dummy, cur_data)            
             tmp = np.array((2**15-1)*cur_data.transpose(),dtype="int16",order="C")
+
             #tmp = np.sqrt(np.abs(np.max(tmp)))
             print tmp
             #        cur_data=stream.read()[1]
@@ -388,7 +395,7 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
     else:
         pass
         #cur_data=self.stream.read(self.params['chunk'])
-
+    width = 3
     while event_queue.empty():
 #            if len(slid_win)>0:
 #                print max(slid_win) #uncomment if you want to print intensity values
@@ -396,7 +403,7 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
             try:
                 jack.process(dummy, cur_data)
                 #            cur_data=stream.read()[1]
-                tmp = np.array((2**15-1)*cur_data.transpose(),dtype="int16",order="C")
+                tmp = np.array((2**(8*width-1)-1)*cur_data.transpose(),dtype="float",order="C")
                 #tmp = np.sqrt(np.abs(np.max(tmp)))
                 recording_queue.put(tmp)
             except jack.InputSyncError:
@@ -415,20 +422,21 @@ def save_audio(data, outdir, rate):
     filename = "/".join([str(outdir), 'output_'+str(int(time.time()))]) + ".wav"
     print filename
     #data1 = np.array(data[0], dtype="int16", order="C")
-    data1 = np.sqrt(np.abs(data.flatten('C')))
-    data2 = np.ndarray((len(data1), 1), buffer=data1)
+    #data1 = data.flatten()
+    #xdata1 = ''.join(data1)
+#    data2 = np.ndarray((len(data1), 1), buffer=data1)
     print np.shape(data)
-    print np.shape(data1)
-    print np.shape(data2)
-    print data1
-#    scipy.io.wavfile.write(filename, rate, data2)
+#    print np.shape(data1)
+ #   print np.shape(data2)
+#    print data1
+#    scipy.io.wavfile.write(filename, int(rate), data2)
     # writes data to WAV file
     # data = ''.join(data)
     wavout = wave.open(filename, 'wb')
     wavout.setnchannels(1)
     wavout.setsampwidth(4)
     wavout.setframerate(rate)
-    wavout.writeframes(data1)
+    wavout.writeframes(data)
     wavout.close()
     return filename + '.wav'
 
