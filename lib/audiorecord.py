@@ -278,8 +278,8 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
 
         try:
             #print cur_data
-            tmp = np.array((2**23-1)*cur_data.transpose(),dtype="float",order="C").transpose()
-            #tmp = np.array((2**15-1)*cur_data.transpose(),dtype="int16",order="C").transpose()
+            #tmp = np.array((2**23-1)*cur_data.transpose(),dtype="float",order="C").transpose()
+            tmp = np.array((2**15-1)*cur_data.transpose(),dtype="int16",order="C").transpose()
             #tmp = math.sqrt(abs(audioop.max(cur_data, 2)))
             #print tmp
             tmp2 = np.max(tmp)
@@ -297,8 +297,8 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
                 sys.stdout.write("recording ... ")
                 sys.stdout.flush()
                 started = True
-            print np.shape(audio2send), np.shape(tmp)
-            audio2send = np.append(audio2send, tmp, axis=0)
+            print np.shape(audio2send), np.shape(cur_data)
+            audio2send = np.append(audio2send, cur_data, axis=0)
             #print np.shape(audio2send)[0], min_dur*rel
             print np.shape(audio2send)
         elif (started is True and np.shape(audio2send)[0]>min_dur*rel and np.shape(audio2send)[0]<max_dur*rel):
@@ -322,7 +322,7 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
             audio2send=np.zeros((1,chunk))
             print "listening ..."
         else:
-            prev_audio.append(tmp)
+            prev_audio.append(cur_data)
             
     else:
         #print "done recording"
@@ -426,7 +426,7 @@ def save_audio(data, outdir, rate):
     # data = ''.join(data)
     wavout = wave.open(filename, 'wb')
     wavout.setnchannels(1)
-    wavout.setsampwidth(3)
+    wavout.setsampwidth(4)
     wavout.setframerate(rate)
     wavout.writeframes(data1)
     wavout.close()
