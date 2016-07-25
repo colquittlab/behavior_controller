@@ -26,6 +26,24 @@ if uname=='Linux': # this allows for development on non-linux systems
 else:
     import pyaudio as pa
 
+# from https://scimusing.wordpress.com/2013/10/25/ring-buffers-in-pythonnumpy/
+class Ringbuffer():
+    "A 1D ring buffer using numpy arrays"
+    def __init__(self, length):
+        self.data = np.zeros(length, dtype='f')
+        self.index = 0
+
+    def extend(self, x):
+        "adds array x to ring buffer"
+        x_index = (self.index + np.arange(x.size)) % self.data.size
+        self.data[x_index] = x
+        self.index = x_index[-1] + 1
+
+    def get(self):
+        "Returns the first-in-first-out data in the ring buffer"
+        idx = (self.index + np.arange(self.data.size)) %self.data.size
+        return self.data[idx]
+
 class AudioRecord:
     def __init__(self):
         self.pcm = None
@@ -256,7 +274,8 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
     print rate, chunk
     rel = rate/chunk
     slid_win = deque(maxlen=silence_limit * rel) #amplitude threshold running buffer
-    prev_audio = deque(maxlen=prev_audio_time * rate) #prepend audio running buffer
+    #prev_audio = deque(maxlen=prev_audio_time * rate) #prepend audio running buffer
+    prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
     started = False
 
     if uname == "Linux":
@@ -319,22 +338,25 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
             outdir_date = "/".join([outdir, today])
             if not os.path.exists(outdir_date): os.makedirs(outdir_date)
             #print outdir_date
-#            filename = save_audio(np.append(prev_audio, audio2send), outdir_date, rate)
-            filename = save_audio(audio2send, outdir_date, rate)   
+            filename = save_audio(np.append(prev_audio.get(), audio2send), outdir_date, rate)
+            #filename = save_audio(audio2send, outdir_date, rate)   
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
-            prev_audio = deque(maxlen=prev_audio_time * rate)
+            #prev_audio = deque(maxlen=prev_audio_time * rate)
+            prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
             print "listening ..."
             audio2send=None
         elif (started is True):
             print "duration criterion not met"
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
-            prev_audio = deque(maxlen=prev_audio_time * rate)
+            #prev_audio = deque(maxlen=prev_audio_time * rate)
+            prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
             audio2send=None
             print "listening ..."
         else:
-            prev_audio.append(tmp)
+             prev_audio.extend(cur_data[0,:])
+            #prev_audio = np.append(prev_audio, cur_data[0,:])
             
     else:
         #print "done recording"
