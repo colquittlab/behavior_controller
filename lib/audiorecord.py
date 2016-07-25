@@ -9,6 +9,7 @@ import math
 import pdb
 import datetime
 import ConfigParser
+import wavio
 import numpy as np
 import scipy.io.wavfile
 import multiprocessing as mp
@@ -35,7 +36,7 @@ class AudioRecord:
         self.params['birdname'] = None
         self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
-        self.params['channels'] = 1
+        self.params['channels'] = 2
         self.params['rate'] = 44100
         self.params['threshold'] = None
         self.params['silence_limit'] = None
@@ -225,10 +226,15 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
         print "Client:", myname
         print "Jack ports (before):", jack.get_ports()
         jack.register_port("in_1", jack.IsInput)
+        #jack.register_port("in_2", jack.IsInput)
         jack.activate()
         print "Jack ports (after):", jack.get_ports()
         jack.connect(pcm + ":capture_1", myname + ":in_1")
+        #jack.connect(pcm + ":capture_2", myname + ":in_2")
+        #jack.connect("system:capture_1", myname + ":in_1")
+        #jack.connect("system:capture_2", myname + ":in_2")
         print jack.get_connections(myname+":in_1")
+        #print jack.get_connections(myname+":in_2")
         chunk = jack.get_buffer_size()
         print "Buffer Size:", chunk, "Sample Rate:", rate
         cur_data = np.zeros((1,chunk), 'f')
@@ -264,7 +270,7 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
     #tmp = np.array((2**23-1)*cur_data.transpose(),dtype="float",order="C")
     #slid_win.append(math.sqrt(abs(audioop.max(cur_data, 4))))
     #slid_win.append(math.sqrt(abs(audioop.max(tmp, 4))))
-    width = 3
+    #width = 2
     while queue.empty():
         #if len(slid_win)>0:
         #    print max(slid_win) #uncomment if you want to print intensity values
@@ -279,12 +285,12 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
             #cur_data=self.stream.read(self.params['chunk'])
 
         try:
-            print cur_data
+            #print cur_data
             #tmp = np.array((2**23-1)*cur_data.transpose(),dtype="float",order="C").transpose()
-            tmp = np.array((2**(8*width-1)-1)*cur_data.transpose(),dtype="float",order="C").transpose()
+            tmp = np.array((2**15-1)*cur_data[0,:].transpose(),dtype="float",order="C").transpose()
             #tmp = math.sqrt(abs(audioop.max(cur_data, 2)))
             #print tmp
-            tmp2 = np.max(tmp)
+            tmp2 = np.max(np.abs(tmp))
             #print tmp2
             #slid_win.append(math.sqrt(abs(audioop.max(tmp, 4))))
             slid_win.append(tmp2)
@@ -319,13 +325,13 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
             slid_win = deque(maxlen=silence_limit * rel)
             prev_audio = deque(maxlen=prev_audio_time * rate)
             print "listening ..."
-            audio2send=np.zeros((1,chunk))
+            audio2send=None
         elif (started is True):
             print "duration criterion not met"
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
             prev_audio = deque(maxlen=prev_audio_time * rate)
-            audio2send=np.zeros((1,chunk))
+            audio2send=None
             print "listening ..."
         else:
             prev_audio.append(tmp)
@@ -432,12 +438,13 @@ def save_audio(data, outdir, rate):
 #    scipy.io.wavfile.write(filename, int(rate), data2)
     # writes data to WAV file
     # data = ''.join(data)
-    wavout = wave.open(filename, 'wb')
-    wavout.setnchannels(1)
-    wavout.setsampwidth(4)
-    wavout.setframerate(rate)
-    wavout.writeframes(data)
-    wavout.close()
+    # wavout = wave.open(filename, 'wb')
+    # wavout.setnchannels(1)
+    # wavout.setsampwidth(3)
+    # wavout.setframerate(rate)
+    # wavout.writeframes(data)
+    # wavout.close()
+    wavio.write(filename, data, rate, sampwidth=3)
     return filename + '.wav'
 
 def get_audio_power(data):
