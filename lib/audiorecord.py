@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 
-import wave
-import audioop
 import os
 import sys
 import re
@@ -10,15 +8,16 @@ import math
 import pdb
 import datetime
 import ConfigParser
+import wave
 import wavio
+import audioop
 import numpy as np
-import scipy.io.wavfile
 import multiprocessing as mp
+from collections import deque
+from subprocess import Popen
 
 sys.path.append(os.path.expanduser("~") + "/src/behavior_controller")
 import lib.soundout_tools as so
-from collections import deque
-from subprocess import Popen
 
 uname = os.uname()[0]
 if uname=='Linux': # this allows for development on non-linux systems
@@ -48,6 +47,7 @@ class Ringbuffer():
 class AudioRecord:
     def __init__(self):
         self.pcm = None
+        self.channel = "1"
         self.event_queue = None
         self.recording_queue = None
         self.running = False
@@ -78,13 +78,11 @@ class AudioRecord:
         self.params['outdir'] = "."
 
     def init_config(self, config_file):
-#        pdb.set_trace()
         if config_file is None:
             self.test_config()
             return
         config = ConfigParser.ConfigParser() 
         config.read(config_file)
-        #pdb.set_trace()
         for option in config.options('record_params'):
             if option == "sound_card":
                 attr = config.get('record_params', option)
@@ -105,18 +103,19 @@ class AudioRecord:
                     self.params[option] = attr
 
         self.params['outdir'] = "/".join([self.params['data_dir'], self.params['birdname']])
-
-#        self.params['outdir'] = "/".join([self.params['outdir'], self.params['bird']])
         if not os.path.exists(self.params['outdir']):
             os.makedirs(self.params['outdir'])
 
     def set_sound_card(self, attr):
-        #self.pcm = "hw:CARD=%s,DEV=0" % attr
         self.pcm = "hw:%s,0" % attr
+        
+    def set_channel(self, idx):
+        self.channel = str(idx)
 
     def list_sound_cards(self):
         return so.list_sound_cards()
-
+        
+    ### NOT WORKING WITH CURRENT SETUP ###
     def audio_int(self, num_samples=64):
         """ Gets max audio intensity for a bunch of chunks of data. Useful for setting threshold.
         """
@@ -140,7 +139,6 @@ class AudioRecord:
                              input=True)
             values = [math.sqrt(abs(audioop.max(stream.read(self.params['chunk']), 4)))for x in range(num_samples)]
 
-        #values = sorted(values, reverse=True)
         r = sum(values[:int(num_samples * 0.2)]) / int(num_samples * 0.2)
         print "Finished"
         print "max audio intensity is", values
@@ -158,17 +156,11 @@ class AudioRecord:
         jack.attach("mainserver")
 
     def check_if_jack_subclient_running(self):
-        self.attach_to_jack()
+        self.attach_to_jack() # this is probably not the best spot for this...
         myname = jack.get_client_name()
         ports = jack.get_ports()
         res = [re.search(p, self.pcm) for p in ports]
-        #jack.detach("mainserver")
         return any(res)
-        #print "Jack port (before):", jack.get_ports()
-        #jack.register_port("in_1", jack.IsInput)
-        #jack.register_port("in_2", jack.IsInput)
-        #jack.activate()
-        #print "Jack ports (after):", jack.get_ports()
         
     def start_jack_subclient(self):
         print "Starting jack subclient..."
@@ -185,11 +177,6 @@ class AudioRecord:
         self.running = True
         self.event_queue = mp.Queue()
         jack_running = self.check_if_jack_subclient_running()
-        print jack_running
-        #jack_running = False
-        print self.params['channel']
-        #self.attach_to_jack()
-        #jack.attach("mainserver")
         if (not jack_running):
             self.start_jack_subclient()
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
@@ -212,25 +199,20 @@ class AudioRecord:
         self.event_queue = mp.Queue()
         self.recording_queue = mp.Queue()
         error_queue = mp.Queue()
-        self.start_jack_subclient(self.pcm, self.params['channels'], self.params['rate'])
-        
-        print "here"
-        print  self.pcm, self.params['channels'], self.params['rate']
-        #self.jack_proc = mp.Process(target = start_jack_subclient, args = (
-        #                                                                   self.pcm, 
-        #                                                                   self.params['channels'], 
-        #                                                                   self.params['rate']))
-        print "here"
-        #self.jack_proc.start()
+        print "Current channel", self.channel
+        jack_running = self.check_if_jack_subclient_running()
+        if (not jack_running):
+            self.start_jack_subclient()
+
         self.proc = mp.Process(target = start_recording_return_data, args= (self.event_queue,
                                                                             self.recording_queue,
                                                                             error_queue,
-                                                                self.pcm,
-                                                                            #self.params['sound_card'],
-                                                                self.params['channels'],
-                                                                self.params['rate'],
-                                                                self.params['format'],
-                                                                self.params['chunk']))
+                                                                            self.pcm,
+                                                                            self.channel,
+                                                                            self.params['channels'],
+                                                                            self.params['rate'],
+                                                                            self.params['format'],
+                                                                            self.params['chunk']))
 
         print "Starting recording..."
         self.proc.start()
@@ -246,34 +228,29 @@ class AudioRecord:
         self.running = False
         self.event_queue.put(1)
         self.jack_client_process.kill()
+        jack.deactivate()
+        jack.detach()
+
+def establish_connection(pcm, channel):
+    myname = jack.get_client_name()
+    capture_name = pcm + ":capture_" + channel
+    port_name = "in_" + channel
+    connection_name = myname+":"+port_name
+
+    print capture_name, port_name, connection_name
+    print "Jack ports (before):", jack.get_ports()
+    jack.register_port(port_name, jack.IsInput)
+    jack.activate()
+    print "Jack ports (after):", jack.get_ports()
+    jack.connect(capture_name, connection_name)
+    print jack.get_connections(connection_name)
 
 def start_recording(queue, pcm, channel, birdname, channels, rate, format, chunk,
                     silence_limit, prev_audio_time, min_dur, max_dur, threshold, outdir):
     stream = None
     if uname == "Linux":
-        channel1 = str(channel)
-        #print channel
-#        jack.attach("mainserver")
-        myname = jack.get_client_name()
-        capture_name = pcm + ":capture_" + channel1
-        port_name = "in_" + channel1
-        connection_name = myname+":"+port_name
-        print capture_name, port_name, connection_name
-        #0print "Client:", myname
-        print "Jack ports (before):", jack.get_ports()
-        jack.register_port(port_name, jack.IsInput)
-#        jack.register_port("in_2", jack.IsInput)
-        jack.activate()
-        print "Jack ports (after):", jack.get_ports()
-        #jack.connect(pcm + ":capture_1", myname + ":in_1")
-        jack.connect(capture_name, connection_name)
-        #jack.connect(pcm + ":capture_2", myname + ":in_2")
-        #jack.connect("system:capture_1", myname + ":in_1")
-        #jack.connect("system:capture_2", myname + ":in_2")
-
-        print jack.get_connections(connection_name)
-        #sys.exit()
-        #print jack.get_connections(myname+":in_2")
+        channel = str(channel)
+        establish_connection(pcm, channel)
         chunk = jack.get_buffer_size()
         print "Buffer Size:", chunk, "Sample Rate:", rate
         cur_data = np.zeros((1,chunk), 'f')
@@ -281,21 +258,11 @@ def start_recording(queue, pcm, channel, birdname, channels, rate, format, chunk
 
     else:
         pass
-        # p = pa.PyAudio()
-        # stream = p.open(rate=self.params['rate'],
-        #                  format=self.params['format'],
-        #                  channels=self.params['channels'],
-        #                  frames_per_buffer=self.params['chunk'],
-        #                  input=True)
 
     print "listening..."
-    #audio2send = np.zeros((1,chunk))
-    #audio2send = np.zeros(0)
     audio2send = None
-    #print rate, chunk
     rel = rate/chunk
     slid_win = deque(maxlen=silence_limit * rel) #amplitude threshold running buffer
-    #prev_audio = deque(maxlen=prev_audio_time * rate) #prepend audio running buffer
     prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
     started = False
 
@@ -306,28 +273,17 @@ def start_recording(queue, pcm, channel, birdname, channels, rate, format, chunk
             pass
     else:
         pass
-
-        #cur_data=self.stream.read(self.params['chunk'])
-    #tmp = np.array((2**23-1)*cur_data.transpose(),dtype="float",order="C")
-    #slid_win.append(math.sqrt(abs(audioop.max(cur_data, 4))))
-    #slid_win.append(math.sqrt(abs(audioop.max(tmp, 4))))
-    #width = 2
     
     while queue.empty():
-        #if len(slid_win)>0:
-        #    print max(slid_win) #uncomment if you want to print intensity values
         if uname == "Linux":
             try: 
                 jack.process(dummy, cur_data)            
-                #            cur_data=stream.read()[1]
             except jack.InputSyncError:
                 pass
         else:
             pass
         try:
-            tmp = np.array((2**15-1)*cur_data[0,:].transpose(),dtype="float",order="C").transpose()
-            tmp2 = np.max(np.abs(tmp))
-            slid_win.append(tmp2)
+            slid_win.append(get_audio_power(cur_data[0,:]))
         except audioop.error:
             print "invalid number of blocks for threshold calculation, but continuing"
 
@@ -340,24 +296,16 @@ def start_recording(queue, pcm, channel, birdname, channels, rate, format, chunk
                 sys.stdout.flush()
                 started = True
                 audio2send = np.array(cur_data[0,:])
-            #print np.shape(audio2send), np.shape(cur_data[0,:])
             audio2send = np.append(audio2send, cur_data[0,:])
-            #audio2send = np.append(audio2send, cur_data, axis=0)
-            #print np.shape(audio2send)[0], min_dur*rel
-            #print np.shape(audio2send), min_dur*rate
-#        elif (started is True and np.shape(audio2send)[0]>min_dur*rel and np.shape(audio2send)[0]<max_dur*rel):
         elif (started is True and np.shape(audio2send)[0]>min_dur*rate and np.shape(audio2send)[0]<max_dur*rate):
             # write out
             print "writing to file"
             today = datetime.date.today().isoformat()
             outdir_date = "/".join([outdir, today])
             if not os.path.exists(outdir_date): os.makedirs(outdir_date)
-            #print outdir_date
             filename = save_audio(np.append(prev_audio.get(), audio2send), outdir_date, rate)
-            #filename = save_audio(audio2send, outdir_date, rate)   
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
-            #prev_audio = deque(maxlen=prev_audio_time * rate)
             prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
             print "listening ..."
             audio2send = None
@@ -365,42 +313,25 @@ def start_recording(queue, pcm, channel, birdname, channels, rate, format, chunk
             print "duration criterion not met"
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
-            #prev_audio = deque(maxlen=prev_audio_time * rate)
             prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
             audio2send = None
             print "listening ..."
         else:
             prev_audio.extend(cur_data[0,:])
-            #prev_audio = np.append(prev_audio, cur_data[0,:])
             
     else:
-        #print "done recording"
         jack.deactivate()
         jack.detach()
-#        stream.close()
         return
 
-def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, channels, rate, format, chunk):
+def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, channel, channels, rate, format, chunk):
     stream = None
     if uname == "Linux":
         try:
-            jack.attach("mainserver")
-            myname = jack.get_client_name()
-            print "Client:", myname
-            print "Jack ports (before):", jack.get_ports()
-
-            jack.register_port("in_1", jack.IsInput)
-
-            jack.activate()
-            print "Jack ports (after):", jack.get_ports()
-            
-            jack.connect(pcm + ":capture_1", myname + ":in_1")
-
-            print jack.get_connections(myname+":in_1")
-
-            N = jack.get_buffer_size()
-            print "Buffer Size:", N, "Sample Rate:", rate
-            cur_data = np.zeros((1,N), 'f')
+            establish_connection(pcm, channel)
+            chunk = jack.get_buffer_size()
+            print "Buffer Size:", chunk, "Sample Rate:", rate
+            cur_data = np.zeros((1,chunk), 'f')
             dummy = np.zeros((1,0), 'f')
         except:
             print "here2"
@@ -417,37 +348,20 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
         #                  input=True)
 
     print "listening..."
-    audio2send = []
-    #cur_data = '' # current chunk of audio data
-    rel = rate/chunk
-    started = False
-
     if uname == "Linux":
-        print N
         try:
             jack.process(dummy, cur_data)            
-            tmp = np.array((2**15-1)*cur_data.transpose(),dtype="int16",order="C")
-
-            #tmp = np.sqrt(np.abs(np.max(tmp)))
-            print tmp
-            #        cur_data=stream.read()[1]
-            print np.shape(tmp)
+            tmp = cur_data[0,:]
             recording_queue.put(tmp)
         except jack.InputSyncError:
             print "InputSyncError"
     else:
         pass
-        #cur_data=self.stream.read(self.params['chunk'])
-    width = 3
     while event_queue.empty():
-#            if len(slid_win)>0:
-#                print max(slid_win) #uncomment if you want to print intensity values
         if uname == "Linux":
             try:
                 jack.process(dummy, cur_data)
-                #            cur_data=stream.read()[1]
-                tmp = np.array((2**(8*width-1)-1)*cur_data.transpose(),dtype="float",order="C")
-                #tmp = np.sqrt(np.abs(np.max(tmp)))
+                tmp = get_audio_power(cur_data[0,:])
                 recording_queue.put(tmp)
             except jack.InputSyncError:
                 print "InputSyncError"
@@ -457,35 +371,18 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
     else:
         jack.deactivate()
         jack.detach()
-        #stream.close()
         return
 
 def save_audio(data, outdir, rate):
     """ Saves mic data to  WAV file. Returns filename of saved file """
     filename = "/".join([str(outdir), 'output_'+str(int(time.time()))]) + ".wav"
-    print filename
-    #data1 = np.array(data[0], dtype="int16", order="C")
-    #data1 = data.flatten()
-    #xdata1 = ''.join(data1)
-#    data2 = np.ndarray((len(data1), 1), buffer=data1)
-    print np.shape(data)
-#    print np.shape(data1)
- #   print np.shape(data2)
-#    print data1
-#    scipy.io.wavfile.write(filename, int(rate), data2)
-    # writes data to WAV file
-    # data = ''.join(data)
-    # wavout = wave.open(filename, 'wb')
-    # wavout.setnchannels(1)
-    # wavout.setsampwidth(3)
-    # wavout.setframerate(rate)
-    # wavout.writeframes(data)
-    # wavout.close()
-    wavio.write(filename, data, rate, sampwidth=3)
+    scale_factor = (-.1, .1) # this is hand set for a 24-bit presonus amp. will need to make dynamic later
+    wavio.write(filename, data, rate, sampwidth=3, scale=scale_factor)
     return filename + '.wav'
 
 def get_audio_power(data):
-    return math.sqrt(abs(audioop.max(data, 4)))
+    tmp = np.array((2**15-1)*data.transpose(),dtype="float",order="C").transpose()
+    return np.max(np.abs(tmp))
 
 def main(argv):
     recorder = AudioRecord()

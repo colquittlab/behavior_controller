@@ -51,7 +51,8 @@ class AudioThread(QtCore.QThread):
             data.append(0)
 
         while not self.exiting:
-            data.append(ar.get_audio_power(self.parent.parent.recorder.recording_queue.get()))
+            data.append(self.parent.parent.recorder.recording_queue.get())
+            #data.append(ar.get_audio_power(self.parent.parent.recorder.recording_queue.get()))
             self.emit( QtCore.SIGNAL( "gotData( PyQt_PyObject )" ), list(data) )
 
     def stop(self):
@@ -161,6 +162,31 @@ class SoundCardBox(QtGui.QSpinBox):
     def valueFromText(self, text):
         return self._values[text]
 
+class ChannelBox(QtGui.QSpinBox):
+    def __init__(self, parent, recorder):
+        super(ChannelBox, self).__init__(parent)
+#        soundcard_names = recorder.list_sound_cards()
+        channel_names = ['1','2']
+        self.setStrings(channel_names)
+
+    def strings(self):
+        return self._strings
+
+    def setStrings(self, strings):
+        self._strings = tuple(strings)
+#        self._values = dict(zip(strings, range(len(strings))))
+        self._values = dict(zip(strings, map(int, strings)))
+        self.setRange(0, len(strings) - 1)
+
+    def textFromValue(self, value):
+        print "value", value
+        print "string",  self._strings[value]
+        return self._strings[value]
+
+    def valueFromText(self, text):
+        print "vt"
+        return self._values[text]
+
 class Ui_LiveAudio(object):
     def __del__(self):
         self.recorder.stop()
@@ -196,8 +222,13 @@ class Ui_LiveAudio(object):
 
         #-------- Soundcard selection --------#
         self.soundcard_idx = SoundCardBox(LiveAudio, self.recorder)
-        self.soundcard_idx.setGeometry(QtCore.QRect(470, 270, 100, 27))
+        self.soundcard_idx.setGeometry(QtCore.QRect(530, 240, 100, 27))
         self.soundcard_idx.setObjectName(_fromUtf8("soundcard_idx"))
+
+        #-------- Channel selection --------#
+        self.channel_idx = ChannelBox(LiveAudio, self.recorder)
+        self.channel_idx.setGeometry(QtCore.QRect(530, 270, 100, 27))
+        self.channel_idx.setObjectName(_fromUtf8("channel_idx"))
 
         #-------- Graphing Widgets --------#
         self.audio_plot = AudioPlotWidget(LiveAudio, self.recorder)
@@ -215,6 +246,7 @@ class Ui_LiveAudio(object):
         self.stop_recording_button.connect(self.stop_recording_button, QtCore.SIGNAL("clicked()"), self.stop_recording)
         self.cancel_button.connect(self.cancel_button, QtCore.SIGNAL("clicked()"), self.quit_program)
         self.soundcard_idx.connect(self.soundcard_idx, QtCore.SIGNAL("valueChanged(int)"), self.update_selected_soundcard)
+        self.channel_idx.connect(self.channel_idx, QtCore.SIGNAL("valueChanged(const QString&)"), self.update_selected_channel)
 
         self.retranslateUi(LiveAudio)
         QtCore.QMetaObject.connectSlotsByName(LiveAudio)
@@ -226,6 +258,7 @@ class Ui_LiveAudio(object):
         self.start_recording_button.setText(_translate("LiveAudio", "Start recording", None))
         self.stop_recording_button.setText(_translate("LiveAudio", "Stop recording", None))
         self.label.setText(_translate("LiveAudio", "Soundcard", None))
+        self.label.setText(_translate("LiveAudio", "Channel", None))
 
     def setup_audio_recorder(self):
         self.recorder = ar.AudioRecord()
@@ -255,6 +288,10 @@ class Ui_LiveAudio(object):
     def update_selected_soundcard(self, i):
         print i
         self.recorder.set_sound_card(i)
+
+    def update_selected_channel(self, i):
+        print "update", i
+        self.recorder.set_channel(i)
     
     def quit_program(self):
         if self.audio_recording:
