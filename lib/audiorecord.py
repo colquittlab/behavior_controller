@@ -107,7 +107,8 @@ class AudioRecord:
             os.makedirs(self.params['outdir'])
 
     def set_sound_card(self, attr):
-        self.pcm = "hw:%s,0" % attr
+        self.pcm = "hw:%s,0" % attr.strip("\"")
+
         
     def set_channel(self, idx):
         self.channel = str(idx)
@@ -157,9 +158,10 @@ class AudioRecord:
 
     def check_if_jack_subclient_running(self):
         self.attach_to_jack() # this is probably not the best spot for this...
+
         myname = jack.get_client_name()
         ports = jack.get_ports()
-        res = [re.search(p, self.pcm) for p in ports]
+        res = [re.search(self.pcm, p) for p in ports]
         return any(res)
         
     def start_jack_subclient(self):
@@ -178,7 +180,9 @@ class AudioRecord:
         self.event_queue = mp.Queue()
         jack_running = self.check_if_jack_subclient_running()
         if (not jack_running):
-            self.start_jack_subclient()
+            print "Please start jack servers first. Exiting..."
+            sys.exit()
+            #self.start_jack_subclient()
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
                                                                 self.pcm,
                                                                 self.params['channel'],
@@ -202,7 +206,9 @@ class AudioRecord:
         print "Current channel", self.channel
         jack_running = self.check_if_jack_subclient_running()
         if (not jack_running):
-            self.start_jack_subclient()
+            print "Please start jack servers first. Exiting..."
+            sys.exit()
+            #self.start_jack_subclient()
 
         self.proc = mp.Process(target = start_recording_return_data, args= (self.event_queue,
                                                                             self.recording_queue,
@@ -307,6 +313,7 @@ def start_recording(queue, pcm, channel, birdname, channels, rate, format, chunk
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
             prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
+            prev_audio.extend(audio2send)
             print "listening ..."
             audio2send = None
         elif (started is True):
@@ -314,6 +321,7 @@ def start_recording(queue, pcm, channel, birdname, channels, rate, format, chunk
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
             prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
+            prev_audio.extend(audio2send)
             audio2send = None
             print "listening ..."
         else:
