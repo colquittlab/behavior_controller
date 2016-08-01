@@ -166,7 +166,8 @@ class ChannelBox(QtGui.QSpinBox):
     def __init__(self, parent, recorder):
         super(ChannelBox, self).__init__(parent)
 #        soundcard_names = recorder.list_sound_cards()
-        channel_names = ['1','2']
+        #channel_names = map(str, cnames)
+        channel_names = map(str, range(1,5))
         self.setStrings(channel_names)
 
     def strings(self):
@@ -245,7 +246,8 @@ class Ui_LiveAudio(object):
         self.start_recording_button.connect(self.start_recording_button, QtCore.SIGNAL("clicked()"), self.start_recording)
         self.stop_recording_button.connect(self.stop_recording_button, QtCore.SIGNAL("clicked()"), self.stop_recording)
         self.cancel_button.connect(self.cancel_button, QtCore.SIGNAL("clicked()"), self.quit_program)
-        self.soundcard_idx.connect(self.soundcard_idx, QtCore.SIGNAL("valueChanged(int)"), self.update_selected_soundcard)
+#        self.soundcard_idx.connect(self.soundcard_idx, QtCore.SIGNAL("valueChanged(int)"), self.update_selected_soundcard)
+        self.soundcard_idx.connect(self.soundcard_idx, QtCore.SIGNAL("valueChanged(const QString&)"), self.update_selected_soundcard)
         self.channel_idx.connect(self.channel_idx, QtCore.SIGNAL("valueChanged(const QString&)"), self.update_selected_channel)
 
         self.retranslateUi(LiveAudio)

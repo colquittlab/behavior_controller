@@ -107,9 +107,10 @@ class AudioRecord:
             os.makedirs(self.params['outdir'])
 
     def set_sound_card(self, attr):
-        self.pcm = "hw:%s,0" % attr.strip("\"")
+        if isinstance(attr, basestring):
+            attr = attr.strip("\"")
+        self.pcm = "hw:%s,0" % attr
 
-        
     def set_channel(self, idx):
         self.channel = str(idx)
 
@@ -158,7 +159,6 @@ class AudioRecord:
 
     def check_if_jack_subclient_running(self):
         self.attach_to_jack() # this is probably not the best spot for this...
-
         myname = jack.get_client_name()
         ports = jack.get_ports()
         res = [re.search(self.pcm, p) for p in ports]
@@ -182,7 +182,7 @@ class AudioRecord:
         if (not jack_running):
             print "Please start jack servers first. Exiting..."
             sys.exit()
-            #self.start_jack_subclient()
+            
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
                                                                 self.pcm,
                                                                 self.params['channel'],
@@ -208,8 +208,7 @@ class AudioRecord:
         if (not jack_running):
             print "Please start jack servers first. Exiting..."
             sys.exit()
-            #self.start_jack_subclient()
-
+            
         self.proc = mp.Process(target = start_recording_return_data, args= (self.event_queue,
                                                                             self.recording_queue,
                                                                             error_queue,
