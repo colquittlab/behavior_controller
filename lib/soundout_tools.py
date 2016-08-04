@@ -147,8 +147,9 @@ if __name__=="__main__":
         raise(Exception('no args passed'))
     else:
     	cardidx = int(sys.argv[1])
-        spath = sys.argv[2]
-    sendwf(0,'sounds/beep.wav','.wav',44100,channel=2)
+        chanidx = int(sys.argv[2])
+        spath = sys.argv[3]
+    sendwf(cardidx,'sounds/beep.wav','.wav',44100,channel=chanidx)
 	#sendwf(cardidx, spath, '.wav',44100,pulse = False)
 	# # song1 = wave.open('/home/jknowles/test.wav')
 	# # song2 = wave.open('/home/jknowles/test1ch.wav')
