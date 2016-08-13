@@ -121,7 +121,6 @@ function trials = read_from_file(fname)
         end
         if isfield(data, 'bin_entries')
             trial.bin_entries = cell2mat(cellfun(@(x) [x{1} x{3}],data.bin_entries,'uniformoutput',false)');
-            
         else
             trial.bin_entries = '';
         end
