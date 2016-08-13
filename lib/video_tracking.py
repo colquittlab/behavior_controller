@@ -32,11 +32,17 @@ class Target:
         self.bounds.extend(bounds)
         self.bounds.append(self.frame_size[0])
 
-    def find_target(self, first_frame = False, jump_thresh = 100): 
+    def find_target(self, first_frame = False, jump_thresh = 100, dark_thresh = 50): 
         currtime=tm.time()
         self.color_image = cv.QueryFrame(self.capture)
         # Smooth to get rid of false positives
         cv.Smooth(self.color_image, self.color_image, cv.CV_GAUSSIAN, 3, 0)
+        grey = cv.CloneImage(self.grey_image)
+        cv.CvtColor(self.color_image,grey,cv.CV_RGB2GRAY)
+        mean_brightness = np.mean(np.fromstring(grey.tostring(),np.uint8))
+        if mean_brightness < dark_thresh:
+            return "dark"
+
         if first_frame:
             difference = cv.CloneImage(self.color_image)
             temp = cv.CloneImage(self.color_image)
@@ -125,16 +131,19 @@ class Target:
     def run(self, event_queue=None, plot = True, log_period = 1):
         last_log_time = tm.time()
 
-	while True:
+        while True:
             tm.sleep(0.01)
 	    
 	   
             
-	    center_point = self.find_target()
-            
-	    if center_point is not None:
+            center_point = self.find_target()
+            if center_point is not None:
+                if center_point is "dark":
+                    center_point = None
+                    new_bin = -1
+                else:
+                    new_bin = self.find_bin_of_pos(center_point)
                 self.current_pos = center_point
-                new_bin = self.find_bin_of_pos(center_point)
                 
                 if new_bin != self.current_bin: 
                     self.current_bin = new_bin
@@ -169,7 +178,7 @@ def start_tracking(**args):
     # p.join()
 
 if __name__=="__main__":
-    run_tracking_process(camera_idx=1)
+    run_tracking_process(camera_idx=0)
     # tracking_process()
     # p, q = start_tracking(plot=True)
     # # import ipdb; ipdb.set_trace()
