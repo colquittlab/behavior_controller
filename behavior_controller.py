@@ -13,8 +13,8 @@ import sys
 import Queue
 
 import lib.soundout_tools as so
-# import lib.serial_tools as st
-# import lib.arduino_tools as at
+import lib.serial_tools as st
+import lib.arduino_tools as at
 import lib.usb_tools as ut
 import loop_iterations as loop
 import trial_generators as trial
@@ -26,11 +26,16 @@ try:
     import lib.video_tracking as vt
 except:
     vt = None
+try:
+    import lib.pygame_tools as pgt
+except:
+    pgt = None
 
 import lib.pin_definitions as pindef
 
 
 # from pyfirmata import Arduino, util
+baud_rate = 19200
 time_tollerance = 50e-3
 debug = True
 beep = False
@@ -273,7 +278,7 @@ class BehaviorController(object):
             else:
                 stats['by_stimset'][stimset_idx]['p_occurance'] = 0.5
         return stats    
-        
+    
 
 class BehaviorBox(object):
     """this object holds the present state of the behavior Arduino
@@ -289,6 +294,14 @@ class BehaviorBox(object):
         self.force_feed_up = False
         self.video_event_queue = None
         self.video_tracking_process = None
+        self.video_playback_object = None
+        self.box_zero_time = 0
+        self.last_sync_time = 0
+        self.sync_period = 60*30
+        self.serial_port = None
+        self.serial_device_id = None
+        self.serial_c = None
+        self.serial_io = None
         # bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
@@ -303,6 +316,108 @@ class BehaviorBox(object):
         if self.serial_c != None:
             return self.sync()
         else: return False
+
+    def select_serial_port(self, port = None):
+        list_of_ports = st.return_list_of_usb_serial_ports()
+        if port == None:
+            print 'Select desired port from list below:'
+            for k,port in enumerate(list_of_ports):
+                print '[%d] port: %s serial# %s' % (k,port[0], port[1])
+            # x = input('Enter Number: ')
+            x = 0
+            self.serial_port = list_of_ports[x][0]
+            self.serial_device_id = list_of_ports[x][1]
+        else:
+            self.serial_port = port;
+        result = self.connect_to_serial_port()
+        return result
+
+    def connect_to_serial_port(self): 
+        try:
+            self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
+            self.serial_c.setDTR(False)
+            self.serial_c.flushInput()
+            self.serial_c.flushOutput()
+            self.serial_c.setDTR(True)
+            self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')  
+            time.sleep(2)
+            return self.sync()
+        except:
+            self.reload_arduino_firmware()
+            return self.connect_to_serial_port()
+
+    def reload_arduino_firmware(self):
+        at.build_and_upload(self.serial_port)
+
+    def sync(self):
+
+        send_time = self.current_time
+        self.write_command('<sync>')
+        events = []
+        count = 0
+        events = self.query_arduino_events(timeout = 2)
+        sync_time = None
+        for event in events:
+            if len(event) > 1 and event[1]=='sync':
+                sync_time = float(event[0])
+        if sync_time != None:
+            self.box_zero_time = send_time - float(sync_time)/1000
+            self.last_sync_time = self.current_time;
+            return True
+        else:
+            raise(st.SerialError('Sync not successful'))
+        return True
+
+    def query_arduino_events(self, timeout = 0):
+        events_since_last = []
+        try:
+            if timeout != self.serial_c.timeout:
+                self.serial_c.timeout = timeout
+            # read any new input into the buffer
+            self.serial_buffer += self.serial_io.read()
+        except KeyboardInterrupt:
+            raise
+        except:
+            raise st.SerialError('serial connection lost')
+
+        # read any exigent events out of the serial buffer and add them to events_since_last
+        while True:
+            idx1 = self.serial_buffer.find('<') 
+            idx2 = self.serial_buffer[idx1:].find('>')
+            if idx1 > -1 and idx2 > -1:
+                idx2 = idx2 + idx1 + 1
+                line = self.serial_buffer[idx1:idx2]
+                event = self.parse_event_from_line(line)
+                if event != None:
+                    events_since_last.append(event)
+                self.serial_buffer = self.serial_buffer[idx2:]
+            else: 
+                return events_since_last
+    def parse_event_from_line(self,line):
+        line = line.strip('\n')
+        line = line.strip('\r')
+
+        idx1 = line.find('<') 
+        idx2 = line.find('>')
+        if idx1 > -1 and idx2 > -1:
+        # if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
+            line_parts = line[idx1+1:idx2].split('-')
+            if len(line_parts) is 3:
+                box_time = float(line_parts[0])
+                box_time = float(box_time)/1000 + self.box_zero_time
+                port = int(line_parts[1]) 
+                state = int(line_parts[2])
+            elif line_parts[1].lower() == "sync":
+                return (line_parts[0],line_parts[1],self.current_time)
+            else: return None
+        else: return None
+        if port in self.input_definitions.keys():
+            if state == self.trigger_value:
+                event = [box_time] + self.input_definitions[port]
+            else: return None
+        else: return None
+        return tuple(event)
+
 
     @property
     def current_time(self):
@@ -436,6 +551,24 @@ class BehaviorBox(object):
             self.video_event_queue = q
             self.video_event_process = p
         pass
+
+    def init_video(self):
+        try:
+            self.video_playback_object = pgt.PyGamePlayer()
+        except:
+            pass
+
+    def play_video(self,fname):
+        if self.video_playback_object is None:
+            self.init_video()
+        self.video_playback_object.send_movie(fname)
+
+    def write_command(self, command):
+        self.serial_io.write(unicode(command))
+        self.serial_io.flush()
+
+    def select_screen(self,screen):
+        self.write_command('<o12=%d>' % screen)
 
 
 ##
@@ -628,6 +761,23 @@ def parse_config(cfpath):
             box.connect_to_camera(camera_idx=camera_idx, plot=camera_plot, bounds = camera_bounds)
         else:
             box.connect_to_camera(camera_idx=camera_idx, plot=camera_plot)
+
+    if config.has_option('run_params','video_playback'):
+        video_playback = config.getboolean('run_params','video_playback')
+        if video_playback:
+            box.init_video()
+        else:
+            pass
+    else:
+        pass
+
+    if config.has_option('run_params','arduino_port'):
+        arduino_port = config.get('run_params','arduino_port')
+        box.select_serial_port(port=arduino_port)
+        box.select_screen(0)
+        box.select_screen(1)
+    else:
+        pass
 
     # set any box params
     for param in ['trigger_value']:
