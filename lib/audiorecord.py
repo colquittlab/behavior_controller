@@ -301,7 +301,8 @@ def start_recording(queue, pcm, channel, birdname, channels, rate, format, chunk
                 sys.stdout.flush()
                 started = True
                 audio2send = np.array(cur_data[0,:])
-            audio2send = np.append(audio2send, cur_data[0,:])
+            else:
+                audio2send = np.append(audio2send, cur_data[0,:])
         elif (started is True and np.shape(audio2send)[0]>min_dur*rate and np.shape(audio2send)[0]<max_dur*rate):
             # write out
             print "writing to file"
