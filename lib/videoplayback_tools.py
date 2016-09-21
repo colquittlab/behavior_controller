@@ -70,7 +70,7 @@ class PyGamePlayer(object):
         # self.movie = None
         self.playing = False
         self.thread = None
-    def play_movie(self,fname,rotation=0):
+    def play_movie(self,fname,rotation=1):
         # import ipdb; ipdb.set_trace()
         if self.playing:
             self.stop()
