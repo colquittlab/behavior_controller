@@ -19,6 +19,7 @@ import lib.arduino_tools as at
 import lib.usb_tools as ut
 import loop_iterations as loop
 import trial_generators as trial
+import lib.pin_definitions as pindef
 try:
     import lib.bone_tools as bt
 except Exception as e:
@@ -29,16 +30,13 @@ try:
     import lib.video_tracking as vt
 except:
     warnings.warn('lib.videotracking import failed.  videotracking functionality disabled',UserWarning)
-    vt = None
-    warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.',UserWarning)
-   
+    vt = None  
 try:
-    import lib.pygame_tools as pgt
+    import lib.videoplayback_tools as vpt
 except:
-    warnings.warn('lib.pygametools import failed.  videoplayback functionality disabled',UserWarning)
-    pgt = None
-    warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.',UserWarning)
-import lib.pin_definitions as pindef
+    warnings.warn('lib.videoplayback_tools import failed.  videoplayback functionality disabled',UserWarning)
+    vpt = None
+
 
 
 # from pyfirmata import Arduino, util
@@ -560,7 +558,7 @@ class BehaviorBox(object):
         pass
 
     def init_video(self):
-        self.video_playback_object = pgt.PyGamePlayer()
+        self.video_playback_object = vpt.PyGamePlayer()
 
     def play_video(self,fname):
         if self.video_playback_object is None:
