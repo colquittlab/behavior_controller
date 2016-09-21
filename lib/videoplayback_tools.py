@@ -20,15 +20,28 @@ def openVideo(fname):
     fps = cap.get(5) # fps is int property 5
     return cap, fps
 
-def cvtFrame(frame, color=True, res_out=(100,100)):
+def cvtFrame(frame, color=True, res_out=(100,100), rotation=0):
     frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
     if not color:
         frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
         frame=cv2.cvtColor(frame,cv2.COLOR_GRAY2RGB)
+    frame=rotateFrame(frame, rotation)
     frame=cv2.resize(frame, res_out, interpolation = cv2.INTER_AREA)
     frame=numpy.rot90(frame)
     frame=pygame.surfarray.make_surface(frame)
     return frame
+
+def rotateFrame(frame, rotation):
+    if rotation==1:
+        frame = cv2.transpose(frame)
+    elif rotation==2:
+        frame = cv2.flip(frame,0)
+    elif rotation==3:
+        frame=cv2.flip(cv2.transpose(frame),1)
+    else:
+        pass
+    return frame
+
 
 class PyGamePlayer(object):
     def __init__(self):
@@ -51,11 +64,13 @@ class PyGamePlayer(object):
 
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.width,self.height),pygame.NOFRAME)
+        self.screen.fill((0,0,0))
+        pygame.display.update()
         # self.movie_screen = pygame.Surface(self.screen.get_size()).convert()
         # self.movie = None
         self.playing = False
         self.thread = None
-    def play_movie(self,fname):
+    def play_movie(self,fname,rotation=0):
         # import ipdb; ipdb.set_trace()
         if self.playing:
             self.stop()
@@ -65,7 +80,7 @@ class PyGamePlayer(object):
         while self.playing:
             retval,frame=mov.read()
             if frame is not None:
-                frame=cvtFrame(frame, res_out = (self.width, self.height))
+                frame=cvtFrame(frame, res_out = (self.width, self.height), rotation=rotation)
                 self.screen.blit(frame,(0,0))
                 pygame.display.flip()
                 cv2.waitKey(int(float(1000)/fps))
@@ -76,11 +91,10 @@ class PyGamePlayer(object):
         self.screen.fill((0,0,0))
         pygame.display.update()
 
-    def send_movie(self, fname):
+    def send_movie(self, *args, **kwargs):
         if self.thread is not None:
             self.stop()
-
-        self.thread=threading.Thread(target = self.play_movie, args=(fname,))
+        self.thread=threading.Thread(target = self.play_movie, args=args, kwargs=kwargs)
         self.thread.start()
 
     def stop(self):
@@ -96,5 +110,5 @@ class PyGamePlayer(object):
 
 if __name__=="__main__":
     pgp = PyGamePlayer()
-    pgp.send_movie('video/jeffbird.mpg')
+    # pgp.send_movie('video/jeffbird.mpg')
     import ipdb; ipdb.set_trace()

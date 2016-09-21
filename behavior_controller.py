@@ -28,16 +28,16 @@ except Exception as e:
 try:
     import lib.video_tracking as vt
 except:
-    warnings.warn('lib.videotracking import failed.  videotracking functionality disabled',ImportWarning)
+    warnings.warn('lib.videotracking import failed.  videotracking functionality disabled',UserWarning)
     vt = None
-    warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.',ImportWarning)
+    warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.',UserWarning)
    
 try:
     import lib.pygame_tools as pgt
 except:
-    warnings.warn('lib.pygametools import failed.  videoplayback functionality disabled',ImportWarning)
+    warnings.warn('lib.pygametools import failed.  videoplayback functionality disabled',UserWarning)
     pgt = None
-    warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.',ImportWarning)
+    warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.',UserWarning)
 import lib.pin_definitions as pindef
 
 
@@ -560,10 +560,7 @@ class BehaviorBox(object):
         pass
 
     def init_video(self):
-        # try:
         self.video_playback_object = pgt.PyGamePlayer()
-        # except:
-            # pass
 
     def play_video(self,fname):
         if self.video_playback_object is None:
