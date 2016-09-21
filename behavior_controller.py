@@ -11,6 +11,7 @@ import json
 import ConfigParser
 import sys
 import Queue
+import warnings 
 
 import lib.soundout_tools as so
 import lib.serial_tools as st
@@ -20,17 +21,23 @@ import loop_iterations as loop
 import trial_generators as trial
 try:
     import lib.bone_tools as bt
-except:
+except Exception as e:
     bt = None
+    warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.')
+   
 try:
     import lib.video_tracking as vt
 except:
+    warnings.warn('lib.videotracking import failed.  videotracking functionality disabled',ImportWarning)
     vt = None
+    warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.',ImportWarning)
+   
 try:
     import lib.pygame_tools as pgt
 except:
+    warnings.warn('lib.pygametools import failed.  videoplayback functionality disabled',ImportWarning)
     pgt = None
-
+    warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.',ImportWarning)
 import lib.pin_definitions as pindef
 
 
@@ -553,10 +560,10 @@ class BehaviorBox(object):
         pass
 
     def init_video(self):
-        try:
-            self.video_playback_object = pgt.PyGamePlayer()
-        except:
-            pass
+        # try:
+        self.video_playback_object = pgt.PyGamePlayer()
+        # except:
+            # pass
 
     def play_video(self,fname):
         if self.video_playback_object is None:
