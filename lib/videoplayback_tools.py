@@ -6,7 +6,7 @@ import os
 import threading
 from pygame.locals import *
 import cv2
-import numpy
+import numpy as np
 
 
 # def initCamera(camera_idx=0):
@@ -18,6 +18,8 @@ import numpy
 def openVideo(fname):
     cap = cv2.VideoCapture(fname)
     fps = cap.get(5) # fps is int property 5
+    if np.isnan(fps):
+        fps = 30
     return cap, fps
 
 def cvtFrame(frame, color=True, res_out=(100,100), rotation=0):
@@ -27,7 +29,7 @@ def cvtFrame(frame, color=True, res_out=(100,100), rotation=0):
         frame=cv2.cvtColor(frame,cv2.COLOR_GRAY2RGB)
     frame=rotateFrame(frame, rotation)
     frame=cv2.resize(frame, res_out, interpolation = cv2.INTER_AREA)
-    frame=numpy.rot90(frame)
+    frame=np.rot90(frame)
     frame=pygame.surfarray.make_surface(frame)
     return frame
 
@@ -110,5 +112,5 @@ class PyGamePlayer(object):
 
 if __name__=="__main__":
     pgp = PyGamePlayer()
-    # pgp.send_movie('video/jeffbird.mpg')
-    import ipdb; ipdb.set_trace()
+    pgp.play_movie('video/jeffbird.mpg')
+
