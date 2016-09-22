@@ -25,7 +25,6 @@ try:
 except Exception as e:
     bt = None
     warnings.warn('lib.bonetools import failed.  beaglebone functionality disabled. \n execute \npython import lib/bonetools.py for details.')
-   
 try:
     import lib.video_tracking as vt
 except:
@@ -451,7 +450,6 @@ class BehaviorBox(object):
             idx = list_of_cards.index(cardname)
         self.sc_idx = idx
         print idx
-        self.beep()
 
     def query_events(self, timeout = 0):
         events_since_last = []
@@ -565,6 +563,9 @@ class BehaviorBox(object):
             self.init_video()
         self.video_playback_object.send_movie(fname)
 
+    def stop_video(self):
+        self.video_playback_object.stop()
+
     def write_command(self, command):
         self.serial_io.write(unicode(command))
         self.serial_io.flush()
@@ -596,6 +597,7 @@ def run_box(controller, box):
     box.query_events()
     box.light_on()
     box.feeder_off()
+    box.beep()
 #    try:
         # send loop
     main_loop(controller, box)
