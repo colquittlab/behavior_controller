@@ -9,17 +9,26 @@ from multiprocessing import Queue
 
 class Target:
 
-    def __init__(self, camera_idx=0, bounds=None):
-        self.current_pos = None
-        self.current_bin = None
-        self.time_of_last_confidence = 0
-
-        ## initiatite tracking
+    def __init__(self, camera_idx=0, bounds=None, exclusion_polys=None):
+                # set up bounds
+             ## initiatite tracking
         self.capture = cv.CaptureFromCAM(camera_idx)
         self.window = None      
         frame = cv.QueryFrame(self.capture)
         
         self.frame_size = cv.GetSize(frame)
+
+        self.bounds = [0]
+        self.bounds.extend(bounds)
+        self.bounds.append(self.frame_size[0])
+        self.exclusion_polys = exclusion_polys
+
+
+        self.current_pos = None
+        self.current_bin = None
+        self.time_of_last_confidence = 0
+
+
         self.color_image = cv.CreateImage(cv.GetSize(frame), 8, 3)
         self.grey_image = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_8U, 1)
         self.moving_average = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F, 3)
@@ -27,10 +36,6 @@ class Target:
         self.difference = cv.CloneImage(self.color_image)
         self.find_target(first_frame=True)
   
-        # set up bounds
-        self.bounds = [0]
-        self.bounds.extend(bounds)
-        self.bounds.append(self.frame_size[0])
 
     def find_target(self, first_frame = False, jump_thresh = 100, dark_thresh = 50): 
         currtime=tm.time()
@@ -58,9 +63,15 @@ class Target:
 
         # Convert the image to grayscale.
         cv.CvtColor(self.difference, self.grey_image, cv.CV_RGB2GRAY)
-
+        # apply exclusion zones
+        if self.exclusion_polys is not None:
+            cv.FillPoly(self.grey_image,self.exclusion_polys,(0,))
+            # cv.Rectangle(self.grey_image,(zone[0],zone[1]),(zone[2],zone[3])), (255,))
+            # cv.ShowImage("Target",self.grey_image)
+            pass
         # Convert the image to black and white.
         cv.Threshold(self.grey_image, self.grey_image, 40, 255, cv.CV_THRESH_BINARY)
+
 
         # Dilate and erode to get blobs
         cv.Dilate(self.grey_image, self.grey_image, None, 18)
@@ -122,7 +133,8 @@ class Target:
         if self.bounds is not None:
             for bound in self.bounds:
                 cv.Line(self.color_image,(bound,0), (bound,self.frame_size[1]),(255,0,0),5)
-        
+        if self.exclusion_polys is not None:
+            cv.FillPoly(self.color_image,self.exclusion_polys,(0,))
         # cv.Copy(self.color_im,self.grey_image)
         cv.ShowImage("Target", self.color_image)
         # import ipdb; ipdb.set_trace()
@@ -130,12 +142,11 @@ class Target:
 
     def run(self, event_queue=None, plot = True, log_period = 1):
         last_log_time = tm.time()
-
+        self.find_target(first_frame=True)
         while True:
             tm.sleep(0.01)
 	    
 	   
-            
             center_point = self.find_target()
             if center_point is not None:
                 if center_point is "dark":
@@ -163,8 +174,8 @@ class Target:
                 self.plot()
             
 
-def run_tracking_process(bounds = [250, 450], event_queue = None, plot = True, log_period = 1, camera_idx = 0):
-    t = Target(bounds = bounds, camera_idx = camera_idx)
+def run_tracking_process(bounds = [250, 450], event_queue = None, plot = True, log_period = 1, camera_idx = 0, exclusion_polys = [((0,0), (0,100), (100,100),(100,0))]):
+    t = Target(bounds = bounds, camera_idx = camera_idx, exclusion_polys=exclusion_polys)
     t.run(event_queue=event_queue, plot=plot, log_period = log_period)
     pass
 
