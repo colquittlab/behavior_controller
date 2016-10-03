@@ -306,6 +306,8 @@ class BehaviorBox(object):
         self.serial_device_id = None
         self.serial_c = None
         self.serial_io = None
+        self.arduino_model = "uno"
+        self.trigger_value = True
         # bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
@@ -321,9 +323,37 @@ class BehaviorBox(object):
             return self.sync()
         else: return False
 
+    def query_events(self, timeout = 0):
+        events_since_last = []
+
+        if bt is not None: # if bonetools is active, query beaglebone events
+            while len(bt.event_buffer) > 0:
+                event = bt.event_buffer.pop(0)
+                event_out = [event[0]]
+                event_out.extend(pindef.input_definitions[event[1]])
+                events_since_last.append(tuple(event_out))
+
+        if self.serial_c is not None: # if arduino connection has been activated, query arduino events
+            arduino_events = self.query_arduino_events()
+            events_since_last.extend(arduino_events)
+
+        # if video tracking is active, query any videotracking events
+        if self.video_event_queue is not None:
+            while not self.video_event_queue.empty():
+                try:
+                    event = self.video_event_queue.get_nowait()
+                    events_since_last.append(event)
+                except Queue.Empty:
+                    pass
+            pass
+
+        return events_since_last
+
     def select_serial_port(self, port = None):
-        list_of_ports = st.return_list_of_usb_serial_ports()
-        if port == None:
+        if port is not None:
+            self.serial_port = port;
+        else:
+            list_of_ports = st.return_list_of_usb_serial_ports()
             print 'Select desired port from list below:'
             for k,port in enumerate(list_of_ports):
                 print '[%d] port: %s serial# %s' % (k,port[0], port[1])
@@ -331,8 +361,6 @@ class BehaviorBox(object):
             x = 0
             self.serial_port = list_of_ports[x][0]
             self.serial_device_id = list_of_ports[x][1]
-        else:
-            self.serial_port = port;
         result = self.connect_to_serial_port()
         return result
 
@@ -351,7 +379,7 @@ class BehaviorBox(object):
             return self.connect_to_serial_port()
 
     def reload_arduino_firmware(self):
-        at.build_and_upload(self.serial_port)
+        at.build_and_upload(self.serial_port, arduino_model = self.arduino_model)
 
     def sync(self):
 
@@ -415,9 +443,9 @@ class BehaviorBox(object):
                 return (line_parts[0],line_parts[1],self.current_time)
             else: return None
         else: return None
-        if port in self.input_definitions.keys():
+        if port in pindef.input_definitions.keys():
             if state == self.trigger_value:
-                event = [box_time] + self.input_definitions[port]
+                event = [box_time] + pindef.input_definitions[port]
             else: return None
         else: return None
         return tuple(event)
@@ -451,26 +479,6 @@ class BehaviorBox(object):
         self.sc_idx = idx
         print idx
 
-    def query_events(self, timeout = 0):
-        events_since_last = []
-
-        if bt is not None:
-            while len(bt.event_buffer) > 0:
-                event = bt.event_buffer.pop(0)
-                event_out = [event[0]]
-                event_out.extend(pindef.input_definitions[event[1]])
-                events_since_last.append(tuple(event_out))
-
-        if self.video_event_queue is not None:
-            while not self.video_event_queue.empty():
-                try:
-                    event = self.video_event_queue.get_nowait()
-                    events_since_last.append(event)
-                except Queue.Empty:
-                    pass
-            pass
-
-        return events_since_last
     def feeder_on(self):
         # bt.set_output_list(pindef.output_definitions['feeder_port'], 1)    
         # try:
@@ -545,12 +553,9 @@ class BehaviorBox(object):
                 is_playing = True
         return is_playing
 
-    def connect_to_camera(self, camera_idx = 0, plot=False, bounds = None):
+    def connect_to_camera(self, camera_idx = 0, plot=False, bounds = None, exclusion_zones=None):
         if self.video_event_queue is None:
-            if bounds is not None:
-                p, q = vt.start_tracking(camera_idx = camera_idx, plot = plot, bounds=bounds)
-            else:
-                p, q = vt.start_tracking(camera_idx = camera_idx, plot = plot)
+            p, q = vt.start_tracking(camera_idx = camera_idx, plot = plot, exclusion_polys = exclusion_zones)
             self.video_event_queue = q
             self.video_event_process = p
         pass
@@ -648,6 +653,14 @@ def main_loop(controller, box):
             else:
                 box.force_feed_up = False
                 box.feeder_off()
+
+        if box.serial_c is not None:
+            # other housecleaning:
+            if current_time - box.last_sync_time > box.sync_period:
+                box.sync()
+                last_time = box.current_time
+
+
 
 
     # exit routine:
@@ -762,9 +775,14 @@ def parse_config(cfpath):
 
         if config.has_option('run_params','camera_bounds'):
             camera_bounds = json.loads(config.get('run_params','camera_bounds'))
-            box.connect_to_camera(camera_idx=camera_idx, plot=camera_plot, bounds = camera_bounds)
         else:
-            box.connect_to_camera(camera_idx=camera_idx, plot=camera_plot)
+            camera_bounds = None
+
+        if config.has_option('run_params', 'exclusion_zones'):
+            exclusion_zones = json.loads(config.get('run_params', 'exclusion_zones'))
+        else:
+            exclusion_zones = None
+        box.connect_to_camera(camera_idx=camera_idx, plot=camera_plot, bounds = camera_bounds, exclusion_zones=exclusion_zones)
 
     if config.has_option('run_params','video_playback'):
         video_playback = config.getboolean('run_params','video_playback')
@@ -775,6 +793,14 @@ def parse_config(cfpath):
     else:
         pass
 
+    # set arduino stuff
+    if config.has_option('run_params','arduino_model'):
+        arduino_model = config.get('run_params','arduino_model')
+        box.arduino_model = arduino_model
+    else:
+        pass
+
+
     if config.has_option('run_params','arduino_port'):
         arduino_port = config.get('run_params','arduino_port')
         box.select_serial_port(port=arduino_port)
@@ -782,6 +808,10 @@ def parse_config(cfpath):
         box.select_screen(1)
     else:
         pass
+
+
+    
+
 
     # set any box params
     for param in ['trigger_value']:
