@@ -17,7 +17,7 @@ class Target:
         frame = cv.QueryFrame(self.capture)
         
         self.frame_size = cv.GetSize(frame)
-
+        print self.frame_size
         self.bounds = [0]
         self.bounds.extend(bounds)
         self.bounds.append(self.frame_size[0])
@@ -174,7 +174,7 @@ class Target:
                 self.plot()
             
 
-def run_tracking_process(bounds = [250, 450], event_queue = None, plot = True, log_period = 1, camera_idx = 0, exclusion_polys = [((0,0), (0,100), (100,100),(100,0))]):
+def run_tracking_process(bounds = [250, 450], event_queue = None, plot = True, log_period = 1, camera_idx = 0, exclusion_polys = [((120,340), (160,310), (160,240),(120,240)), ((480,310), (520,340), (520,240),(480,240))]):
     t = Target(bounds = bounds, camera_idx = camera_idx, exclusion_polys=exclusion_polys)
     t.run(event_queue=event_queue, plot=plot, log_period = log_period)
     pass
@@ -189,7 +189,9 @@ def start_tracking(**args):
     # p.join()
 
 if __name__=="__main__":
+    
     run_tracking_process(camera_idx=0)
+
     # tracking_process()
     # p, q = start_tracking(plot=True)
     # # import ipdb; ipdb.set_trace()

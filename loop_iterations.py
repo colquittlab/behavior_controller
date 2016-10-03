@@ -963,7 +963,7 @@ def interleaved_video_preference_assay_videoplayback(controller, box, events_sin
             stim_idx = controller.current_trial['stim_idxs'][side_idx]
             box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
             box.select_screen(side_idx)
-            box.play_video('video/jeffbird.mpg')
+            box.play_video('video/Singing4_vertical.mp4')
             controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
             events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx,'stim_%d' % stim_idx,controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
         elif box.current_time >= controller.current_trial['playbacks'][-1][0] + interstimulus_interval:
@@ -973,7 +973,7 @@ def interleaved_video_preference_assay_videoplayback(controller, box, events_sin
             stim_idx = controller.current_trial['stim_idxs'][side_idx]
             box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
             box.select_screen(side_idx)
-            box.play_video('video/jeffbird.mpg')
+            box.play_video('video/Singing4_vertical.mp4')
             controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
             events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx, 'stim_%d' % stim_idx, controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
         
