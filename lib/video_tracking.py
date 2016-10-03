@@ -21,7 +21,17 @@ class Target:
         self.bounds = [0]
         self.bounds.extend(bounds)
         self.bounds.append(self.frame_size[0])
-        self.exclusion_polys = exclusion_polys
+        if exclusion_polys is not None:
+            epo = []
+            for poly in exclusion_polys:
+                polyout = []
+                for cordpair in poly:
+                    cordout = tuple(cordpair)
+                    polyout.append(cordout)
+                epo.append(tuple(polyout))
+            self.exclusion_polys = epo
+        else:
+            self.exclusion_polys = None
 
 
         self.current_pos = None

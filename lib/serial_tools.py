@@ -98,4 +98,5 @@ class SerialError(Exception):
 
 
 if __name__=='__main__':
+    print return_list_of_usb_serial_ports()
     print return_list_of_named_arduinos()
