@@ -920,6 +920,78 @@ iterations['interleaved_video_preference_assay'] = interleaved_video_preference_
 
 
 
+
+
+def interleaved_video_preference_assay_triggered(controller, box, events_since_last):
+    center_bin_time = 30
+    interstimulus_interval = 10
+    nplaybacks_per_side = 10
+    intertrial_interval = 500
+    # record any events that have happened on the box     
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+
+    for event_idx,name in enumerate(events_since_last_names): 
+        if name == 'pos':
+            controller.current_trial['track'].append((events_since_last[event_idx][0], events_since_last[event_idx][2]))
+            controller.current_trial['current_bin'] = events_since_last[event_idx][3]
+        if name == 'enter_bin': 
+            controller.current_trial['current_bin'] = events_since_last[event_idx][2]
+            controller.current_trial['bin_entries'].append(events_since_last[event_idx])
+
+
+    if controller.task_state == 'prepare_trial':
+        controller.current_trial['start_time']=box.current_time
+        controller.task_state = 'waiting_to_start_playback'
+        events_since_last.append((box.current_time, 'trial_started'))
+    elif controller.task_state == 'waiting_to_start_playback':
+        if controller.current_trial['current_bin'] ==1:
+            if controller.current_trial['last_center_bin_entry_time'] is None:
+                controller.current_trial['last_center_bin_entry_time']=box.current_time
+            elif box.current_time > controller.current_trial['last_center_bin_entry_time'] + center_bin_time:
+                if 'trial_trigger' in events_since_last_names:
+                    controller.current_trial['playback_start_time'] = box.current_time
+                    controller.task_state = 'playback'
+                    events_since_last.append((box.current_time, 'started_playback'))
+            else:
+                pass
+        else:
+            controller.current_trial['last_center_bin_entry_time']=None
+        pass
+    elif controller.task_state == 'playback':
+        if len(controller.current_trial['playbacks'])==0:
+            box.stop_sounds()
+            side_idx = controller.current_trial['start_side']
+            stimset_idx = 0
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx,'stim_%d' % stim_idx,controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+        elif box.current_time >= controller.current_trial['playbacks'][-1][0] + interstimulus_interval:
+            box.stop_sounds()
+            side_idx = int(not controller.current_trial['playbacks'][-1][1])
+            stimset_idx = 0
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx, 'stim_%d' % stim_idx, controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+        
+        if len(controller.current_trial['playbacks']) >= 2*nplaybacks_per_side:
+            controller.current_trial['end_time'] = box.current_time
+            controller.task_state = 'intertrial'
+            events_since_last.append((box.current_time, 'end_of_trial'))
+
+    elif controller.task_state == 'intertrial':
+        if box.current_time >= controller.current_trial['end_time'] + intertrial_interval:
+            trial_ended = True
+        pass
+
+    return events_since_last, trial_ended
+iterations['interleaved_video_preference_assay_triggered'] = interleaved_video_preference_assay_triggered
+
+
+
+
 def interleaved_video_preference_assay_videoplayback(controller, box, events_since_last):
     center_bin_time = 30
     interstimulus_interval = 10
