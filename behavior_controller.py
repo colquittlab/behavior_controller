@@ -555,7 +555,7 @@ class BehaviorBox(object):
 
     def connect_to_camera(self, camera_idx = 0, plot=False, bounds = None, exclusion_zones=None):
         if self.video_event_queue is None:
-            p, q = vt.start_tracking(camera_idx = camera_idx, plot = plot, exclusion_polys = exclusion_zones)
+            p, q = vt.start_tracking(camera_idx = camera_idx, plot = plot, bounds=bounds, exclusion_polys = exclusion_zones)
             self.video_event_queue = q
             self.video_event_process = p
         pass

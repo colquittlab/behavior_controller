@@ -17,10 +17,12 @@ class Target:
         frame = cv.QueryFrame(self.capture)
         
         self.frame_size = cv.GetSize(frame)
-        print self.frame_size
+
         self.bounds = [0]
-        self.bounds.extend(bounds)
+        if bounds is not None:
+            self.bounds.extend(bounds)
         self.bounds.append(self.frame_size[0])
+
         if exclusion_polys is not None:
             epo = []
             for poly in exclusion_polys:
