@@ -63,7 +63,6 @@ class PyGamePlayer(object):
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (self.x,self.y)
         pygame.init()
         pygame.mixer.quit()
-
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.width,self.height),pygame.NOFRAME)
         self.screen.fill((0,0,0))
@@ -72,8 +71,15 @@ class PyGamePlayer(object):
         # self.movie = None
         self.playing = False
         self.thread = None
+
+    def test_monitors(self):
+        monitors = screeninfo.get_monitors()
+        if len(monitors)<2:
+            raise(Exception('only one monior connected'))
+
     def play_movie(self,fname,rotation=1):
         # import ipdb; ipdb.set_trace()
+        # self.test_monitors()
         if self.playing:
             self.stop()
 
@@ -89,9 +95,11 @@ class PyGamePlayer(object):
             else:
                 self.playing=False
             # 
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
         self.screen.fill((0,0,0))
         pygame.display.update()
+        mov.release()
+        pass
 
     def send_movie(self, *args, **kwargs):
         if self.thread is not None:
@@ -103,7 +111,7 @@ class PyGamePlayer(object):
         if self.thread is not None:
             self.playing = False
             self.thread.join()
-        cv2.destroyAllWindows()
+            # self.thread = None
         self.screen.fill((0,0,0))
         pygame.display.update()
 
@@ -112,5 +120,13 @@ class PyGamePlayer(object):
 
 if __name__=="__main__":
     pgp = PyGamePlayer()
-    pgp.play_movie('video/jeffbird.mpg')
+    pgp.send_movie('video/jeffbird.mpg')
+    import time
+    for k in range(0,200):
+        for k1 in range(0,4):
+            time.sleep(1)
+            pgp.send_movie('video/jeffbird.mpg', rotation=k1)
+            print k,k1, pgp.playing
+
+
 
