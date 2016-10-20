@@ -474,6 +474,8 @@ class BehaviorBox(object):
                 print '[%d] %s' % (k,card)
             idx = input('Enter Number: ')
             #idx = len(list_of_cards)-1
+        elif type(carname)==int:
+            idx = cardname
         else:
             idx = list_of_cards.index(cardname)
         self.sc_idx = idx
@@ -763,7 +765,7 @@ def parse_config(cfpath):
     if config.has_option('run_params','box'):
         box.activate_box(config.get('run_params','box'))
     else:
-        box.select_sound_card('PCH')
+        box.select_sound_card(0)
         # box.select_serial_port()
 
     if config.has_option('run_params','camera_idx'):
