@@ -213,7 +213,7 @@ if __name__=="__main__":
      #    # import ipdb; ipdb.set_trace()
      for k in range(0,len(qs)):
         if not qs[k].empty():
-            print 'camera', k ': ', q.get_nowait(), tm.time()
+            print 'camera', k, ': ', q.get_nowait(), tm.time()
       #   if not q.empty():
        ##      print q.get_nowait(), tm.time()
 
