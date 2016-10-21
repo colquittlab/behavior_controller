@@ -203,12 +203,13 @@ def start_tracking(**args):
     # p.join()
 
 if __name__=="__main__":
+    start_tracking(camera_idx=0, plot=False, log_period=.5)
     start_tracking(camera_idx=1, plot=False, log_period=.5)
  
     #run_tracking_process(camera_idx=0, plot=False, log_period=.5)
-    import cProfile
-    command = """run_tracking_process(camera_idx=0, plot=False, log_period=.1)"""
-    cProfile.runctx(command, globals(), locals(), filename='test.profile')
+    # import cProfile
+    # command = """run_tracking_process(camera_idx=0, plot=False, log_period=.1)"""
+    # cProfile.runctx(command, globals(), locals(), filename='test.profile')
     #p, q = start_tracking(plot=False, log_period = .1)
     
     #while True:
