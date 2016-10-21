@@ -201,13 +201,15 @@ def start_tracking(**args):
     # p.join()
 
 if __name__=="__main__":
+    #start_tracking(camera_idx=1, plot=False, log_period=.5)
+ 
+    #run_tracking_process(camera_idx=1, plot=False, log_period=.5)
+    import cProfile
+    command = """run_tracking_process(camera_idx=0, plot=False, log_period=.5)"""
+    cProfile.runctx(command, globals(), locals(), filename='test.profile')
+    #p, q = start_tracking(plot=False, log_period = .1)
     
-    run_tracking_process(camera_idx=0)
-
-    # tracking_process()
-    # p, q = start_tracking(plot=True)
-    # # import ipdb; ipdb.set_trace()
-    # while True:
-    #         # import ipdb; ipdb.set_trace()
-    #     if not q.empty():
-    #         print q.get_nowait(), tm.time()
+    #while True:
+     #    # import ipdb; ipdb.set_trace()
+      #   if not q.empty():
+       ##      print q.get_nowait(), tm.time()
