@@ -205,7 +205,7 @@ def start_tracking(**args):
 if __name__=="__main__":
     ps = []
     qs = []
-    for k in range(0,2):
+    for k in range(0,1):
         p,q=start_tracking(camera_idx=k, plot=False, log_period=.5)
         ps.append(p)
         qs.append(q)
