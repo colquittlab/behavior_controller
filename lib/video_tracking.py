@@ -203,8 +203,20 @@ def start_tracking(**args):
     # p.join()
 
 if __name__=="__main__":
-    start_tracking(camera_idx=0, plot=False, log_period=.5)
-    start_tracking(camera_idx=1, plot=False, log_period=.5)
+    ps = []
+    qs = []
+    for k in range(0,2):
+        p,q=start_tracking(camera_idx=k, plot=False, log_period=.5)
+        ps.append(p)
+        qs.append(q)
+    while True:
+     #    # import ipdb; ipdb.set_trace()
+     for k in range(0,len(qs)):
+        if not qs[k].empty():
+            print 'camera', k ': ', q.get_nowait(), tm.time()
+      #   if not q.empty():
+       ##      print q.get_nowait(), tm.time()
+
  
     #run_tracking_process(camera_idx=0, plot=False, log_period=.5)
     # import cProfile
