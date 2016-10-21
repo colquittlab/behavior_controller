@@ -58,7 +58,8 @@ class Target:
         cv.CvtColor(self.color_image,grey,cv.CV_RGB2GRAY)
         mean_brightness = np.mean(np.fromstring(grey.tostring(),np.uint8))
         if mean_brightness < dark_thresh:
-            return "dark"
+            loop_time = tm.time()-currtime
+            return "dark", loop_time
 
         if first_frame:
             difference = cv.CloneImage(self.color_image)
@@ -123,7 +124,8 @@ class Target:
            
         
         c = cv.WaitKey(7) % 0x100
-        return center_point
+        loop_time = tm.time()-currtime
+	return center_point, loop_time
 
     def find_bin_of_pos(self, pos):
         if self.bounds is not None and pos is not None:
@@ -159,7 +161,7 @@ class Target:
             tm.sleep(0.01)
 	    
 	   
-            center_point = self.find_target()
+            center_point, loop_time  = self.find_target()
             if center_point is not None:
                 if center_point is "dark":
                     center_point = None
@@ -180,7 +182,7 @@ class Target:
                 if event_queue != None:
                     event_queue.put((tm.time(),'pos',self.current_pos, self.find_bin_of_pos(self.current_pos)))
                 else:
-                    print "current pos ", self.current_pos
+                    print "current pos ", self.current_pos, ' loop time ', loop_time
 
             if plot:
                 self.plot()
@@ -205,7 +207,7 @@ if __name__=="__main__":
  
     #run_tracking_process(camera_idx=1, plot=False, log_period=.5)
     import cProfile
-    command = """run_tracking_process(camera_idx=0, plot=False, log_period=.5)"""
+    command = """run_tracking_process(camera_idx=0, plot=False, log_period=.1)"""
     cProfile.runctx(command, globals(), locals(), filename='test.profile')
     #p, q = start_tracking(plot=False, log_period = .1)
     
