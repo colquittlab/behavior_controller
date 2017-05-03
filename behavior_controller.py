@@ -48,7 +48,15 @@ mode_definitions = loop.iterations.keys()
 default_stimuli_dir = '/data/stimuli/'
 default_data_dir = '/data/behavior/'
 
+class GracefulKiller:
+    # http://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully/31464349#31464349
+    kill_now = False
+    def __init__(self):
+      signal.signal(signal.SIGINT, self.exit_gracefully)
+      signal.signal(signal.SIGTERM, self.exit_gracefully)
 
+    def exit_gracefully(self,signum, frame):
+      self.kill_now = True
 
 class BehaviorController(object):
     def __init__(self):
@@ -760,6 +768,11 @@ def parse_config(cfpath):
     for param in ['stimset_occurance']:
         if config.has_option('run_params', param):
                 controller.params[param] = json.loads(config.get('run_params',param))
+
+    # set (overwrite) int parameters:
+    for param in ['allowed_songs_per_session']:
+        if config.has_option('run_params', param):
+            controller.params[param] = config.getint('run_params', param)
 
     controller.load_stimsets()
     box = BehaviorBox()
