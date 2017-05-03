@@ -308,6 +308,7 @@ class BehaviorBox(object):
         self.serial_io = None
         self.arduino_model = "uno"
         self.trigger_value = True
+        self.recorder = None
         # bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
