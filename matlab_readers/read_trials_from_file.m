@@ -90,7 +90,11 @@ function trials = read_from_file(fname)
             trial.mode = '';
         end
         if isfield(data,'reward_p')
-            trial.reward_p = cell2mat(data.reward_p);
+            if iscell(data.reward_p)
+                trial.reward_p = cell2mat(data.reward_p);
+            else
+                trial.reward_p = data.reward_p;
+            end
         else
             trial.reward_p = '';
         end
@@ -99,7 +103,7 @@ function trials = read_from_file(fname)
             trial.track.t = trial.track.t;
             trial.track.uv = data.track(:,2:3); 
         else
-            data.track = '';
+            trial.track = '';
         end
         if isfield(data,'start_side')
              trial.start_side = data.start_side;

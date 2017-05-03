@@ -158,7 +158,7 @@ class Target:
         last_log_time = tm.time()
         self.find_target(first_frame=True)
         while True:
-            tm.sleep(0.01)
+            # tm.sleep(0.01)
 	    
 	   
             center_point, loop_time  = self.find_target()
