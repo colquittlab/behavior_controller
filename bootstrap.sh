@@ -31,7 +31,7 @@ done
 if $DOPACKAGES
 then
     # install existing packages
-    APTPACKAGES="python-scipy python-alsaaudio ntp  libopencv-dev python-opencv"
+    APTPACKAGES="python-scipy python-alsaaudio ntp  libopencv-dev python-opencv python-pip"
     PIPPACKAGES="pyserial ipython schedule ino pygame screeninfo"
     apt-get update
     for PACK in $APTPACKAGES
