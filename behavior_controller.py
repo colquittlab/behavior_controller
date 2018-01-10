@@ -17,6 +17,7 @@ import lib.soundout_tools as so
 import lib.serial_tools as st
 import lib.arduino_tools as at
 import lib.usb_tools as ut
+import lib.audiorecording_tools as ar
 import loop_iterations as loop
 import trial_generators as trial
 import lib.pin_definitions as pindef
@@ -129,7 +130,6 @@ class BehaviorController(object):
         self.Bocc = 1.0 - self.Aocc
 
         self.box = None
-
 
 
     def set_bird_name(self, birdname):
@@ -614,6 +614,10 @@ def run_box(controller, box):
     box.light_on()
     box.feeder_off()
     box.beep()
+
+    if box.recorder is not None:
+        box.recorder.start()
+
 #    try:
         # send loop
     main_loop(controller, box)
@@ -826,7 +830,23 @@ def parse_config(cfpath):
         pass
 
 
-    
+    if config.has_section('record_params'):
+        if config.has_option('record_params','record_audio'):
+            record_audio = config.get('record_params','record_audio')
+        else: 
+            record_audio = False
+        if record_audio:
+            box.recorder = ar.AudioRecord()
+            for option in config.options('record_params'):
+                if option == "sound_card":
+                    attr = config.get('record_params', option)
+                    box.recorder.set_sound_card(attr)
+                elif option in ["outdir"]:
+                    box.recorder.params[option] = config.get('record_params',option)
+                elif option == "chunk":
+                    box.recorder.params[option] = config.getint('record_params',option)
+                else:
+                    box.recorder.params[option] = config.getfloat('record_params',option)
 
 
     # set any box params
