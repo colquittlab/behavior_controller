@@ -841,13 +841,26 @@ def parse_config(cfpath):
                 if option == "sound_card":
                     attr = config.get('record_params', option)
                     box.recorder.set_sound_card(attr)
-                elif option in ["outdir"]:
-                    box.recorder.params[option] = config.get('record_params',option)
+                elif option in ["outdir", "birdname"]:
+                    attr = config.get('record_params', option)
+                    box.recorder.params[option] = attr
                 elif option == "chunk":
-                    box.recorder.params[option] = config.getint('record_params',option)
+                    attr = config.getint('record_params', option)
+                    box.recorder.params[option] = attr
                 else:
-                    box.recorder.params[option] = config.getfloat('record_params',option)
+                    attr = config.getfloat('record_params', option)
+                    box.recorder.params[option] = attr
+            if config.has_section('run_params'):
+                for option in config.options('run_params'):
+                    if option in ["data_dir", "birdname"]:
+                        attr = config.get("run_params", option)
+                        box.recorder.params[option] = attr
 
+            box.recorder.params['outdir'] = "/".join([box.recorder.params['data_dir'], box.recorder.params['birdname']])
+
+#               self.params['outdir'] = "/".join([self.params['outdir'], self.params['bird']])
+            if not os.path.exists(box.recorder.params['outdir']):
+                os.makedirs(box.recorder.params['outdir'])
 
     # set any box params
     for param in ['trigger_value']:

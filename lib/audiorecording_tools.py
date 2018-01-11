@@ -200,7 +200,6 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
     cur_data = '' # current chunk of audio data
     rel = rate/chunk
     slid_win = deque(maxlen=silence_limit * rel) #amplitude threshold running buffer
-    print prev_audio_time
     prev_audio = deque(maxlen=prev_audio_time * rel) #prepend audio running buffer
     started = False
 
