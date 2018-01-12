@@ -317,6 +317,7 @@ class BehaviorBox(object):
         self.arduino_model = "uno"
         self.trigger_value = True
         self.recorder = None
+        self.video_dir = None
         # bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
@@ -576,7 +577,7 @@ class BehaviorBox(object):
         if self.video_control_que is None or self.video_event_process is None:
             pass
         else:
-            video_
+            filename = 
         
 
 
@@ -826,6 +827,8 @@ def parse_config(cfpath):
             if not os.path.exists(box.recorder.params['outdir']):
                 os.makedirs(box.recorder.params['outdir'])
     
+
+    box.outdir = 
 
     if config.has_option('run_params','box'):
         box.activate_box(config.get('run_params','box'))
