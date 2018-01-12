@@ -13,11 +13,10 @@ class Target:
     def __init__(self, camera_idx=0, bounds=None, exclusion_polys=None):
                 # set up bounds
              ## initiatite tracking
+        print "poop"
         self.capture = cv.CaptureFromCAM(camera_idx)
         self.window = None      
         frame = cv.QueryFrame(self.capture)
-        import ipdb; ipdb.set_trace()
-        
         self.frame_size = cv.GetSize(frame)
 
         self.bounds = [0]
@@ -57,9 +56,9 @@ class Target:
 
     def start_writing(self, fname):
         self.writer = cv.CreateVideoWriter(
-            '/home/jknowles/Desktop/out.avi',     # Filename
+            '/home/jknowles/Desktop/%s.avi' % fname,     # Filename
             self.codec,                              # Codec for compression
-            10,                                 # Frames per second
+            30,                                 # Frames per second
             self.size,                         # Width / Height tuple
             True                                # Color flag
         )
@@ -174,7 +173,7 @@ class Target:
         if self.exclusion_polys is not None:
             cv.FillPoly(self.color_image,self.exclusion_polys,(0,))
         # cv.Copy(self.color_im,self.grey_image)
-        cv.ShowImage("Target", self.raw_image)
+        cv.ShowImage("Target", self.color_image)
         # import ipdb; ipdb.set_trace()
 
     def get_image_from_buffer(self, q):
@@ -185,24 +184,49 @@ class Target:
         self.color_image = new_image
         return new_image
 
-    def run_capture(self, frame_q=None):
-        start_time = tm.time()
-        self.start_writing('null')
+    def run_capture(self, frame_q=None, control_q=None):
         frame  = cv.CreateImage(self.frame_size, 8, 3)
+        frame = cv.QueryFrame(self.capture)
+        last = tm.time()
         count = 0
+        frame_count=1
+        start_time = tm.time()
+        now=start_time
         while True:
             count+=1
-            now=tm.time()
             frame = cv.QueryFrame(self.capture)
-            frame_q.put(pickle.dumps(frame.tostring(),-1))
-            # print 'capt', count
-            # if start_time-now < 10:
-            #     cv.WriteFrame(self.writer,self.raw_image)
+            last=now
+            now=tm.time()
+            if not frame_q.full():
+                frame_q.put(pickle.dumps(frame.tostring(),-1), block=True)
+            now=tm.time()
+            if self.writing:
+                cv.WriteFrame(self.writer,frame)
+                frame_count +=1
+                if not control_q.empty():
+                    command = control_q.get(block=True)
+                    if command[0]=="stop":
+                        self.stop_writing()
+                    elif command[0]=="start":
+                        self.stop_writing()
+                        self.start_writing(command[1])
+            else:
+                if not control_q.empty():
+                    command = control_q.get(block=True)
+                    if command[0]=="start":
+                        self.start_writing(command[1])
+                        print "starting", command[1]
+
+            tm.sleep(0.001)
+                # print "frames written", frame_count, now-start_time
+
+            # print "capt", count, now-last#, float(count)/(now-start_time)
+            
         print "cap done"
 
 
 
-    def run(self, event_queue=None, frame_q=None, plot = True, log_period = 1):
+    def run(self, event_q=None, frame_q=None, plot = True, log_period = 1):
         last_log_time = tm.time()
         # while True:
         #     print frame_q.qsize()
@@ -219,12 +243,8 @@ class Target:
         start_time = tm.time()
         while True:
             now = tm.time()
-            # print now-last
             last = now
-            tm.sleep(0.01)
-            print frame_q.qsize()
-            new_frame = pickle.loads(frame_q.get(block=True))
-            cv.SetData(self.color_image, new_frame)
+            self.get_image_from_buffer(frame_q)
             center_point, loop_time = self.find_target()
             if center_point is not None:
                 if center_point is "dark":
@@ -237,20 +257,21 @@ class Target:
                 if new_bin != self.current_bin: 
                     self.current_bin = new_bin
                     # log as event
-                    if event_queue != None:
-                        event_queue.put((tm.time(), "enter_bin", new_bin))
+                    if event_q != None:
+                        event_q.put((tm.time(), "enter_bin", new_bin))
                     else:
                         print "bird entered bin %d" % new_bin
             if tm.time() > last_log_time + log_period:
                 last_log_time = tm.time()
-                if event_queue != None:
-                    event_queue.put((tm.time(),'pos',self.current_pos, self.find_bin_of_pos(self.current_pos)))
+                if event_q != None:
+                    event_q.put((tm.time(),'pos',self.current_pos, self.find_bin_of_pos(self.current_pos)))
                 else:
                     print "current pos ", self.current_pos, ' loop time ', loop_time
 
 
             if plot:
                 self.plot()
+                c = cv.WaitKey(7) % 0x100
 
 
 
@@ -258,22 +279,27 @@ class Target:
         
 
 
-def run_capture_process(t = None, q = None, frame_q=None, plot=False, log_period=1):
-    t.run_capture(frame_q = frame_q)
+def run_capture_process(t = None, event_q = None, frame_q=None, control_q = None, plot=False, log_period=1):
+    t.run_capture(frame_q = frame_q, control_q = control_q)
     pass
 
 
-def run_tracking_process(t = None, q = None, frame_q = None, plot=False, log_period=1):
-    t.run(event_queue=q, frame_q= frame_q, plot=plot, log_period = log_period)
+def run_tracking_process(t = None, event_q = None, frame_q = None, plot=False, control_q = None, log_period=1):
+    t.run(event_q=event_q, frame_q= frame_q, plot=plot, log_period = log_period)
     pass
 
-def start_tracking(bounds = [250, 450], event_queue = None, plot = True, log_period = 1, camera_idx = 0, exclusion_polys = [((120,340), (160,310), (160,240),(120,240)), ((480,310), (520,340), (520,240),(480,240))]):
+def start_tracking(bounds = [250, 450], event_q = None, control_q=None, plot = True, log_period = 1, camera_idx = 0, exclusion_polys = [((120,340), (160,310), (160,240),(120,240)), ((480,310), (520,340), (520,240),(480,240))]):
     t = Target(bounds = bounds, camera_idx = camera_idx, exclusion_polys=exclusion_polys)
-    q = Queue()
-    frame_q = Queue()
+    if event_q is None:
+        event_q = Queue(maxsize=100)
+    if control_q is None:
+        control_q = Queue(maxsize=10)
+
+    frame_q = Queue(maxsize=1)
     args={}
-    args['q']=q
+    args['event_q']=event_q
     args['frame_q'] = frame_q
+    args['control_q'] = control_q
     args['t']=t
     args['plot'] = plot
     args['log_period'] = log_period
@@ -286,16 +312,17 @@ def start_tracking(bounds = [250, 450], event_queue = None, plot = True, log_per
     # run_tracking_process(**args)
     # p=Thread(target=run_tracking_process, kwargs=args)
 
-    return p_cap, p_track, q
+    return p_cap, p_track, event_q, control_q
     # p.join()
 
 if __name__=="__main__":
     ps = []
     qs = []
     for k in range(0,1):
-        p_cap, p_track ,q=start_tracking(camera_idx=k, plot=True, log_period=.5)
+        p_cap, p_track ,event_q, control_q =start_tracking(camera_idx=k, plot=True, log_period=.5)
         # ps.append(p)
-        qs.append(q)
+        qs.append(event_q)
+    import ipdb; ipdb.set_trace()
     while True:
      #    # import ipdb; ipdb.set_trace()
      for k in range(0,len(qs)):

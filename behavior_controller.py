@@ -566,10 +566,19 @@ class BehaviorBox(object):
 
     def connect_to_camera(self, camera_idx = 0, plot=False, bounds = None, exclusion_zones=None):
         if self.video_event_queue is None:
-            p, q = vt.start_tracking(camera_idx = camera_idx, plot = plot, bounds=bounds, exclusion_polys = exclusion_zones)
+            p, q, cq = vt.start_tracking(camera_idx = camera_idx, plot = plot, bounds=bounds, exclusion_polys = exclusion_zones)
             self.video_event_queue = q
             self.video_event_process = p
+            self.video_control_que = cq
         pass
+
+    def start_video_recording(self, filename_extra):
+        if self.video_control_que is None or self.video_event_process is None:
+            pass
+        else:
+            video_
+        
+
 
     def init_video(self):
         self.video_playback_object = vpt.PyGamePlayer()
