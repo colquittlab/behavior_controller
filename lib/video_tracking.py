@@ -3,6 +3,7 @@ import time as tm
 import numpy as np
 from multiprocessing import Process
 from multiprocessing import Queue
+import cPickle as pickle
 # from threading import Thread
 # from Queue import Queue
 
@@ -15,6 +16,7 @@ class Target:
         self.capture = cv.CaptureFromCAM(camera_idx)
         self.window = None      
         frame = cv.QueryFrame(self.capture)
+        import ipdb; ipdb.set_trace()
         
         self.frame_size = cv.GetSize(frame)
 
@@ -39,19 +41,41 @@ class Target:
         self.current_pos = None
         self.current_bin = None
         self.time_of_last_confidence = 0
-
-
+        self.raw_image = cv.CreateImage(cv.GetSize(frame), 8, 3)
         self.color_image = cv.CreateImage(cv.GetSize(frame), 8, 3)
         self.grey_image = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_8U, 1)
         self.moving_average = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F, 3)
         self.temp_image =  cv.CloneImage(self.color_image)       
         self.difference = cv.CloneImage(self.color_image)
+        self.color_image= cv.QueryFrame(self.capture)
         self.find_target(first_frame=True)
-  
+
+        self.codec = cv.CV_FOURCC('D','I','V','X') # MPEG-4 
+        self.size = cv.GetSize(frame)
+        self.writing = False
+        self.writer = None
+
+    def start_writing(self, fname):
+        self.writer = cv.CreateVideoWriter(
+            '/home/jknowles/Desktop/out.avi',     # Filename
+            self.codec,                              # Codec for compression
+            10,                                 # Frames per second
+            self.size,                         # Width / Height tuple
+            True                                # Color flag
+        )
+        self.writing = True
+        pass
+
+    def stop_writing(self):
+        del(self.writer)
+        self.writer = None
+        self.writing=False
+        pass
+
 
     def find_target(self, first_frame = False, jump_thresh = 100, dark_thresh = 50): 
         currtime=tm.time()
-        self.color_image = cv.QueryFrame(self.capture)
+        # self.color_image = new_frame
         # Smooth to get rid of false positives
         cv.Smooth(self.color_image, self.color_image, cv.CV_GAUSSIAN, 3, 0)
         grey = cv.CloneImage(self.grey_image)
@@ -123,7 +147,7 @@ class Target:
             self.time_of_last_confidence = tm.time()
            
         
-        c = cv.WaitKey(7) % 0x100
+        # c = cv.WaitKey(7) % 0x100
         loop_time = tm.time()-currtime
 	return center_point, loop_time
 
@@ -150,18 +174,58 @@ class Target:
         if self.exclusion_polys is not None:
             cv.FillPoly(self.color_image,self.exclusion_polys,(0,))
         # cv.Copy(self.color_im,self.grey_image)
-        cv.ShowImage("Target", self.color_image)
+        cv.ShowImage("Target", self.raw_image)
         # import ipdb; ipdb.set_trace()
 
+    def get_image_from_buffer(self, q):
+        q.get(block=True)
+        new_frame = pickle.loads(q.get(block=True))
+        new_image = cv.CreateImageHeader(self.frame_size, 8, 3)
+        cv.SetData(new_image, new_frame)
+        self.color_image = new_image
+        return new_image
 
-    def run(self, event_queue=None, plot = True, log_period = 1):
-        last_log_time = tm.time()
-        self.find_target(first_frame=True)
+    def run_capture(self, frame_q=None):
+        start_time = tm.time()
+        self.start_writing('null')
+        frame  = cv.CreateImage(self.frame_size, 8, 3)
+        count = 0
         while True:
-            # tm.sleep(0.01)
-	    
-	   
-            center_point, loop_time  = self.find_target()
+            count+=1
+            now=tm.time()
+            frame = cv.QueryFrame(self.capture)
+            frame_q.put(pickle.dumps(frame.tostring(),-1))
+            # print 'capt', count
+            # if start_time-now < 10:
+            #     cv.WriteFrame(self.writer,self.raw_image)
+        print "cap done"
+
+
+
+    def run(self, event_queue=None, frame_q=None, plot = True, log_period = 1):
+        last_log_time = tm.time()
+        # while True:
+        #     print frame_q.qsize()
+
+        
+        self.get_image_from_buffer(frame_q)
+        # self.color_image = new_frame
+        # import ipdb; ipdb.set_trace()
+        center_point, loop_time = self.find_target(first_frame=True)
+
+
+        # print new_frame
+        last = tm.time()
+        start_time = tm.time()
+        while True:
+            now = tm.time()
+            # print now-last
+            last = now
+            tm.sleep(0.01)
+            print frame_q.qsize()
+            new_frame = pickle.loads(frame_q.get(block=True))
+            cv.SetData(self.color_image, new_frame)
+            center_point, loop_time = self.find_target()
             if center_point is not None:
                 if center_point is "dark":
                     center_point = None
@@ -184,30 +248,53 @@ class Target:
                 else:
                     print "current pos ", self.current_pos, ' loop time ', loop_time
 
+
             if plot:
                 self.plot()
-            
 
-def run_tracking_process(bounds = [250, 450], event_queue = None, plot = True, log_period = 1, camera_idx = 0, exclusion_polys = [((120,340), (160,310), (160,240),(120,240)), ((480,310), (520,340), (520,240),(480,240))]):
-    t = Target(bounds = bounds, camera_idx = camera_idx, exclusion_polys=exclusion_polys)
-    t.run(event_queue=event_queue, plot=plot, log_period = log_period)
+
+
+
+        
+
+
+def run_capture_process(t = None, q = None, frame_q=None, plot=False, log_period=1):
+    t.run_capture(frame_q = frame_q)
     pass
 
-def start_tracking(**args):
+
+def run_tracking_process(t = None, q = None, frame_q = None, plot=False, log_period=1):
+    t.run(event_queue=q, frame_q= frame_q, plot=plot, log_period = log_period)
+    pass
+
+def start_tracking(bounds = [250, 450], event_queue = None, plot = True, log_period = 1, camera_idx = 0, exclusion_polys = [((120,340), (160,310), (160,240),(120,240)), ((480,310), (520,340), (520,240),(480,240))]):
+    t = Target(bounds = bounds, camera_idx = camera_idx, exclusion_polys=exclusion_polys)
     q = Queue()
-    args['event_queue']=q
-    p=Process(target=run_tracking_process, kwargs=args)
+    frame_q = Queue()
+    args={}
+    args['q']=q
+    args['frame_q'] = frame_q
+    args['t']=t
+    args['plot'] = plot
+    args['log_period'] = log_period
+
+    p_cap=Process(target=run_capture_process, kwargs=args)
+    p_cap.start()
+    # run_capture_process(**args)
+    p_track=Process(target=run_tracking_process, kwargs=args)
+    p_track.start()
+    # run_tracking_process(**args)
     # p=Thread(target=run_tracking_process, kwargs=args)
-    p.start()
-    return p, q
+
+    return p_cap, p_track, q
     # p.join()
 
 if __name__=="__main__":
     ps = []
     qs = []
     for k in range(0,1):
-        p,q=start_tracking(camera_idx=k, plot=False, log_period=.5)
-        ps.append(p)
+        p_cap, p_track ,q=start_tracking(camera_idx=k, plot=True, log_period=.5)
+        # ps.append(p)
         qs.append(q)
     while True:
      #    # import ipdb; ipdb.set_trace()
