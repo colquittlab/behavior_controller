@@ -55,8 +55,11 @@ class Target:
         self.writer = None
 
     def start_writing(self, fname):
+        fname = fname.replace("//","/")
+        fname = fname.replace(".","p")
+        print fname
         self.writer = cv.CreateVideoWriter(
-            '/home/jknowles/Desktop/%s.avi' % fname,     # Filename
+            '%s.avi' % fname,     # Filename
             self.codec,                              # Codec for compression
             30,                                 # Frames per second
             self.size,                         # Width / Height tuple
@@ -291,7 +294,7 @@ def run_tracking_process(t = None, event_q = None, frame_q = None, plot=False, c
 def start_tracking(bounds = [250, 450], event_q = None, control_q=None, plot = True, log_period = 1, camera_idx = 0, exclusion_polys = [((120,340), (160,310), (160,240),(120,240)), ((480,310), (520,340), (520,240),(480,240))]):
     t = Target(bounds = bounds, camera_idx = camera_idx, exclusion_polys=exclusion_polys)
     if event_q is None:
-        event_q = Queue(maxsize=100)
+        event_q = Queue()
     if control_q is None:
         control_q = Queue(maxsize=10)
 

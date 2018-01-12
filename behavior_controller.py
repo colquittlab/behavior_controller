@@ -297,7 +297,7 @@ class BehaviorBox(object):
     and contains the methods to change the pins of the box"""
     def __init__(self):
         # 
-
+        self.birdname = None
         self.stimuli_dir = None
         self.serial_buffer = ""
         self.box_name = None
@@ -305,7 +305,9 @@ class BehaviorBox(object):
         self.pulse_state = 0
         self.force_feed_up = False
         self.video_event_queue = None
+        self.video_control_queue = None
         self.video_tracking_process = None
+        self.video_capture_process = None
         self.video_playback_object = None
         self.box_zero_time = 0
         self.last_sync_time = 0
@@ -317,7 +319,7 @@ class BehaviorBox(object):
         self.arduino_model = "uno"
         self.trigger_value = True
         self.recorder = None
-        self.video_dir = None
+        self.media_outdir = None
         # bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
@@ -567,18 +569,25 @@ class BehaviorBox(object):
 
     def connect_to_camera(self, camera_idx = 0, plot=False, bounds = None, exclusion_zones=None):
         if self.video_event_queue is None:
-            p, q, cq = vt.start_tracking(camera_idx = camera_idx, plot = plot, bounds=bounds, exclusion_polys = exclusion_zones)
-            self.video_event_queue = q
-            self.video_event_process = p
-            self.video_control_que = cq
+            pcap, ptrack, eventq, controlq = vt.start_tracking(camera_idx = camera_idx, plot = plot, bounds=bounds, exclusion_polys = exclusion_zones)
+            self.video_event_queue = eventq
+            self.video_capture_process = pcap
+            self.video_tracking_process = ptrack
+            self.video_control_queue = controlq
         pass
 
-    def start_video_recording(self, filename_extra):
-        if self.video_control_que is None or self.video_event_process is None:
-            pass
-        else:
-            filename = 
-        
+    def start_video_recording(self, filename_suffix = ""):
+        # if self.video_control_que is None or self.video_event_process is None:
+        #     pass
+        # else:
+        #     pass
+            # filename = 
+        filename = "%s/%s_%f_%s" % (self.media_outdir, self.birdname,self.current_time, filename_suffix)
+        import ipdb; ipdb.set_trace()
+        self.video_control_queue.put(["start", filename])
+
+    def stop_video_recording(self):
+        self.video_control_queue.put(["stop",""])
 
 
     def init_video(self):
@@ -792,8 +801,10 @@ def parse_config(cfpath):
 
     controller.load_stimsets()
     box = BehaviorBox()
-
-
+    box.birdname = controller.birdname
+    box.media_outdir = "/".join([controller.params['data_dir'], controller.birdname])
+    if not os.path.exists(box.media_outdir):
+        os.makedirs(box.media_outdir)
 
     if config.has_section('record_params'):
         if config.has_option('record_params','record_audio'):
@@ -828,8 +839,7 @@ def parse_config(cfpath):
                 os.makedirs(box.recorder.params['outdir'])
     
 
-    box.outdir = 
-
+    
     if config.has_option('run_params','box'):
         box.activate_box(config.get('run_params','box'))
     else:
@@ -900,6 +910,7 @@ if __name__=='__main__':
     # parse the config file
     controller, box = parse_config(cfpath)
     # run the box
+    import ipdb; ipdb.set_trace()
     run_box(controller, box)
 
 
