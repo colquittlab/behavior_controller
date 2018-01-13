@@ -13,19 +13,20 @@ import numpy as np
 import multiprocessing as mp
 
 # sys.path.append(os.path.expanduser("~") + "/src/behavior_controller")
-import soundout_tools as so
+# import soundout_tools as so
+import alsaaudio as aa
 from collections import deque
 
 uname = os.uname()[0]
-if uname=='Linux': # this allows for development on non-linux systems
-    import alsaaudio as aa
-else:
-    import pyaudio as pa
+# if uname=='Linux': # this allows for development on non-linux systems
+#     import alsaaudio as aa
+# else:
+#     import pyaudio as pa
 
 class AudioRecord:
     def __init__(self):
         self.pcm = None
-        self.event_queue = None
+        self.event_queue = mp.Queue()
         self.recording_queue = None
         self.running = False
         self.params = {}
@@ -64,9 +65,12 @@ class AudioRecord:
         config.read(config_file)
         #pdb.set_trace()
         for option in config.options('record_params'):
-            if option == "sound_card":
+            if option == "soundcard":
                 attr = config.get('record_params', option)
                 self.set_sound_card(attr)
+            elif option in ["record_audio"]:
+                attr = config.getboolean('record_params',option)
+                self.params['record_audio'] = attr
             elif option in ["outdir", "birdname"]:
                 attr = config.get('record_params', option)
                 self.params[option] = attr
@@ -89,8 +93,9 @@ class AudioRecord:
             os.makedirs(self.params['outdir'])
 
     def set_sound_card(self, attr):
-        self.pcm = "hw:CARD=%s,DEV=0" % attr
-
+        # self.pcm = "hw:CARD=%s,DEV=0" % attr
+        self.pcm = "plughw:%s,0" % attr
+        # self.pcm = int(attr)
     def list_sound_cards(self):
         return so.list_sound_cards()
 
@@ -133,7 +138,6 @@ class AudioRecord:
 
     def start(self):
         self.running = True
-        self.event_queue = mp.Queue()
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
                                                                 self.pcm,
                                                                 self.params['birdname'],
@@ -176,11 +180,11 @@ class AudioRecord:
         self.running = False
         self.event_queue.put(1)
 
-def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
+def start_recording(event_queue, pcm, birdname, channels, rate, format, chunk,
                     silence_limit, prev_audio_time, min_dur, max_dur, threshold, outdir):
     stream = None
     if uname == "Linux":
-        print pcm
+        # print pcm
         stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, card=pcm)
         stream.setchannels(channels)
         stream.setrate(int(rate))
@@ -195,7 +199,7 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
         #                  frames_per_buffer=self.params['chunk'],
         #                  input=True)
 
-    print "listening..."
+    print "AudioRecorder started (listening...)"
     audio2send = []
     cur_data = '' # current chunk of audio data
     rel = rate/chunk
@@ -210,7 +214,7 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
         #cur_data=self.stream.read(self.params['chunk'])
     slid_win.append(math.sqrt(abs(audioop.max(cur_data, 4))))
 
-    while queue.empty():
+    while True:
         #if len(slid_win)>0:
         #    print max(slid_win) #uncomment if you want to print intensity values
         if uname == "Linux":
@@ -228,31 +232,33 @@ def start_recording(queue, pcm, birdname, channels, rate, format, chunk,
             if(not started):
                 # start recording
                 sys.stdout.write(birdname + ", ")
-                sys.stdout.write(time.ctime() + ": ")
-                sys.stdout.write("recording ... ")
+                # sys.stdout.write(time.ctime() + ": ")
+                event_queue.put((time.time(), "Audio Recording Started"))
+                # sys.stdout.write("recording ... ")
                 sys.stdout.flush()
                 started = True
             audio2send.append(cur_data)
         elif (started is True and len(audio2send)>min_dur*rel and len(audio2send)<max_dur*rel):
             # write out
-            print "writing to file"
+
             today = datetime.date.today().isoformat()
             outdir_date = "/".join([outdir, today])
             if not os.path.exists(outdir_date): os.makedirs(outdir_date)
             #print outdir_date
             filename = save_audio(list(prev_audio) + audio2send, outdir_date, rate, birdname=birdname)
+            event_queue.put((time.time(), "Audio File Saved: %s" % filename))
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
             prev_audio = deque(maxlen=prev_audio_time * rel)
-            print "listening ..."
+            event_queue.put((time.time(), "Listening"))
             audio2send=[]
         elif (started is True):
-            print "duration criterion not met"
+            event_queue.put((time.time(), "Duration Criteria not met, listening"))
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
             prev_audio = deque(maxlen=prev_audio_time * rel)
             audio2send=[]
-            print "listening ..."
+            # print "listening ..."
         else:
             prev_audio.append(cur_data)
     else:
@@ -337,6 +343,7 @@ def main(argv):
         recorder.init_config(argv[1])
     else:
         recorder.test_config()
+    import ipdb; ipdb.set_trace()
     recorder.start()
 
 if(__name__ == '__main__'):

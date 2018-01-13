@@ -305,6 +305,7 @@ class BehaviorBox(object):
         self.pulse_state = 0
         self.force_feed_up = False
         self.video_event_queue = None
+        self.audio_event_queue = None
         self.video_control_queue = None
         self.video_tracking_process = None
         self.video_capture_process = None
@@ -358,6 +359,14 @@ class BehaviorBox(object):
                 except Queue.Empty:
                     pass
             pass
+
+        if self.audio_event_queue is not None:
+            while not self.audio_event_queue.empty():
+                try:
+                    event = self.audio_event_queue.get_nowait()
+                    events_since_last.append(event)
+                except Queue.Empty:
+                    pass
 
         return events_since_last
 
@@ -583,7 +592,6 @@ class BehaviorBox(object):
         #     pass
             # filename = 
         filename = "%s/%s_%f_%s" % (self.media_outdir, self.birdname,self.current_time, filename_suffix)
-        import ipdb; ipdb.set_trace()
         self.video_control_queue.put(["start", filename])
 
     def stop_video_recording(self):
@@ -630,6 +638,7 @@ def run_box(controller, box):
     # initialize box
     if box.recorder is not None:
         box.recorder.start()
+        # time.sleep(2)
         # import ipdb; ipdb.set_trace()
     box.stimuli_dir = controller.params['stimuli_dir']
     box.query_events()
@@ -806,15 +815,18 @@ def parse_config(cfpath):
     if not os.path.exists(box.media_outdir):
         os.makedirs(box.media_outdir)
 
+    # setup audio recorder
     if config.has_section('record_params'):
         if config.has_option('record_params','record_audio'):
-            record_audio = config.get('record_params','record_audio')
+            record_audio = config.getboolean('record_params','record_audio')
         else: 
             record_audio = False
         if record_audio:
             box.recorder = ar.AudioRecord()
             for option in config.options('record_params'):
-                if option == "sound_card":
+                if option == "record_audio":
+                    pass
+                elif option == "soundcard" or option=="sound_card":
                     attr = config.get('record_params', option)
                     box.recorder.set_sound_card(attr)
                 elif option in ["outdir", "birdname"]:
@@ -833,19 +845,19 @@ def parse_config(cfpath):
                         box.recorder.params[option] = attr
 
             box.recorder.params['outdir'] = "/".join([box.recorder.params['data_dir'], box.recorder.params['birdname']])
-
     #               self.params['outdir'] = "/".join([self.params['outdir'], self.params['bird']])
             if not os.path.exists(box.recorder.params['outdir']):
                 os.makedirs(box.recorder.params['outdir'])
-    
+            box.audio_event_queue=box.recorder.event_queue
 
-    
+
     if config.has_option('run_params','box'):
         box.activate_box(config.get('run_params','box'))
     else:
         box.select_sound_card(0)
         # box.select_serial_port()
 
+    # setup video recorder and tracking
     if config.has_option('run_params','camera_idx'):
         camera_idx = config.getint('run_params','camera_idx')
         if config.has_option('run_params','camera_plot'):
@@ -910,8 +922,8 @@ if __name__=='__main__':
     # parse the config file
     controller, box = parse_config(cfpath)
     # run the box
-    import ipdb; ipdb.set_trace()
     run_box(controller, box)
+
 
 
     # import cProfile

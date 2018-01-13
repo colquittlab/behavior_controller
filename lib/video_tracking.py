@@ -57,16 +57,17 @@ class Target:
     def start_writing(self, fname):
         fname = fname.replace("//","/")
         fname = fname.replace(".","p")
-        print fname
+        fname = "%s.avi" % fname
         self.writer = cv.CreateVideoWriter(
-            '%s.avi' % fname,     # Filename
+            fname,     # Filename
             self.codec,                              # Codec for compression
             30,                                 # Frames per second
             self.size,                         # Width / Height tuple
             True                                # Color flag
         )
         self.writing = True
-        pass
+
+        return fname
 
     def stop_writing(self):
         del(self.writer)
@@ -187,7 +188,8 @@ class Target:
         self.color_image = new_image
         return new_image
 
-    def run_capture(self, frame_q=None, control_q=None):
+    def run_capture(self, event_q = None, frame_q=None, control_q=None):
+        filename = ""
         frame  = cv.CreateImage(self.frame_size, 8, 3)
         frame = cv.QueryFrame(self.capture)
         last = tm.time()
@@ -210,15 +212,19 @@ class Target:
                     command = control_q.get(block=True)
                     if command[0]=="stop":
                         self.stop_writing()
+                        event_q.put((tm.time(), "Stopped video recording: %s" % filename))
                     elif command[0]=="start":
                         self.stop_writing()
-                        self.start_writing(command[1])
+                        event_q.put((tm.time(), "Stopped video recording: %s" % filename))
+                        filename=self.start_writing(command[1])
+                        event_q.put((tm.time(), "Started video recording: %s" % filename))
             else:
                 if not control_q.empty():
                     command = control_q.get(block=True)
                     if command[0]=="start":
-                        self.start_writing(command[1])
-                        print "starting", command[1]
+                        filename=self.start_writing(command[1])
+                        event_q.put((tm.time(), "Started video recording: %s" % filename))
+                        
 
             tm.sleep(0.001)
                 # print "frames written", frame_count, now-start_time
@@ -283,7 +289,7 @@ class Target:
 
 
 def run_capture_process(t = None, event_q = None, frame_q=None, control_q = None, plot=False, log_period=1):
-    t.run_capture(frame_q = frame_q, control_q = control_q)
+    t.run_capture(event_q = event_q, frame_q = frame_q, control_q = control_q)
     pass
 
 
