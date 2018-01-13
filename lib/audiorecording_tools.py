@@ -151,7 +151,22 @@ class AudioRecord:
                                                                 self.params['max_dur'],
                                                                 self.params['threshold'],
                                                                 self.params['outdir']))
+
         self.proc.start()
+
+        # start_recording(self.event_queue,
+        #                                                         self.pcm,
+        #                                                         self.params['birdname'],
+        #                                                         self.params['channels'],
+        #                                                         self.params['rate'],
+        #                                                         self.params['format'],
+        #                                                         self.params['chunk'],
+        #                                                         self.params['silence_limit'],
+        #                                                         self.params['prev_audio'],
+        #                                                         self.params['min_dur'],
+        #                                                         self.params['max_dur'],
+        #                                                         self.params['threshold'],
+        #                                                         self.params['outdir'])
 
     def start_return_data(self):
         self.event_queue = mp.Queue()
@@ -343,8 +358,9 @@ def main(argv):
         recorder.init_config(argv[1])
     else:
         recorder.test_config()
-    import ipdb; ipdb.set_trace()
     recorder.start()
+    while True:
+        print recorder.event_queue.get(block=True)
 
 if(__name__ == '__main__'):
     main(sys.argv)

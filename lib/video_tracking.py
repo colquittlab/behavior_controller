@@ -331,7 +331,6 @@ if __name__=="__main__":
         p_cap, p_track ,event_q, control_q =start_tracking(camera_idx=k, plot=True, log_period=.5)
         # ps.append(p)
         qs.append(event_q)
-    import ipdb; ipdb.set_trace()
     while True:
      #    # import ipdb; ipdb.set_trace()
      for k in range(0,len(qs)):
