@@ -202,6 +202,7 @@ class Target:
             frame = cv.QueryFrame(self.capture)
             last=now
             now=tm.time()
+            print now-last
             if not frame_q.full():
                 frame_q.put(pickle.dumps(frame.tostring(),-1), block=True)
             now=tm.time()
