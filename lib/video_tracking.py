@@ -13,7 +13,6 @@ class Target:
     def __init__(self, camera_idx=0, bounds=None, exclusion_polys=None):
                 # set up bounds
              ## initiatite tracking
-        print "poop"
         self.capture = cv.CaptureFromCAM(camera_idx)
         self.window = None      
         frame = cv.QueryFrame(self.capture)
@@ -199,10 +198,11 @@ class Target:
         now=start_time
         while True:
             count+=1
+            then = tm.time()
             frame = cv.QueryFrame(self.capture)
             last=now
             now=tm.time()
-            print now-last
+            # print now-last, now-then
             if not frame_q.full():
                 frame_q.put(pickle.dumps(frame.tostring(),-1), block=True)
             now=tm.time()
