@@ -17,6 +17,8 @@ import multiprocessing as mp
 import alsaaudio as aa
 from collections import deque
 
+import soundout_tools as so
+
 uname = os.uname()[0]
 # if uname=='Linux': # this allows for development on non-linux systems
 #     import alsaaudio as aa
@@ -43,7 +45,7 @@ class AudioRecord:
         self.params['outdir'] = None
 
     def test_config(self):
-        self.pcm = 'hw:CARD=usbaudio_2,DEV=0'
+        self.set_sound_card(0)
 
         self.params['chunk'] = 256
         self.params['format'] = aa.PCM_FORMAT_S16_LE
@@ -172,6 +174,7 @@ class AudioRecord:
         self.event_queue = mp.Queue()
         self.recording_queue = mp.Queue()
         error_queue = mp.Queue()
+        print self.pcm
         self.proc = mp.Process(target = start_recording_return_data, args= (self.event_queue,
                                                                 self.recording_queue,
                                                                             error_queue,
@@ -284,21 +287,22 @@ def start_recording(event_queue, pcm, birdname, channels, rate, format, chunk,
 def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, channels, rate, format, chunk):
     stream = None
     if uname == "Linux":
-        try:
-            stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, device=pcm)
-            stream.setchannels(channels)
-            stream.setrate(rate)
-            stream.setformat(format)
-            stream.setperiodsize(chunk)
-        except:
-            print "here2"
-            error_queue.put(1)
-            return
-            #error_queue.put(1)
-            #raise aa.ALSAAudioError
-            #raise
-            #print "recording2"
-            #return
+        # try:
+        print pcm
+        stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, card=pcm)
+        stream.setchannels(channels)
+        stream.setrate(rate)
+        stream.setformat(format)
+        stream.setperiodsize(chunk)
+        # except:
+        #     print "here2"
+        #     error_queue.put(1)
+        #     return
+        #     #error_queue.put(1)
+        #     #raise aa.ALSAAudioError
+        #     #raise
+        #     #print "recording2"
+        #     #return
     else:
         pass
         # p = pa.PyAudio()
@@ -320,7 +324,6 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
     else:
         pass
         #cur_data=self.stream.read(self.params['chunk'])
-
     while event_queue.empty():
 #            if len(slid_win)>0:
 #                print max(slid_win) #uncomment if you want to print intensity values
