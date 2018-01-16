@@ -909,9 +909,10 @@ def interleaved_video_preference_assay(controller, box, events_since_last):
             controller.current_trial['end_time'] = box.current_time
             controller.task_state = 'intertrial'
             events_since_last.append((box.current_time, 'end_of_trial'))
-            box.stop_video_recording()
+            
 
     elif controller.task_state == 'intertrial':
+        box.stop_video_recording()
         if box.current_time >= controller.current_trial['end_time'] + intertrial_interval:
             trial_ended = True
         pass
