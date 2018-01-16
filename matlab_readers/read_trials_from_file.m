@@ -126,7 +126,18 @@ function trials = read_from_file(fname)
             trial.last_center_bin_entry_time = '';
         end
         if isfield(data, 'bin_entries')
-            trial.bin_entries = cell2mat(cellfun(@(x) [x{1} x{3}],data.bin_entries,'uniformoutput',false)');
+            try
+                trial.bin_entries = cell2mat(cellfun(@(x) [x{1} x{3}],data.bin_entries,'uniformoutput',false)');
+            catch 
+                bin_entries = {};
+                bin_entries_string = data.bin_entries;  
+                for k5=1:size(bin_entries_string,1)
+                    bin_entries{end+1} = cellstr(bin_entries_string(k5,:));
+       
+                end
+                
+                trial.bin_entries = cell2mat(cellfun(@(x)([str2num(x{1}) str2num(x{3}) ]),bin_entries,'uniformoutput',false)');
+            end
         else
             trial.bin_entries = '';
         end
