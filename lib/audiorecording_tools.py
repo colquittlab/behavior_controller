@@ -47,8 +47,9 @@ class AudioRecord:
 
     def test_config(self):
         self.set_sound_card(0)
-
-        self.params['chunk'] = 256
+        
+        self.params['birdname']= "test"
+        self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
         self.params['channels'] = 1
         self.params['rate'] = 44100
@@ -383,20 +384,14 @@ def print_event_queue(event_queue):
         print event_queue.get(block=True)
 
 
-def main(argv):
+if(__name__ == '__main__'):
     recorder = AudioRecord()
     if len(argv) > 1:
         recorder.init_config(argv[1])
     else:
-        recorder.test_config()
+        recorder.default_config()
+    
     recorder.start()
-
 
     print_process = mp.Process(target = print_event_queue, args = (recorder.event_queue,))
     print_process.start()
-
-    import ipdb; ipdb.set_trace()
-
-
-if(__name__ == '__main__'):
-    main(sys.argv)
