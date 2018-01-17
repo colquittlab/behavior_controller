@@ -29,6 +29,7 @@ class AudioRecord:
     def __init__(self):
         self.pcm = None
         self.event_queue = mp.Queue()
+        self.control_queue = mp.Queue()
         self.recording_queue = None
         self.running = False
         self.params = {}
@@ -96,7 +97,7 @@ class AudioRecord:
 
     def set_sound_card(self, attr):
         # self.pcm = "hw:CARD=%s,DEV=0" % attr
-        self.pcm = "plughw:%s,0" % attr
+        self.pcm = "hw:%s,0" % attr
         # self.pcm = int(attr)
     def list_sound_cards(self):
         return so.list_sound_cards()
@@ -141,6 +142,7 @@ class AudioRecord:
     def start(self):
         self.running = True
         self.proc = mp.Process(target = start_recording, args= (self.event_queue,
+                                                                self.control_queue,
                                                                 self.pcm,
                                                                 self.params['birdname'],
                                                                 self.params['channels'],
@@ -198,14 +200,15 @@ class AudioRecord:
         self.running = False
         self.event_queue.put(1)
 
-def start_recording(event_queue, pcm, birdname, channels, rate, format, chunk,
+def start_recording(event_queue, control_queue, pcm, birdname, channels, rate, format, chunk,
                     silence_limit, prev_audio_time, min_dur, max_dur, threshold, outdir):
     stream = None
+    print birdname
     if uname == "Linux":
-        # print pcm
+        print pcm
         stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, card=pcm)
         stream.setchannels(channels)
-        stream.setrate(int(rate))
+        print stream.setrate(int(rate))
         stream.setformat(format)
         stream.setperiodsize(chunk)
     else:
@@ -224,6 +227,8 @@ def start_recording(event_queue, pcm, birdname, channels, rate, format, chunk,
     slid_win = deque(maxlen=silence_limit * rel) #amplitude threshold running buffer
     prev_audio = deque(maxlen=prev_audio_time * rel) #prepend audio running buffer
     started = False
+    control_force_record = False
+    control_force_record_just_stopped = False
 
     if uname == "Linux":
         cur_data=stream.read()[1]
@@ -233,6 +238,25 @@ def start_recording(event_queue, pcm, birdname, channels, rate, format, chunk,
     slid_win.append(math.sqrt(abs(audioop.max(cur_data, 4))))
 
     while True:
+        ## check whether any events are in queue and if so change control_force_record accordingly
+        command = None
+        control_force_record_just_stopped = False
+        if not control_queue.empty():
+            command = control_queue.get(block=True)
+            if control_force_record:
+                if command == "start":
+                    pass
+                elif command == "stop":
+                    control_force_record = False
+                    control_force_record_just_stopped = True
+                pass
+            else:
+                if command == "start":
+                    control_force_record = True
+                elif command == "stop":
+                    pass
+                pass
+
         #if len(slid_win)>0:
         #    print max(slid_win) #uncomment if you want to print intensity values
         if uname == "Linux":
@@ -246,24 +270,27 @@ def start_recording(event_queue, pcm, birdname, channels, rate, format, chunk,
         except audioop.error:
             print "invalid number of blocks for threshold calculation, but continuing"
 
-        if(sum([x > threshold for x in slid_win]) > 0):
+        if(sum([x > threshold for x in slid_win]) > 0) or control_force_record:
             if(not started):
                 # start recording
-                sys.stdout.write(birdname + ", ")
+                # sys.stdout.write(birdname + ", ")
                 # sys.stdout.write(time.ctime() + ": ")
                 event_queue.put((time.time(), "Audio Recording Started"))
+                prev_audio_time_emperical = float(len(prev_audio)) / rel
+                recording_start_time = time.time() - prev_audio_time_emperical
+
                 # sys.stdout.write("recording ... ")
                 sys.stdout.flush()
                 started = True
             audio2send.append(cur_data)
-        elif (started is True and len(audio2send)>min_dur*rel and len(audio2send)<max_dur*rel):
+        elif (started is True and len(audio2send)>min_dur*rel and len(audio2send)<max_dur*rel) or control_force_record_just_stopped:
             # write out
 
             today = datetime.date.today().isoformat()
             outdir_date = "/".join([outdir, today])
             if not os.path.exists(outdir_date): os.makedirs(outdir_date)
             #print outdir_date
-            filename = save_audio(list(prev_audio) + audio2send, outdir_date, rate, birdname=birdname)
+            filename = save_audio(list(prev_audio) + audio2send, recording_start_time, outdir_date, rate, birdname=birdname)
             event_queue.put((time.time(), "Audio File Saved: %s" % filename))
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
@@ -337,9 +364,10 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
         stream.close()
         return
 
-def save_audio(data, outdir, rate, birdname = ''):
+def save_audio(data, recording_start_time, outdir, rate, birdname = ''):
     """ Saves mic data to  WAV file. Returns filename of saved file """
-    filname = "/".join([str(outdir), 'output_'+str(int(time.time()))])
+    # filname = "/".join([str(outdir), 'output_'+str(int(time.time()))])
+    filname = "/".join([str(outdir), 'output_'+ str(recording_start_time).replace(".","p")])
     filname = filname.replace("//","/")
     #print filname
     # writes data to WAV file
@@ -355,6 +383,12 @@ def save_audio(data, outdir, rate, birdname = ''):
 def get_audio_power(data):
     return math.sqrt(abs(audioop.max(data, 4)))
 
+
+def print_event_queue(event_queue):
+    while True:
+        print event_queue.get(block=True)
+
+
 def main(argv):
     recorder = AudioRecord()
     if len(argv) > 1:
@@ -362,8 +396,13 @@ def main(argv):
     else:
         recorder.test_config()
     recorder.start()
-    while True:
-        print recorder.event_queue.get(block=True)
+
+
+    print_process = mp.Process(target = print_event_queue, args = (recorder.event_queue,))
+    print_process.start()
+
+    import ipdb; ipdb.set_trace()
+
 
 if(__name__ == '__main__'):
     main(sys.argv)
