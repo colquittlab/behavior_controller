@@ -217,10 +217,11 @@ class Target:
         frame = cv.QueryFrame(self.capture)
         last = tm.time()
         count = 0
-        frame_count=1
+        frame_count=0
         start_time = tm.time()
         now=start_time
-
+        video_start_time = now
+        video_stop_time = now
         self.detect_fps()
 
         while True:
@@ -236,24 +237,31 @@ class Target:
             if self.writing:
                 cv.WriteFrame(self.writer,frame)
                 frame_count +=1
+                video_frame_count +=1
                 if not control_q.empty():
                     command = control_q.get(block=True)
                     if command[0]=="stop":
                         self.stop_writing()
-                        event_q.put((tm.time(), "Stopped video recording: %s" % filename))
+
+                        video_stop_time = tm.time()
+                        event_q.put((video_stop_time, "Stopped video recording: %s  --- %0.1fs, %d frames, %0.1f FPS" % (filename, np.round(video_stop_time - video_start_time), video_frame_count, (video_frame_count / (video_stop_time - video_start_time)))))
+                        
                     elif command[0]=="start":
                         self.stop_writing()
-                        event_q.put((tm.time(), "Stopped video recording: %s" % filename))
+                        video_stop_time = tm.time()
+                        event_q.put((video_stop_time, "Stopped video recording: %s  --- %0.1fs, %d frames, %0.1f FPS" % (filename, np.round(video_stop_time - video_start_time), video_frame_count, (video_frame_count / (video_stop_time - video_start_time)))))
                         filename=self.start_writing(command[1])
-                        event_q.put((tm.time(), "Started video recording: %s" % filename))
+                        video_start_time = tm.time()
+                        video_frame_count = 0
+                        event_q.put((video_start_time, "Started video recording: %s" % filename))       
             else:
                 if not control_q.empty():
                     command = control_q.get(block=True)
                     if command[0]=="start":
                         filename=self.start_writing(command[1])
-                        event_q.put((tm.time(), "Started video recording: %s" % filename))
-                        
-
+                        video_start_time = tm.time()
+                        video_frame_count = 0
+                        event_q.put((video_start_time, "Started video recording: %s" % filename))
             tm.sleep(0.001)
                 # print "frames written", frame_count, now-start_time
 
@@ -310,12 +318,6 @@ class Target:
                 self.plot()
                 c = cv.WaitKey(7) % 0x100
 
-
-
-
-        
-
-
 def run_capture_process(t = None, event_q = None, frame_q=None, control_q = None, plot=False, log_period=1):
     t.run_capture(event_q = event_q, frame_q = frame_q, control_q = control_q)
     pass
@@ -349,9 +351,13 @@ def start_tracking(bounds = [250, 450], event_q = None, control_q=None, plot = T
     p_track.start()
     # run_tracking_process(**args)
     # p=Thread(target=run_tracking_process, kwargs=args)
-
     return p_cap, p_track, event_q, control_q, t
     # p.join()
+
+def print_event_queue(event_queue):
+    while True:
+        print event_queue.get(block=True), '\n'
+
 
 if __name__=="__main__":
     import sys
@@ -362,15 +368,36 @@ if __name__=="__main__":
 
     ps = []
     qs = []
-    p_cap, p_track ,event_q, control_q, t =start_tracking(camera_idx=camera_idx, plot=True, log_period=.5)
-    while True:
-     #    # import ipdb; ipdb.set_trace()
-        if not event_q.empty():
-            print event_q.get_nowait(), tm.time()
-      #   if not q.empty():
-       ##      print q.get_nowait(), tm.time()
+    p_cap, p_track ,event_q, control_q, t=start_tracking(camera_idx=camera_idx, plot=True, log_period=2)
 
- 
+    print_process = Process(target = print_event_queue, args = (event_q,))
+    print_process.start()
+
+    test_idx = 0 
+    while True:
+        test_idx +=1
+        video_name = raw_input('\nEnter video name ("test_video_%d"):' % test_idx )
+    #     # print video_name
+        if video_name == "":
+            video_name = 'test_video_%d' % (test_idx)
+        control_q.put(('start',video_name))
+        raw_input("any key to stop")
+        control_q.put(('stop',''))
+
+
+
+
+            
+    # import ipdb; ipdb.set_trace()
+    # control_q.put(["start","test_video"])
+    # ipdb.set_trace()
+    # control_q.put(["stop",""])
+
+
+
+
+
+
     #run_tracking_process(camera_idx=0, plot=False, log_period=.5)
     # import cProfile
     # command = """run_tracking_process(camera_idx=0, plot=False, log_period=.1)"""
