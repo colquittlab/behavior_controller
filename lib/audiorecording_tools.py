@@ -272,24 +272,17 @@ def start_recording(event_queue, control_queue, pcm, birdname, channels, rate, f
 
         if(sum([x > threshold for x in slid_win]) > 0) or control_force_record:
             if(not started):
-                # start recording
-                # sys.stdout.write(birdname + ", ")
-                # sys.stdout.write(time.ctime() + ": ")
                 event_queue.put((time.time(), "Audio Recording Started"))
                 prev_audio_time_emperical = float(len(prev_audio)) / rel
                 recording_start_time = time.time() - prev_audio_time_emperical
-
-                # sys.stdout.write("recording ... ")
                 sys.stdout.flush()
                 started = True
             audio2send.append(cur_data)
-        elif (started is True and len(audio2send)>min_dur*rel and len(audio2send)<max_dur*rel) or control_force_record_just_stopped:
-            # write out
 
+        elif (started is True and len(audio2send)/rel>min_dur and len(audio2send)/rel<max_dur) or control_force_record_just_stopped:
             today = datetime.date.today().isoformat()
             outdir_date = "/".join([outdir, today])
             if not os.path.exists(outdir_date): os.makedirs(outdir_date)
-            #print outdir_date
             filename = save_audio(list(prev_audio) + audio2send, recording_start_time, outdir_date, rate, birdname=birdname)
             event_queue.put((time.time(), "Audio File Saved: %s" % filename))
             started = False
@@ -297,13 +290,14 @@ def start_recording(event_queue, control_queue, pcm, birdname, channels, rate, f
             prev_audio = deque(maxlen=prev_audio_time * rel)
             event_queue.put((time.time(), "Listening"))
             audio2send=[]
+
         elif (started is True):
             event_queue.put((time.time(), "Duration Criteria not met, listening"))
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
             prev_audio = deque(maxlen=prev_audio_time * rel)
             audio2send=[]
-            # print "listening ..."
+
         else:
             prev_audio.append(cur_data)
     else:
