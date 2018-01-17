@@ -41,7 +41,7 @@ except:
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
-time_tollerance = 50e-3
+time_tollerance = 200e-3
 debug = True
 beep = False
 ## Settings 
@@ -306,6 +306,7 @@ class BehaviorBox(object):
         self.force_feed_up = False
         self.video_event_queue = None
         self.audio_event_queue = None
+        self.audio_control_queue = None
         self.video_control_queue = None
         self.video_tracking_process = None
         self.video_capture_process = None
@@ -578,7 +579,7 @@ class BehaviorBox(object):
 
     def connect_to_camera(self, camera_idx = 0, plot=False, bounds = None, exclusion_zones=None):
         if self.video_event_queue is None:
-            pcap, ptrack, eventq, controlq = vt.start_tracking(camera_idx = camera_idx, plot = plot, bounds=bounds, exclusion_polys = exclusion_zones)
+            pcap, ptrack, eventq, controlq, t = vt.start_tracking(camera_idx = camera_idx, plot = plot, bounds=bounds, exclusion_polys = exclusion_zones)
             self.video_event_queue = eventq
             self.video_capture_process = pcap
             self.video_tracking_process = ptrack
@@ -597,6 +598,11 @@ class BehaviorBox(object):
     def stop_video_recording(self):
         self.video_control_queue.put(["stop",""])
 
+    def start_forced_audio_recording(self):
+        self.audio_control_queue.put("start")
+
+    def stop_forced_audio_recording(self):
+        self.audio_control_queue.put("stop")
 
     def init_video(self):
         self.video_playback_object = vpt.PyGamePlayer()
@@ -849,6 +855,7 @@ def parse_config(cfpath):
             if not os.path.exists(box.recorder.params['outdir']):
                 os.makedirs(box.recorder.params['outdir'])
             box.audio_event_queue=box.recorder.event_queue
+            box.audio_control_queue = box.recorder.control_queue
 
 
     if config.has_option('run_params','box'):
