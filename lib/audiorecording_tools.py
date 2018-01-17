@@ -47,7 +47,6 @@ class AudioRecord:
 
     def test_config(self):
         self.set_sound_card(0)
-        
         self.params['birdname']= "test"
         self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
@@ -56,7 +55,6 @@ class AudioRecord:
         self.params['silence_limit'] = 0.5
         self.params['prev_audio'] = 1
         self.params['min_dur'] = 1
-
         self.params['max_dur'] = 10
         self.params['outdir'] = "."
 
