@@ -384,8 +384,8 @@ def print_event_queue(event_queue):
 
 if(__name__ == '__main__'):
     recorder = AudioRecord()
-    if len(argv) > 1:
-        recorder.init_config(argv[1])
+    if len(sys.argv) > 1:
+        recorder.init_config(sys.argv[1])
     else:
         recorder.default_config()
     
