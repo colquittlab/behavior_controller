@@ -855,7 +855,7 @@ def interleaved_video_preference_assay(controller, box, events_since_last):
     center_bin_time = 30
     interstimulus_interval = 10
     nplaybacks_per_side = 10
-    intertrial_interval = 500
+    intertrial_interval = 300
     # record any events that have happened on the box     
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
@@ -882,6 +882,7 @@ def interleaved_video_preference_assay(controller, box, events_since_last):
                 controller.task_state = 'playback'
                 events_since_last.append((box.current_time, 'started_playback'))
                 box.start_video_recording()
+                box.start_forced_audio_recording()
             else:
                 pass
         else:
@@ -912,9 +913,10 @@ def interleaved_video_preference_assay(controller, box, events_since_last):
             
 
     elif controller.task_state == 'intertrial':
-        box.stop_video_recording()
         if box.current_time >= controller.current_trial['end_time'] + intertrial_interval:
             trial_ended = True
+            box.stop_video_recording()
+            box.stop_forced_audio_recording()
         pass
 
     return events_since_last, trial_ended
