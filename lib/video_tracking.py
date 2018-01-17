@@ -1,4 +1,5 @@
 import cv as cv
+import cv2
 import time as tm
 import numpy as np
 from multiprocessing import Process
@@ -13,11 +14,12 @@ class Target:
     def __init__(self, camera_idx=0, bounds=None, exclusion_polys=None):
                 # set up bounds
              ## initiatite tracking
+
         self.capture = cv.CaptureFromCAM(camera_idx)
         self.window = None      
+
         frame = cv.QueryFrame(self.capture)
         self.frame_size = cv.GetSize(frame)
-
         self.bounds = [0]
         if bounds is not None:
             self.bounds.extend(bounds)
@@ -52,6 +54,28 @@ class Target:
         self.size = cv.GetSize(frame)
         self.writing = False
         self.writer = None
+        self.fps = None
+
+    def detect_fps(self, ncap = 100):
+        if self.capture is not None:
+            count = 0; 
+            times = np.ndarray(ncap+1)
+            while count < 30:
+                count += 1
+                cv.QueryFrame(self.capture)
+            count = 0
+            start = tm.time()
+            times[count]=start
+            while count < ncap:
+                count +=1 
+                cv.QueryFrame(self.capture)
+                times[count] = tm.time()
+                tm.sleep(0.001)
+            end = times[count]
+            self.fps = np.round(float(count-1) / (end-times[1]))
+            print 'FPS',self.fps
+
+
 
     def start_writing(self, fname):
         fname = fname.replace("//","/")
@@ -60,7 +84,7 @@ class Target:
         self.writer = cv.CreateVideoWriter(
             fname,     # Filename
             self.codec,                              # Codec for compression
-            30,                                 # Frames per second
+            int(self.fps),                                 # Frames per second
             self.size,                         # Width / Height tuple
             True                                # Color flag
         )
@@ -196,6 +220,9 @@ class Target:
         frame_count=1
         start_time = tm.time()
         now=start_time
+
+        self.detect_fps()
+
         while True:
             count+=1
             then = tm.time()
@@ -305,6 +332,7 @@ def start_tracking(bounds = [250, 450], event_q = None, control_q=None, plot = T
     if control_q is None:
         control_q = Queue(maxsize=10)
 
+
     frame_q = Queue(maxsize=1)
     args={}
     args['event_q']=event_q
@@ -322,21 +350,23 @@ def start_tracking(bounds = [250, 450], event_q = None, control_q=None, plot = T
     # run_tracking_process(**args)
     # p=Thread(target=run_tracking_process, kwargs=args)
 
-    return p_cap, p_track, event_q, control_q
+    return p_cap, p_track, event_q, control_q, t
     # p.join()
 
 if __name__=="__main__":
+    import sys
+    if len(sys.argv) > 1:
+        camera_idx = int(sys.argv[1])
+    else:
+        camera_idx=0
+
     ps = []
     qs = []
-    for k in range(0,1):
-        p_cap, p_track ,event_q, control_q =start_tracking(camera_idx=k, plot=True, log_period=.5)
-        # ps.append(p)
-        qs.append(event_q)
+    p_cap, p_track ,event_q, control_q, t =start_tracking(camera_idx=camera_idx, plot=True, log_period=.5)
     while True:
      #    # import ipdb; ipdb.set_trace()
-     for k in range(0,len(qs)):
-        if not qs[k].empty():
-            print 'camera', k, ': ', qs[k].get_nowait(), tm.time()
+        if not event_q.empty():
+            print event_q.get_nowait(), tm.time()
       #   if not q.empty():
        ##      print q.get_nowait(), tm.time()
 
