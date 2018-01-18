@@ -852,10 +852,10 @@ iterations['video_preference_assay'] = video_preference_assay
 
 
 def interleaved_video_preference_assay(controller, box, events_since_last):
-    center_bin_time = 30
-    interstimulus_interval = 10
-    nplaybacks_per_side = 10
-    intertrial_interval = 300
+    center_bin_time = controller.params['center_bin_time']
+    interstimulus_interval = controller.params['interstimulus_interval']
+    nplaybacks_per_side = controller.params['nplaybacks_per_side']
+    intertrial_interval = controller.params['intertrial_interval']
     # record any events that have happened on the box     
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
