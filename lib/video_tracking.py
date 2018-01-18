@@ -92,10 +92,19 @@ class Target:
 
         return fname
 
-    def stop_writing(self):
+    def stop_writing(self, filename, video_start_time, video_stop_time, nframes):
         del(self.writer)
         self.writer = None
         self.writing=False
+        file = open("%s.videoinfo" % filename, 'w')
+        file.write("Video file information for %s\n " % filename)
+        file.write("start_time=%f\n" % video_start_time)
+        file.write("stop_time=%f\n" % video_stop_time )
+        file.write("nframes=%d\n" % nframes)
+        file.write("length(s)= %f\n" % (video_stop_time-video_start_time))
+        file.write("fps = %0.2f\n" % (float(nframes)/(video_stop_time-video_start_time)))
+        file.close()
+
         pass
 
 
@@ -241,14 +250,13 @@ class Target:
                 if not control_q.empty():
                     command = control_q.get(block=True)
                     if command[0]=="stop":
-                        self.stop_writing()
-
                         video_stop_time = tm.time()
+                        self.stop_writing(filename, video_start_time, video_stop_time, video_frame_count)
                         event_q.put((video_stop_time, "Stopped video recording: %s  --- %0.1fs, %d frames, %0.1f FPS" % (filename, np.round(video_stop_time - video_start_time), video_frame_count, (video_frame_count / (video_stop_time - video_start_time)))))
                         
                     elif command[0]=="start":
-                        self.stop_writing()
                         video_stop_time = tm.time()
+                        self.stop_writing(filename, video_start_time, video_stop_time, video_frame_count)
                         event_q.put((video_stop_time, "Stopped video recording: %s  --- %0.1fs, %d frames, %0.1f FPS" % (filename, np.round(video_stop_time - video_start_time), video_frame_count, (video_frame_count / (video_stop_time - video_start_time)))))
                         filename=self.start_writing(command[1])
                         video_start_time = tm.time()
