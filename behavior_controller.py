@@ -131,6 +131,12 @@ class BehaviorController(object):
 
         self.box = None
 
+        # trial run parameter defaults
+        self.params['center_bin_time'] = 30
+        self.params['interstimulus_interval'] = 10
+        self.params['nplaybacks_per_side'] = 10
+        self.params['intertrial_interval'] = 600
+
 
     def set_bird_name(self, birdname):
         if not self.has_run:
