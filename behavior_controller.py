@@ -131,6 +131,12 @@ class BehaviorController(object):
 
         self.box = None
 
+        # trial run parameter defaults
+        self.params['center_bin_time'] = 30
+        self.params['interstimulus_interval'] = 10
+        self.params['nplaybacks_per_side'] = 10
+        self.params['intertrial_interval'] = 600
+
 
     def set_bird_name(self, birdname):
         if not self.has_run:
@@ -800,7 +806,7 @@ def parse_config(cfpath):
             controller.params[param] = config.getboolean('run_params', param)
 
     # set (overwrite) float parameters
-    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance','isi_parameter', 'delay_time']:
+    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance','isi_parameter', 'delay_time', 'center_bin_time', 'interstimulus_interval', 'nplaybacks_per_side', 'intertrial_interval']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
