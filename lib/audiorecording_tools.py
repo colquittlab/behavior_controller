@@ -367,7 +367,7 @@ def save_audio(data, recording_start_time, outdir, rate, birdname = ''):
     data = ''.join(data)
     wavout = wave.open(filname + '.wav', 'wb')
     wavout.setnchannels(1)
-    wavout.setsampwidth(4)
+    wavout.setsampwidth(2)
     wavout.setframerate(rate)
     wavout.writeframes(data)
     wavout.close()
