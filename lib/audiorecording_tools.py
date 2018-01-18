@@ -96,7 +96,7 @@ class AudioRecord:
 
     def set_sound_card(self, attr):
         # self.pcm = "hw:CARD=%s,DEV=0" % attr
-        self.pcm = "hw:%s,0" % attr
+        self.pcm = "plughw:%s,0" % attr
         # self.pcm = int(attr)
     def list_sound_cards(self):
         return so.list_sound_cards()
@@ -204,12 +204,11 @@ def start_recording(event_queue, control_queue, pcm, birdname, channels, rate, f
     stream = None
     print birdname
     if uname == "Linux":
-        print pcm
         stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, card=pcm)
         stream.setchannels(channels)
-        print stream.setrate(int(rate))
         stream.setformat(format)
         stream.setperiodsize(chunk)
+        stream.dumpinfo()
     else:
         pass
         # p = pa.PyAudio()
