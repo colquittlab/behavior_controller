@@ -76,7 +76,7 @@ class AudioRecord:
             elif option in ["outdir", "birdname"]:
                 attr = config.get('record_params', option)
                 self.params[option] = attr
-            elif option == "chunk":
+            elif option ==["chunk","channels"]:
                 attr = config.getint('record_params', option)
                 self.params[option] = attr
             else:
@@ -205,7 +205,7 @@ def start_recording(event_queue, control_queue, pcm, birdname, channels, rate, f
     print birdname
     if uname == "Linux":
         stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, card=pcm)
-        stream.setchannels(channels)
+        stream.setchannels(int(channels))
         stream.setformat(format)
         stream.setperiodsize(chunk)
         stream.dumpinfo()
@@ -281,7 +281,7 @@ def start_recording(event_queue, control_queue, pcm, birdname, channels, rate, f
             today = datetime.date.today().isoformat()
             outdir_date = "/".join([outdir, today])
             if not os.path.exists(outdir_date): os.makedirs(outdir_date)
-            filename = save_audio(list(prev_audio) + audio2send, recording_start_time, outdir_date, rate, birdname=birdname)
+            filename = save_audio(list(prev_audio) + audio2send, recording_start_time, outdir_date, rate, birdname=birdname, channels=channels)
             event_queue.put((time.time(), "Audio File Saved: %s" % filename))
             started = False
             slid_win = deque(maxlen=silence_limit * rel)
@@ -356,7 +356,7 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
         stream.close()
         return
 
-def save_audio(data, recording_start_time, outdir, rate, birdname = ''):
+def save_audio(data, recording_start_time, outdir, rate, birdname = '', channels=1):
     """ Saves mic data to  WAV file. Returns filename of saved file """
     # filname = "/".join([str(outdir), 'output_'+str(int(time.time()))])
     filname = "/".join([str(outdir), 'output_'+ str(recording_start_time).replace(".","p")])
@@ -365,7 +365,7 @@ def save_audio(data, recording_start_time, outdir, rate, birdname = ''):
     # writes data to WAV file
     data = ''.join(data)
     wavout = wave.open(filname + '.wav', 'wb')
-    wavout.setnchannels(1)
+    wavout.setnchannels(channels)
     wavout.setsampwidth(2)
     wavout.setframerate(rate)
     wavout.writeframes(data)
