@@ -17,6 +17,7 @@ class Target:
 
         self.capture = cv.CaptureFromCAM(camera_idx)
         self.window = None      
+        # cv.SetCaptureProperty(self.capture,cv.CV_CAP_PROP_FPS,10) currently not effective
 
         frame = cv.QueryFrame(self.capture)
         self.frame_size = cv.GetSize(frame)
