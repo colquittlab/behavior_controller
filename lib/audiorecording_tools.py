@@ -205,10 +205,11 @@ def start_recording(event_queue, control_queue, pcm, birdname, channels, rate, f
     print birdname
     if uname == "Linux":
         stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, card=pcm)
-        stream.setchannels(int(channels))
-        stream.setformat(format)
-        stream.setperiodsize(chunk)
-        stream.dumpinfo()
+        print format
+        print stream.setchannels(int(channels))
+        print stream.setformat(format)
+        print stream.setperiodsize(chunk)
+        print stream.dumpinfo()
     else:
         pass
         # p = pa.PyAudio()
