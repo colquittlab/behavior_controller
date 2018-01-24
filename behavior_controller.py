@@ -593,16 +593,17 @@ class BehaviorBox(object):
         pass
 
     def start_video_recording(self, filename_suffix = ""):
-        # if self.video_control_que is None or self.video_event_process is None:
-        #     pass
-        # else:
-        #     pass
-            # filename = 
-        filename = "%s/%s_%f_%s" % (self.media_outdir, self.birdname,self.current_time, filename_suffix)
-        self.video_control_queue.put(["start", filename])
+        if self.video_control_queue is None or self.video_event_process is None:
+            pass
+        else:
+            filename = "%s/%s_%f_%s" % (self.media_outdir, self.birdname,self.current_time, filename_suffix)
+            self.video_control_queue.put(["start", filename])
 
     def stop_video_recording(self):
-        self.video_control_queue.put(["stop",""])
+        if self.video_control_queue is None:
+            pass
+        else:
+            self.video_control_queue.put(["stop",""])
 
     def start_forced_audio_recording(self):
         self.audio_control_queue.put("start")
