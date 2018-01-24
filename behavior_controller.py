@@ -864,14 +864,6 @@ def parse_config(cfpath):
             box.audio_control_queue = box.recorder.control_queue
 
 
-    if config.has_option('run_params','box'):
-        box.activate_box(config.get('run_params','box'))
-    elif config.has_option('run_params','soundcard'):
-        sc_idx = config.getint('run_params','soundcard')
-        box.select_sound_card(sc_idx)
-    else:
-        box.select_sound_card()
-        # box.select_serial_port()
 
     # setup video recorder and tracking
     if config.has_option('run_params','camera_idx'):
@@ -901,7 +893,8 @@ def parse_config(cfpath):
     else:
         pass
 
-    # set arduino stuff
+
+    # set arduino model if 
     if config.has_option('run_params','arduino_model'):
         arduino_model = config.get('run_params','arduino_model')
         box.arduino_model = arduino_model
@@ -909,13 +902,23 @@ def parse_config(cfpath):
         pass
 
 
-    if config.has_option('run_params','arduino_port'):
-        arduino_port = config.get('run_params','arduino_port')
-        box.select_serial_port(port=arduino_port)
-        box.select_screen(0)
-        box.select_screen(1)
-    else:
-        pass
+    if config.has_option('run_params','box'):     # if box is set, then use the select box options for soundcard and serial connection
+        box.activate_box(config.get('run_params','box'))
+    else:                                          # otherwise use soundcard and or arduino_port options
+        if config.has_option('run_params','soundcard'):
+            sc_idx = config.getint('run_params','soundcard')
+            box.select_sound_card(sc_idx)
+        else:
+            box.select_sound_card()
+            # box.select_serial_port()
+
+        if config.has_option('run_params','arduino_port'):
+            arduino_port = config.get('run_params','arduino_port')
+            box.select_serial_port(port=arduino_port)
+            box.select_screen(0)
+            box.select_screen(1)
+        else:
+            pass
 
 
 
