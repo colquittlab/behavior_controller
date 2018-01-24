@@ -76,6 +76,29 @@ def interleaved_video_preference_generator(controller, trials_per_block=1):
 generators['interleaved_video_preference'] = interleaved_video_preference_generator
 
 
+def interleaved_video_preference_generator_by_stimset(controller, trials_per_block=1):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		# pick the stimset and the stimulus
+		# pick the stimset and the stimulus
+		trial['stimset_idxs'] = random.sample(range(0,len(controller.stimsets)),2)
+		# trial['stimset_idxs'] = [1]
+		trial['stim_idxs'] = []
+		for stimset in trial['stimset_idxs']:
+			trial['stim_idxs'].append(random.sample(range(0,len(controller.stimsets[stimset]['stims'])),1)[0])
+		# trial['stim_idxs'] = random.sample(range(0,len(controller.stimsets[0]['stims'])),2)
+		trial['start_side'] = random.randint(0,1)
+		trial['current_bin'] = None
+		trial['track'] = []
+		trial['bin_entries'] = []
+		trial['last_center_bin_entry_time']=None
+		trial['trial_type'] = 'video_preference'
+		trial['playbacks'] = []
+		trial_block.append(trial)
+	return trial_block
+generators['interleaved_video_preference_by_stimset'] = interleaved_video_preference_generator_by_stimset
 
 
 def preference_generator(controller, trials_per_block=1):
