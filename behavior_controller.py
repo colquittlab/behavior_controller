@@ -866,8 +866,11 @@ def parse_config(cfpath):
 
     if config.has_option('run_params','box'):
         box.activate_box(config.get('run_params','box'))
+    elif config.has_option('run_params','soundcard'):
+        sc_idx = config.getint('run_params','soundcard')
+        box.select_sound_card(sc_idx)
     else:
-        box.select_sound_card(0)
+        box.select_sound_card()
         # box.select_serial_port()
 
     # setup video recorder and tracking
