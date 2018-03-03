@@ -1,6 +1,5 @@
-import scipy as sp
-import numpy as np
-from scipy import io as spio
+#! /usr/bin/env python
+
 import os
 import serial
 from serial.tools import list_ports
@@ -11,12 +10,12 @@ import json
 import ConfigParser
 import sys
 
-import pdb 
+import pdb
 
 import lib.soundout_tools as so
 import lib.serial_tools as st
-# import lib.arduino_tools as at
 import lib.usb_tools as ut
+import lib.arduino_tools as at
 import loop_iterations as loop
 import trial_generators as trial
 #import lib.bone_tools as bt
@@ -27,7 +26,7 @@ import lib.audiorecord as ar
 time_tollerance = 50e-3
 debug = True
 beep = False
-## Settings 
+## Settings
 mode_definitions = loop.iterations.keys()
 default_stimuli_dir = '/data/stimuli/'
 default_data_dir = '/data/behavior/'
@@ -35,7 +34,7 @@ default_data_dir = '/data/behavior/'
 class BehaviorController(object):
     def __init__(self):
         self.birdname = None
-        # save the date and time 
+        # save the date and time
         self.initial_date = datetime.datetime.now()
 
         # file names ext
@@ -43,6 +42,7 @@ class BehaviorController(object):
         self.has_run = False
         self.log_fid = None
         self.trial_fid = None
+        self.errlog_fid = None
 
         self.config_file_contents = None
 
@@ -56,9 +56,11 @@ class BehaviorController(object):
         self.current_trial = None
         self.completed_trials = []
 
-        # initialize tallies 
-        self.reward_count = 0 
+        # initialize tallies
+        self.reward_count = 0
+        self.rewards_per_session = {}
         self.timeout_count = 0
+        self.event_time = 0
 
         # initialize the stimset holders
         self.stimsets = []
@@ -72,7 +74,7 @@ class BehaviorController(object):
         self.params['data_dir'] = default_data_dir
         self.params['stimuli_dir'] = default_stimuli_dir
 
-        # initialize the task parameters 
+        # initialize the task parameters
         self.params['timeout_period'] = 60; # timeout (punishment) time in seconds
         self.params['max_trial_length'] = 5; # maximum trial time in seconds
         self.params['feed_time'] = 5;
@@ -91,13 +93,14 @@ class BehaviorController(object):
         self.params['laser_occurance'] = 0
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
+        self.params['allowed_songs_per_session'] = 10
 
         # parameters for playback mode
         self.params['delay_time'] = 5
         self.params['isi_distribution'] = 'exponential'
         self.params['isi_parameter'] = 10
+        self.params['set_times'] = 0
 
-        
         # stimset occurance
         self.Aocc = 0.5
         self.Bocc = 1.0 - self.Aocc
@@ -110,9 +113,9 @@ class BehaviorController(object):
         self.generate_file_name()
 
     def generate_file_name(self):
-        # if self.base_filename is not None:
-        #     return self.base_filename
-        basename = '%s_%04d%02d%02d' %(self.birdname,self.initial_date.year,self.initial_date.month,self.initial_date.day) 
+        if self.base_filename is not None:
+            return self.base_filename
+        basename = '%s_%04d%02d%02d' %(self.birdname,self.initial_date.year,self.initial_date.month,self.initial_date.day)
         idx = 0
         while os.path.exists('%s%s_%d.log'%(self.params['data_dir'], basename,idx)):
             idx += 1
@@ -136,8 +139,8 @@ class BehaviorController(object):
         return len(self.completed_trials)
 
     def load_stimsets(self):
-        if len(self.stimset_names) < 2:
-            raise Exception('Error: less than 2 stimset names set')
+        #if len(self.stimset_names) < 2:
+        #    raise Exception('Error: less than 2 stimset names set')
         self.stimsets = []
         for name in self.stimset_names:
             self.stimsets.append(load_and_verify_stimset(self.params['stimuli_dir'], name))
@@ -166,56 +169,70 @@ class BehaviorController(object):
         self.current_trial = None
         pass
 
-    def return_log_fname(self):
-        #if self.log_fid == None:
-         #   self.log_fid = open('%s%s.log'% (self.params['data_dir'],self.base_filename), 'w')
-        #return self.log_fid
-        return '%s%s.log' % (self.params['data_dir'], self.base_filename)
+    def return_log_fid(self):
+        if self.log_fid == None:
+#            self.log_fid = open('%s%s.log'% (self.params['data_dir'],self.base_filename), 'w')
+            self.log_fid = open('%s%s.log'% (self.params['data_dir'],self.base_filename), 'a')
+        return self.log_fid
 
-    def return_events_fname(self):
-    #     if self.trial_fid == None:
-    #         self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'w')
-    #     return self.trial_fid 
-        return '%s%s.trial'% (self.params['data_dir'],self.base_filename)
+    def return_events_fid(self):
+        if self.trial_fid == None:
+#            self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'w')
+            self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'a')
+        return self.trial_fid
+
+    def return_errlog_fid(self):
+        if self.errlog_fid == None:
+#            self.trial_fid = open('%s%s.trial'% (self.params['data_dir'],self.base_filename), 'w')
+            self.errlog_fid = open('%s%s.errlog'% (self.params['data_dir'],self.base_filename), 'a')
+        return self.errlog_fid
+
 
     def save_config_file(self):
         config_fname = '%s%s.config'% (self.params['data_dir'],self.base_filename)
         if self.config_file_contents is not None:
-            config_fid = open(config_fname, 'a')
+            config_fid = open(config_fname, 'w')
             config_fid.write(self.config_file_contents)
         else:
             config = ConfigParser.ConfigParser()
             config.add_section('run_params')
             for key in self.params.keys():
                 config.set('run_params', key, self.params[key])
-
+            config.add_section('record_params')
+            for key in self.recorder.params.keys():
+                config.set('record_params', key, self.recorder.params[key])
         pass
 
     def save_events_to_log_file(self,  events_since_last):
-        with open(self.return_log_fname(),'a') as fid:
-            for event in events_since_last:
-                # tally counts from events
-                self.event_count += 1
-                if event[1] == "reward_start":
-                    self.reward_count += 1
-                if event[1] == "timeout_start":
-                    self.timeout_count += 1
+        fid = self.return_log_fid()
+        for event in events_since_last:
+            # tally counts from events
+            self.event_count += 1
+            if event[1] == "reward_start":
+                self.reward_count += 1
+            if event[1] == "timeout_start":
+                self.timeout_count += 1
 
-                fid.write("%d:%s\n"%(self.event_count, str(event)))
-                if debug:
-                    #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
-                    print "%s events:%d, trials:%d, rewards:%d, tos:%d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, self.timeout_count, str(event)) #GK
-                    if beep:
-                        so.beep()
-            fid.flush()
+            fid.write("%d:%s\n"%(self.event_count, str(event)))
+            if debug:
+                #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
+                print "%s events:%d, trials:%d, rewards:%d, tos:%d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, self.timeout_count, str(event)) #GK
+                if beep:
+                    so.beep()
+        fid.flush()
         pass
 
     def save_trial_to_file(self, trial):
         trial['mode'] = self.params['mode']
-        with open(self.return_events_fname(),'a') as fid:
-            fid.write('%s\n' % json.dumps(trial))
-            fid.flush()
+        fid = self.return_events_fid()
+        fid.write('%s\n' % json.dumps(trial))
+        fid.flush()
         pass
+
+    def write_error(self, e):
+        errlog_fid = self.return_errlog_fid()
+        errlog_fid.write(time.ctime() + " ")
+        tb.print_exc(file=errlog_fid)
 
     def calculate_performance_statistics(self, n_trials_back = None):
         stats = {}
@@ -250,21 +267,39 @@ class BehaviorController(object):
                 stats['by_stimset'][stimset_idx]['p_correct'] = 0
             else:
                 stats['by_stimset'][stimset_idx]['p_correct'] = float(stats['by_stimset'][stimset_idx]['n_correct']) / (stats['by_stimset'][stimset_idx]['n_correct'] + stats['by_stimset'][stimset_idx]['n_incorrect'])
-        return stats    
-        
+        return stats
+
 
 class BehaviorBox(object):
     """this object holds the present state of the behavior Arduino
     and contains the methods to change the pins of the box"""
     def __init__(self):
         self.stimuli_dir = None
+
+        self.input_definitions = {2: ['song_trigger'],
+                             3: ['response_trigger', 'response_a'],
+                             4: ['response_trigger', 'response_b']}
+        self.output_definitions = {'reward_port': 12,
+                                    'light_port': 11}
+        self.trigger_value = 1
+
+        self.box_zero_time = 0
+        self.last_sync_time = 0
+        self.query_period = 0.1
+        self.sync_period = 60*30
+        self.serial_port = None
+        self.serial_device_id = None
+        self.arduino_model = None
+        self.serial_c = None
+        self.serial_io = None
+        self.sc_idx = None
+
         self.serial_buffer = ""
         self.box_name = None
         self.so_workers = []
         self.pulse_state = 0
-        self.force_feed_up = False
-        self.recorder = ar.AudioRecord(self)
-        #bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
+
+        self.recorder = ar.AudioRecord()
 
     def ready_to_run(self):
         if not self.serial_status:
@@ -283,12 +318,53 @@ class BehaviorBox(object):
     def current_time(self):
         return time.time()
 
-    def activate_box(self, box_name):
+    def select_box(self, box):
+
         list_of_boxes = ut.return_list_of_boxes()
 
-        box_data = list_of_boxes[0]
-        self.select_sound_card(box_data[2])
-        self.box_name = box_name
+        if box in [b[0] for b in list_of_boxes]:
+
+            idx = [b[0] for b in list_of_boxes].index(box)
+            box_data = list_of_boxes[idx]
+            self.select_serial_port(box_data[1])
+            self.select_sound_card(box_data[2])
+            self.box_name = box_data[0]
+            print 'Connected to %s' % box_data[0]
+            print 'Soundcard index %s' % self.sc_idx
+            print box_data[1] # GK
+            print box_data[2] # GK
+        else:
+            raise(Exception('%s not connected' % box))
+
+    def select_serial_port(self, port = None):
+        list_of_ports = st.return_list_of_usb_serial_ports()
+        if port == None:
+            print 'Select desired port from list below:'
+            for k,port in enumerate(list_of_ports):
+                print '[%d] port: %s serial# %s' % (k,port[0], port[1])
+            # x = input('Enter Number: ')
+            x = 0
+            self.serial_port = list_of_ports[x][0]
+            self.serial_device_id = list_of_ports[x][1]
+        else:
+            self.serial_port = port;
+        result = self.connect_to_serial_port()
+        return result
+
+    def connect_to_serial_port(self):
+        try:
+            #pdb.set_trace()
+            self.serial_c = serial.Serial(self.serial_port, baud_rate, parity = serial.PARITY_NONE, bytesize = serial.EIGHTBITS, stopbits = serial.STOPBITS_ONE, xonxoff = False, rtscts = False, timeout = False)
+            self.serial_c.setDTR(False)
+            self.serial_c.flushInput()
+            self.serial_c.flushOutput()
+            self.serial_c.setDTR(True)
+            self.serial_io = io.TextIOWrapper(io.BufferedRWPair(self.serial_c, self.serial_c, 20), line_buffering = False, newline='\r')
+            time.sleep(2)
+            return self.sync()
+        except:
+            self.reload_arduino_firmware()
+            return self.connect_to_serial_port()
 
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
@@ -304,37 +380,127 @@ class BehaviorBox(object):
         else:
             idx = list_of_cards.index(cardname)
         self.sc_idx = idx
-        self.beep()
+        try:
+            self.beep()
+        except:
+            pass
 
-    def start_recording(self):
-        self.recording_process = aa.record_song()
+    # def connect_to_sound_card(self, cardidx):
+    #     self.sc_object = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK, mode=alsaaudio.PCM_NORMAL, card='hw:%d,0'%cardidx)
+    #     self.sc_object.setrate(44100)
+
+    def parse_event_from_line(self,line):
+        line = line.strip('\n')
+        line = line.strip('\r')
+
+        idx1 = line.find('<')
+        idx2 = line.find('>')
+        if idx1 > -1 and idx2 > -1:
+        # if len(line)>0 and line[0]=='<' and line[-1]=='>': # this needs better care
+            line_parts = line[idx1+1:idx2].split('-')
+            if len(line_parts) is 3:
+                box_time = float(line_parts[0])
+                box_time = float(box_time)/1000 + self.box_zero_time
+                port = int(line_parts[1])
+                state = int(line_parts[2])
+            elif line_parts[1].lower() == "sync":
+                return (line_parts[0],line_parts[1],self.current_time)
+            else: return None
+        else: return None
+        if port in self.input_definitions.keys():
+            if state == self.trigger_value:
+                event = [box_time] + self.input_definitions[port]
+            else: return None
+        else: return None
+        return tuple(event)
 
     def query_events(self, timeout = 0):
         events_since_last = []
-        while len(bt.event_buffer) > 0:
-            event = bt.event_buffer.pop(0)
-            event_out = [event[0]]
-            event_out.extend(pindef.input_definitions[event[1]])
-            events_since_last.append(tuple(event_out))
-        return events_since_last
+        try:
+            if timeout != self.serial_c.timeout:
+                self.serial_c.timeout = timeout
+            # read any new input into the buffer
+            self.serial_buffer += self.serial_io.read()
+        except KeyboardInterrupt:
+            raise
+        except:
+            raise st.SerialError('serial connection lost')
+
+        # read any exigent events out of the serial buffer and add them to events_since_last
+        while True:
+            idx1 = self.serial_buffer.find('<')
+            idx2 = self.serial_buffer[idx1:].find('>')
+            if idx1 > -1 and idx2 > -1:
+                idx2 = idx2 + idx1 + 1
+                line = self.serial_buffer[idx1:idx2]
+                event = self.parse_event_from_line(line)
+                if event != None:
+                    events_since_last.append(event)
+                self.serial_buffer = self.serial_buffer[idx2:]
+            else:
+                return events_since_last
+
+
+    def write_command(self, command):
+        #pdb.set_trace()
+        self.serial_io.write(unicode(command))
+        self.serial_io.flush()
+
     def feeder_on(self):
-        bt.set_output_list(pindef.output_definitions['feeder_port'], 1)    
-        bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'], 85)
+        command = '<o%d=1>'%self.output_definitions['reward_port']
+        self.write_command(command)
+
     def feeder_off(self, do_warning=False):
         if do_warning:
-            self.beep_warning()
-            time.sleep(1)
-            pass
-        bt.set_output_list(pindef.output_definitions['feeder_port'], 0) 
-        bt.PWM.set_duty_cycle(pindef.output_definitions['pwm_pin'],15)
+                self.beep_warning()
+                time.sleep(1)
+        command = '<o%d=0>'%self.output_definitions['reward_port']
+        self.write_command(command)
+
     def light_on(self):
-        bt.set_output_list(pindef.output_definitions['light_port'], 0)
+        command = '<o%d=0>'%self.output_definitions['light_port']
+        self.write_command(command)
     def light_off(self):
-        bt.set_output_list(pindef.output_definitions['light_port'], 1)
-    def pulse_on(self, freq=100, duty=50):
-        bt.PWM.start(pindef.output_definitions['laser_port'], duty, freq, 1)
+        command = '<o%d=1>'%self.output_definitions['light_port']
+        self.write_command(command)
+    def pulse_on(self):
+        command = '<p=2>'
+        self.write_command(command)
+        self.pulse_state = 2
     def pulse_off(self):
-        bt.PWM.stop(pindef.output_definitions['laser_port'])
+        command = '<p=0>'
+        self.write_command(command)
+        self.pulse_state = 0
+    def pulse_on_trigger(self):
+        command = '<p=1>'
+        self.write_command(command)
+        self.pulse_state = 1
+    def set_pulse_period(self, period):
+        command = '<l=%d>' % int(period)
+        self.write_command(command)
+    def set_pulse_width(self, width):
+        command = '<w=%d>' % int(width)
+        self.write_command(command)
+
+    def sync(self):
+        #pdb.set_trace()
+        send_time = self.current_time
+        self.write_command('<sync>')
+        events = []
+        count = 0
+        events = self.query_events(timeout = 2)
+        sync_time = None
+        for event in events:
+            if len(event) > 1 and event[1]=='sync':
+                sync_time = float(event[0])
+        if sync_time != None:
+            self.box_zero_time = send_time - float(sync_time)/1000
+            self.last_sync_time = self.current_time;
+            return True
+        else:
+            raise(st.SerialError('Sync not successful'))
+        return True
+
     def play_stim(self, stimset, stimulus):
         # stimset_name = stimset['name']
         filename =  '%s%s/%s%s'%(self.stimuli_dir,stimset['name'], stimulus, stimset['stims'][0]['file_type'])
@@ -343,7 +509,6 @@ class BehaviorBox(object):
 
     def play_sound(self, filename):
         # kill any workers
-        #pdb.set_trace()
         while len(self.so_workers)>0:
             worker = self.so_workers.pop()
             if worker[0].is_alive():
@@ -366,10 +531,10 @@ class BehaviorBox(object):
     def beep(self):
         self.play_sound('sounds/beep.wav')
         pass
-        
+
     def beep_warning(self):
-    	self.play_sound('sounds/buzzer_quite.wav')
-    	pass        
+        self.play_sound('sounds/buzzer_quite.wav')
+        pass
 
     def stop_sounds(self):
         while len(self.so_workers)>0:
@@ -387,6 +552,9 @@ class BehaviorBox(object):
         return is_playing
 
 
+    def reload_arduino_firmware(self):
+        #at.build_and_upload(self.serial_port)
+        at.build_and_upload(self.serial_port, self.arduino_model)
 
 ##
 def run_box(controller, box):
@@ -428,47 +596,81 @@ def run_box(controller, box):
     pass
 
 def main_loop(controller, box):
-    # generate the first trial and set that as the state
-    controller.que_next_trial()
-    controller.task_state = 'prepare_trial'
-    controller.has_run = True
-    # enter the loop
-    last_time = box.current_time
+    #killer = GracefulKiller()
 
-    while controller.box_state == 'go':
-        current_time = box.current_time
-        loop_time = current_time - last_time
-        last_time = current_time
-        # query serial events since the last itteration
-        events_since_last = box.query_events()
-        # save loop times greator than tollerance as events
-        if loop_time > time_tollerance:
-            events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
-        # run throgh loop itteration state machine
-        events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
-        # save all the events that have happened in this loop to file
-        controller.save_events_to_log_file(events_since_last)
-        # if a trial eneded in this loop then store event, save events, generate new trial
-        if trial_ended:
+    try:
+        # generate the first trial and set that as the state
+        controller.que_next_trial()
+        if controller.params['mode'] == 'tutoring':
+           controller.task_state = 'playback_pause'
+        else:
             controller.task_state = 'prepare_trial'
-            controller.store_current_trial()
-            controller.que_next_trial()
+        controller.has_run = True
 
-        if 'toggle_force_feed' in [event[1] for event in events_since_last]:
-            if box.force_feed_up is False:
-                box.force_feed_up = True
-                box.feeder_on()
-            else:
-                box.force_feed_up = False
-                box.feeder_off()
+        # enter the loop
+        last_time = box.current_time
+        start_time = box.current_time
+        while controller.box_state == 'go':
 
-    # exit routine:
-    pass
+            time.sleep(.05) # to prevent excessive CPU usage
+#            if controller.task_state == "waiting_for_trial": print "here"
+            current_time = box.current_time
+            loop_time = current_time - last_time
+            last_time = current_time
+
+
+
+            # query serial events since the last itteration
+            events_since_last = box.query_events()
+#            if current_time - start_time > 2:
+#                box.recorder.stop()
+#                pdb.set_trace()
+#                events_since_last.append((box.current_time, 'song_trigger'))
+            # save loop times greator than tollerance as events
+            #if loop_time > time_tollerance:
+            #   events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
+            # run throgh loop itteration state machine
+            events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
+
+            # save all the events that have happened in this loop to file
+            controller.save_events_to_log_file(events_since_last)
+            # if a trial eneded in this loop then store event, save events, generate new trial
+            if trial_ended:
+                controller.task_state = 'prepare_trial'
+                controller.store_current_trial()
+                controller.que_next_trial()
+
+#            controller.task_state + 1
+            # other housecleaning:
+            if current_time - box.last_sync_time > box.sync_period:
+                box.sync()
+                last_time = box.current_time
+
+            # exit routine:
+        pass
+    except st.SerialError as e:
+        # crash handeling for serial errors
+        controller.save_events_to_log_file([(box.current_time, "Error: %s," % (str(e)))])# save crash event
+        box.serial_c.close()
+        box.connect_to_serial_port() # reconnect to box
+        box.light_on()
+        controller.save_events_to_log_file([(box.current_time, "serial connection restablished")])
+         # renter loop
+        main_loop(controller, box)
+    except Exception as e:
+        if not box.recorder == None:
+            box.recorder.stop()
+        controller.write_error(e)
+
+    # if killer.kill_now:
+    #     if not box.recorder == None:
+    #         box.recorder.stop()
+    #     print "BehaviorController killed."
 
 def load_and_verify_stimset(stimuli_dir, stim_name):
     """loads and verifys that the stimset 'stim_name', and checks that
     the stimset is properly formatted, that all stimuli exist, ext"""
-    
+
     stim_dir = stimuli_dir + stim_name + '/'
     mat_fname = stim_dir + stim_name + '.mat'
     if not os.path.exists(stim_dir):
@@ -490,7 +692,7 @@ def load_and_verify_stimset(stimuli_dir, stim_name):
            # stim_out['type'] = stim.type[0]
             stim_out['length'] = stim.length[0,0]
            # stim_out['onset'] = stim.onset[0,0]
-           # stim_out['offset'] = stim.offset[0,0] 
+           # stim_out['offset'] = stim.offset[0,0]
 
             # verify that song file exists and deduce file type
             if os.path.exists(stim_dir + stim_out['name'] + '.sng'):
@@ -499,15 +701,15 @@ def load_and_verify_stimset(stimuli_dir, stim_name):
                 stim_out['file_type'] = '.wav'
             elif os.path.exists(stim_dir + stim_out['name'] + '.raw'):
                 stim_out['file_type'] = '.raw'
-            else: 
+            else:
                 raise(Exception('Song file ' + stim_out['name'] + 'does not exist'))
-            
+
             stimset_out['stims'].append(stim_out)
-        
+
     except Exception as e:
         print 'Stimset ' + mat_fname + ' is not properly formatted'
-        raise e 
-    return stimset_out 
+        raise e
+    return stimset_out
 
 if __name__=='__main__':
     ## Settings (temporary as these will be queried from GUI)
@@ -517,7 +719,7 @@ if __name__=='__main__':
     else:
         cfpath = sys.argv[1]
 
-    config = ConfigParser.ConfigParser() 
+    config = ConfigParser.ConfigParser()
     config.read(cfpath)
     config_fid = open(cfpath)
 
@@ -526,12 +728,15 @@ if __name__=='__main__':
     controller.config_file_contents = config_fid.read()
     controller.set_bird_name(config.get('run_params','birdname'))
     controller.params['mode'] = config.get('run_params','mode')
-    controller.params['trial_generator'] = config.get('run_params','trial_generator')
-    
+    if config.has_option('run_params', 'trial_generator'):
+        controller.params['trial_generator'] = config.get('run_params','trial_generator')
+
     controller.stimset_names = []
     controller.stimset_names.append(config.get('run_params','stimset_0'))
-    controller.stimset_names.append(config.get('run_params','stimset_1'))
-    
+
+    if config.has_option('run_params', 'stimset_1'):
+        controller.stimset_names.append(config.get('run_params','stimset_1'))
+
     # set optional paramters
     if config.has_option('run_params','stimset_2'):
         controller.stimset_names.append(config.get('run_params','stimset_2'))
@@ -544,7 +749,7 @@ if __name__=='__main__':
     for param in ['withold_response']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getboolean('run_params', param)
-            
+
     for param in ['warn_feeder_off']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getboolean('run_params', param)
@@ -554,18 +759,33 @@ if __name__=='__main__':
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
+    # set (overwrite) int parameters:
+    for param in ['allowed_songs_per_session']:
+        if config.has_option('run_params', param):
+            controller.params[param] = config.getint('run_params', param)
+
     # set (overwrite) list parameters
-    for param in ['stimset_occurance']:
+    for param in ['stimset_occurance', 'set_times']:
         if config.has_option('run_params', param):
                 controller.params[param] = json.loads(config.get('run_params',param))
 
+    if controller.params['set_times'] != None:
+        for set_time in controller.params['set_times']:
+            controller.rewards_per_session[set_time] = 0
+    # modify data_dir
+    controller.params['data_dir'] = "/".join([controller.params['data_dir'], controller.birdname]) + "/"
+    if not os.path.exists(controller.params['data_dir']):
+        os.makedirs(controller.params['data_dir'])
     controller.load_stimsets()
     box = BehaviorBox()
     if config.has_option('run_params','box'):
-        box.activate_box(config.get('run_params','box'))
+        box.select_box(config.get('run_params','box'))
     else:
         box.select_sound_card()
         box.select_serial_port()
+
+    if config.has_option('run_params', 'arduino_model'):
+        setattr(box,'arduino_model',config.get('run_params', 'arduino_model'))
 
     # set any box params
     for param in ['trigger_value']:
@@ -573,16 +793,28 @@ if __name__=='__main__':
             attr = config.getfloat('run_params',param)
             setattr(box,param,attr)
 
-    # set recording params
-    for option in config.options('record_params'):
-        attr = config.get('run_params', option)
-        setattr(box.recorder, option, attr)
+
+    if controller.params['mode'] == "tutoring":
+        # set recording params
+        for option in config.options('record_params'):
+            if option == "sound_card":
+                attr = config.get('record_params', option)
+                box.recorder.set_sound_card(attr)
+            elif option in ["outdir"]:
+                box.recorder.params[option] = config.get('record_params',option)
+            elif option == "chunk":
+                box.recorder.params[option] = config.getint('record_params',option)
+            else:
+                box.recorder.params[option] = config.getfloat('record_params',option)
+        box.recorder.params['birdname'] = controller.birdname
+        box.recorder.params['outdir'] = "/".join([controller.params['data_dir'], "recordings"])
+        if not os.path.exists(box.recorder.params['outdir']):
+            os.makedirs(box.recorder.params['outdir'])
 
     # run the box
     run_box(controller, box)
 
 
-    # import cProfile
-    # command = """run_box(controller,box)"""
-    # cProfile.runctx(command, globals(), locals(), filename = 'test.profile')
-
+#    import cProfile
+#    command = """run_box(controller,box)"""
+#    cProfile.runctx(command, globals(), locals(), filename = 'test.profile')

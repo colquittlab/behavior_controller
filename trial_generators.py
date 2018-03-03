@@ -84,7 +84,20 @@ generators['stimset_occurance'] = stimset_occurance_generator
 # 		trial_block.append(trial)
 # 	return trial_block
 # generators['standard_playback'] = standard_playback_generator
-
+def single_playback_generator(controller):
+	"""Dummy for instance of only one song"""
+	trial_block = []
+	trial = {}
+	stim_list = controller.list_stimuli(stimset_idxs = [0])
+	trial['stimulus'] = stim_list[0][2]
+	trial['stimset_idx'] = stim_list[0][0]
+       	trial['stimset'] = controller.stimset_names[trial['stimset_idx']]		
+	trial['stim_length'] = float(controller.stimsets[stim_list[0][0]]['stims'][stim_list[0][1]]['length'])/controller.stimsets[stim_list[0][0]]['samprate']
+	trial['isi'] = controller.params['isi_parameter']
+	trial_block.append(trial)
+	return trial_block
+generators['single_playback'] = single_playback_generator
+	
 def playback_generator(controller, trials_per_block=1):
 	"""Generates trial by trial with no pruning but allows you to set stimet occurance"""
 	trial_block = []

@@ -3,15 +3,15 @@ import  glob
 import  os
 import  re
 import serial
-if os.uname()[0]=='Linux': # this allows for development on non-linux systems 
-	import alsaaudio as aa
+if os.uname()[0]=='Linux': # this allows for development on non-linux systems
+        import alsaaudio as aa
 else:
-	pass
+        pass
 #import alsaaudio as aa
 # from serial.tools import list_ports
 
-import serial_tools as st 
-import soundout_tools as so 
+import serial_tools as st
+import soundout_tools as so
 
 
 
@@ -35,7 +35,7 @@ def return_list_of_boxes():
     if cardout is None:
         raise(Exception('No usb sound card connected'))
     boxes_present = [('box', None, cardout)]
-    return boxes_present                
+    return boxes_present
 
 # def return_list_of_usb_serial_ports():
 #     if os.name == 'nt':
@@ -65,7 +65,7 @@ def return_list_of_boxes():
 #     return list_of_ports_and_ids
 
 # def return_list_of_named_arduinos():
-#     if os.uname()[0]=='Linux': 
+#     if os.uname()[0]=='Linux':
 #         dev = os.listdir('/dev/')
 #         dev = filter(lambda x: x[0:8] == 'arduino_', dev)
 #         dev = ['/dev/%s' % d for d in dev]

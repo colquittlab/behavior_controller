@@ -1,3 +1,5 @@
+import time
+import datetime
 import numpy as np
 import scipy as sp
 
@@ -260,26 +262,74 @@ iterations['discrimination_singleport'] = discrimination_singleport_iteration
 # iterations['probes'] = probes_iteration
 
 
-def song_only_iteration(controller, box, events_since_last):
+def tutoring_iteration(controller, box, events_since_last):
     # record any events that have happened on the box     
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
+    current_hour = datetime.datetime.now().hour
     # make any initial parameters
     if controller.task_state == 'prepare_trial':
-        controller.task_state = 'waiting_for_trial'
+        if current_hour in controller.params['set_times']:
+            controller.task_state = 'waiting_for_trial'
     # examine what events have happened and trigger new ones, depending on box state
-    if controller.task_state == 'waiting_for_trial':
-        if 'song_trigger' in events_since_last_names:
+    if controller.task_state == 'waiting_for_trial' and current_hour in controller.params['set_times']:
+        #---------- Playback on, waiting for trigger ----------#
+        if 'song_trigger' in events_since_last_names and controller.rewards_per_session[current_hour] < controller.params['allowed_songs_per_session']:
+            controller.rewards_per_session[current_hour] += 1
+            #---- stop recorder ----#
+            box.recorder.stop()
+            events_since_last.append((box.current_time,'recording_stopped'))
+
+            #---- play stimulus ----#
             box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
             controller.current_trial['start_time'] = box.current_time
             events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
             controller.task_state = 'playing_song'
+        if controller.rewards_per_session[current_hour] >= controller.params['allowed_songs_per_session']:
+            #--------- Session finished. Pause playback until next session ---------#
+            controller.task_state = 'playback_pause'
+            events_since_last.append((box.current_time, 'playback_paused'))
+
     elif controller.task_state == 'playing_song':
+        #-------- Song currently being played ---------#
         if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             events_since_last.append((box.current_time,'playback_ended'))
-            trial_ended = True
+            #trial_ended = True
+
+            #---- begin timeout period ----#
+            controller.task_state = "time_out"
+            controller.event_time = box.current_time
+            events_since_last.append((box.current_time,'begin_timeout'))
+
+            #---- start recorder ----#
+            box.recorder.start()
+            events_since_last.append((box.current_time,'recording_started'))
+
+    elif controller.task_state == "time_out":
+        #-------- In timeout, switch deactivated --------#
+        if box.current_time > controller.event_time + controller.params['timeout_period']:
+            if current_hour in controller.params['set_times']:
+                controller.task_state = 'waiting_for_trial'
+                events_since_last.append((box.current_time,'end_timeout'))
+
+    elif controller.task_state == "playback_pause":
+        #-------- Session is finished. Waiting for next session ---------#
+#        print current_hour
+        if not box.recorder.running:
+            box.recorder.start()
+        if current_hour in controller.params['set_times']:
+            if controller.rewards_per_session[current_hour] == 0:
+                controller.task_state = "waiting_for_trial"
+        
+        time.sleep(2)
+
+    if current_hour == 0:
+        #-------- New day, reset reward counts --------#
+        for key in controller.rewards_per_session.iterkeys():
+            controller.rewards_per_session[key] = 0
+
     return events_since_last, trial_ended
-iterations['song_only'] = song_only_iteration
+iterations['tutoring'] = tutoring_iteration
 
 def song_plus_food_iteration(controller, box, events_since_last):
     # record any events that have happened on the box     
@@ -659,3 +709,11 @@ def playback_and_count_iteration(controller, box, events_since_last):
 iterations['playback_and_count'] = playback_and_count_iteration
 
 
+# def_triggered_playback(controller, box, events_since_last):
+#     events_since_last_names = [event[1] for event in events_since_last]
+#     trial_ended = False
+
+#     if True in ['trigger' in event for event in events_since_last_names]:
+#         if controllor.current_trial['trigger_start_time'] + controller.current_trial['']
+
+# iterations['triggered_playback'] = triggered_playback_iteration
