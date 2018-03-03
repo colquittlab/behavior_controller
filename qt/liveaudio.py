@@ -165,7 +165,6 @@ class SoundCardBox(QtGui.QSpinBox):
 class ChannelBox(QtGui.QSpinBox):
     def __init__(self, parent, recorder):
         super(ChannelBox, self).__init__(parent)
-#        soundcard_names = recorder.list_sound_cards()
         #channel_names = map(str, cnames)
         channel_names = map(str, range(1,5))
         self.setStrings(channel_names)
@@ -175,7 +174,6 @@ class ChannelBox(QtGui.QSpinBox):
 
     def setStrings(self, strings):
         self._strings = tuple(strings)
-#        self._values = dict(zip(strings, range(len(strings))))
         self._values = dict(zip(strings, map(int, strings)))
         self.setRange(0, len(strings) - 1)
 
