@@ -105,6 +105,10 @@ class BehaviorController(object):
         self.Aocc = 0.5
         self.Bocc = 1.0 - self.Aocc
 
+        self.probe
+        # generic playback files
+        self.white_noise = 'sounds/wn.wav'
+
 
 
     def set_bird_name(self, birdname):
@@ -439,6 +443,10 @@ class BehaviorBox(object):
                 self.serial_buffer = self.serial_buffer[idx2:]
             else:
                 return events_since_last
+
+
+    def query_sound_events(self):
+        audio_event = self.ar.
 
 
     def write_command(self, command):
