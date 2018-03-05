@@ -33,6 +33,9 @@ class Ringbuffer():
         self.data = np.zeros(length, dtype='f')
         self.index = 0
 
+    def __len__(self):
+        return self.data.size
+
     def extend(self, x):
         "adds array x to ring buffer"
         x_index = (self.index + np.arange(x.size)) % self.data.size
