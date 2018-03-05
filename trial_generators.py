@@ -1,7 +1,9 @@
 import scipy as sp
 import numpy as np 
 import random 
-
+"""
+task specific generators are defined here and loaded into the library generators.  This is hand spun and the convention is genorators['name']=name_generator
+"""
 
 generators = {}
 
@@ -28,6 +30,114 @@ def standard_generator(controller, trials_per_block=1):
 		trial_block.append(trial)
 	return trial_block
 generators['standard'] = standard_generator
+
+
+
+def video_preference_generator(controller, trials_per_block=1):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		# pick the stimset and the stimulus
+		# idx = random.randint(0, 1)
+		# if idx == 0:
+		# 	trial['stimset_idxs'] = [0, 1]
+		# else:
+		# 	trial['stimset_idxs'] = [1, 0]
+		trial['stimset_idxs'] = [0, 1] # have the same stimset on each side
+		trial['start_side'] = random.randint(0,1)
+		trial['current_bin'] = None
+		trial['track'] = []
+		trial['bin_entries'] = []
+		trial['last_center_bin_entry_time']=None
+		trial['trial_type'] = 'video_preference'
+		trial['playbacks'] = []
+		trial_block.append(trial)
+	return trial_block
+generators['video_preference'] = video_preference_generator
+
+def interleaved_video_preference_generator(controller, trials_per_block=1):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		# pick the stimset and the stimulus
+		trial['stimset_idxs'] = [0]
+		trial['stim_idxs'] = random.sample(range(0,len(controller.stimsets[0]['stims'])),2)
+		trial['start_side'] = random.randint(0,1)
+		trial['current_bin'] = None
+		trial['track'] = []
+		trial['bin_entries'] = []
+		trial['last_center_bin_entry_time']=None
+		trial['trial_type'] = 'video_preference'
+		trial['playbacks'] = []
+		trial_block.append(trial)
+	return trial_block
+generators['interleaved_video_preference'] = interleaved_video_preference_generator
+
+
+def interleaved_video_preference_generator_by_stimset(controller, trials_per_block=1):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		# pick the stimset and the stimulus
+		# pick the stimset and the stimulus
+		trial['stimset_idxs'] = random.sample(range(0,len(controller.stimsets)),2)
+		# trial['stimset_idxs'] = [1]
+		trial['stim_idxs'] = []
+		for stimset in trial['stimset_idxs']:
+			trial['stim_idxs'].append(random.sample(range(0,len(controller.stimsets[stimset]['stims'])),1)[0])
+		# trial['stim_idxs'] = random.sample(range(0,len(controller.stimsets[0]['stims'])),2)
+		trial['start_side'] = random.randint(0,1)
+		trial['current_bin'] = None
+		trial['track'] = []
+		trial['bin_entries'] = []
+		trial['last_center_bin_entry_time']=None
+		trial['trial_type'] = 'video_preference'
+		trial['playbacks'] = []
+		trial_block.append(trial)
+	return trial_block
+generators['interleaved_video_preference_by_stimset'] = interleaved_video_preference_generator_by_stimset
+
+
+def preference_generator(controller, trials_per_block=1):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		trial['trial_type'] = 'preference'
+		trial['reward_p'] = [1]*len(controller.stimsets)
+		trial['stimulus']=''
+		# pick the stimset and the stimulus
+		trial_block.append(trial)
+	return trial_block
+generators['preference'] = preference_generator
+
+
+
+
+def adaptive_preference_generator(controller, trials_per_block=1, n_trials_back=10):
+	"""Generates trial by trial with no pruning"""
+	trial_block = []
+	for k in range(0, trials_per_block):
+		trial = {}
+		trial['trial_type'] = 'preference'
+		trial['reward_p'] = [1]*len(controller.stimsets)
+		trial['stimulus']=''
+		if len(controller.completed_trials)>=n_trials_back:
+			stats = controller.calculate_performance_statistics(n_trials_back = n_trials_back)
+			for stimset_idx in range(0,len(controller.stimsets)):
+				bias = np.max([stats['by_stimset'][stimset_idx]['p_occurance']-0.5, 0])
+				p0 = 0.75
+				trial['reward_p'][stimset_idx] = p0 - p0*2*bias
+			# import ipdb; ipdb.set_trace()
+			print stats
+
+		# pick the stimset and the stimulus
+		trial_block.append(trial)
+	return trial_block
+generators['adaptive_preference'] = adaptive_preference_generator
 
 
 def stimset_occurance_generator(controller, trials_per_block=1):

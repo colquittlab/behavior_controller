@@ -1,5 +1,7 @@
-function trials = read_trials_from_file(fname,varargin)
-force_regenerate = false;
+function trials = read_trials_from_file(fname,force_regenerate)
+if nargin<2
+force_regenerate = false; 
+end
 matfname = [fname '.mat'];
 
 if (exist(matfname) && ~force_regenerate)
@@ -17,14 +19,19 @@ end
 
 function trials = read_from_file(fname)
     file_data=dir(fname);
+%     trials = struct
     date_modified = file_data.datenum;
     fid = fopen(fname,'r');
     count = 0;
     file_line = fgets(fid);
     while file_line > 0
         count = count + 1;
-        [data, json] = parse_json(file_line);
-        data = data{1};
+        try
+            data = loadjson(file_line);
+        catch
+            data = loadjson(strrep(file_line,'null','[NaN, NaN]')); 
+        end
+%         data = data{1};
         
         if isfield(data,'stimulus')
             trial.stimulus = data.stimulus;
@@ -82,6 +89,65 @@ function trials = read_from_file(fname)
         else
             trial.mode = '';
         end
+        if isfield(data,'reward_p')
+            if iscell(data.reward_p)
+                trial.reward_p = cell2mat(data.reward_p);
+            else
+                trial.reward_p = data.reward_p;
+            end
+        else
+            trial.reward_p = '';
+        end
+        if isfield(data,'track')
+            trial.track.t = data.track(:,1);
+            trial.track.t = trial.track.t;
+            trial.track.uv = data.track(:,2:3); 
+        else
+            trial.track = '';
+        end
+        if isfield(data,'start_side')
+             trial.start_side = data.start_side;
+        else 
+            trial.start_side = ''; 
+        end
+        if isfield(data,'playback_start_time')
+            trial.playback_start_time = data.playback_start_time;
+        else
+            trial.playback_start_time = '';
+        end
+        if isfield(data, 'playbacks')
+            trial.playbacks=data.playbacks;
+        else
+            trial.playbacks = '';
+        end
+        if isfield(data,'last_center_bin_entry_time')
+            trial.last_center_bin_entry_time = data.last_center_bin_entry_time; 
+        else
+            trial.last_center_bin_entry_time = '';
+        end
+        if isfield(data, 'bin_entries')
+            try
+                trial.bin_entries = cell2mat(cellfun(@(x) [x{1} x{3}],data.bin_entries,'uniformoutput',false)');
+            catch 
+                bin_entries = {};
+                bin_entries_string = data.bin_entries;  
+                for k5=1:size(bin_entries_string,1)
+                    bin_entries{end+1} = cellstr(bin_entries_string(k5,:));
+       
+                end
+                
+                trial.bin_entries = cell2mat(cellfun(@(x)([str2num(x{1}) str2num(x{3}) ]),bin_entries,'uniformoutput',false)');
+            end
+        else
+            trial.bin_entries = '';
+        end
+        if isfield(data, 'stim_idxs')
+            trial.stim_idxs = data.stim_idxs;
+            
+        else
+            trial.stim_idxs = '';
+        end
+        
         try
             trials(count) = trial;
         catch
@@ -89,5 +155,8 @@ function trials = read_from_file(fname)
         file_line = fgets(fid);
     end
     fclose(fid);
+    if ~exist('trials')
+        trials = [];
+    end
     save([fname '.mat'],'trials','date_modified')
 end

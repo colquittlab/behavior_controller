@@ -5,7 +5,7 @@ import time
 import pylab
 from PyQt4 import QtCore, QtGui
 import pyqtgraph as pg
-import lib.audiorecord as ar
+import lib.audiorecording_tools as ar
 import numpy as np
 from collections import deque
 
@@ -51,8 +51,7 @@ class AudioThread(QtCore.QThread):
             data.append(0)
 
         while not self.exiting:
-            data.append(self.parent.parent.recorder.recording_queue.get())
-            #data.append(ar.get_audio_power(self.parent.parent.recorder.recording_queue.get()))
+            data.append(ar.get_audio_power(self.parent.parent.recorder.recording_queue.get()))
             self.emit( QtCore.SIGNAL( "gotData( PyQt_PyObject )" ), list(data) )
 
     def stop(self):
@@ -87,6 +86,7 @@ class AudioManager:
         self.parent = parent
         self.plot_params = self.parent.audio_plot.plot_params
         self.initial = True
+        self.writing = False
 
     def setup(self):
         self.thread = AudioThread(self)
@@ -112,6 +112,17 @@ class AudioManager:
 
     def stop(self):
         self.thread.stop()
+
+    def start_write_to_file(self):
+        self.parent.recorder.start_write_to_file()
+        self.writing = True
+
+    def stop_write_to_file(self):
+        self.parent.recorder.stop_write_to_file()
+        self.writing = False
+
+
+
 
 class SpecManager:
     def __init__(self, parent):
@@ -197,7 +208,7 @@ class Ui_LiveAudio(object):
 
     def setupUi(self, LiveAudio):
         LiveAudio.setObjectName(_fromUtf8("LiveAudio"))
-        LiveAudio.resize(765, 300)
+        LiveAudio.resize(765, 354)
         self.cancel_button = QtGui.QPushButton(LiveAudio)
         self.cancel_button.setGeometry(QtCore.QRect(660, 270, 99, 27))
         self.cancel_button.setObjectName(_fromUtf8("cancel_button"))
@@ -207,9 +218,10 @@ class Ui_LiveAudio(object):
         self.stop_recording_button = QtGui.QPushButton(LiveAudio)
         self.stop_recording_button.setGeometry(QtCore.QRect(150, 270, 141, 27))
         self.stop_recording_button.setObjectName(_fromUtf8("stop_recording_button"))
-        self.label = QtGui.QLabel(LiveAudio)
-        self.label.setGeometry(QtCore.QRect(380, 270, 81, 17))
-        self.label.setObjectName(_fromUtf8("label"))
+        self.write_to_file = QtGui.QPushButton(LiveAudio)
+        self.write_to_file.setGeometry(QtCore.QRect(290, 270, 101, 27))
+        self.write_to_file.setObjectName(_fromUtf8("write_to_file"))
+        self.write_to_file.setCheckable(True)
 
         #-------- Message box --------#
         self.message_box = QtGui.QTextEdit(LiveAudio)
@@ -220,14 +232,21 @@ class Ui_LiveAudio(object):
         self.setup_audio_recorder()
 
         #-------- Soundcard selection --------#
+        self.label = QtGui.QLabel(LiveAudio)
+        self.label.setGeometry(QtCore.QRect(400, 270, 81, 17))
+        self.label.setObjectName(_fromUtf8("label"))
         self.soundcard_idx = SoundCardBox(LiveAudio, self.recorder)
-        self.soundcard_idx.setGeometry(QtCore.QRect(530, 240, 100, 27))
+        self.soundcard_idx.setGeometry(QtCore.QRect(480, 270, 71, 27))
         self.soundcard_idx.setObjectName(_fromUtf8("soundcard_idx"))
 
-        #-------- Channel selection --------#
-        self.channel_idx = ChannelBox(LiveAudio, self.recorder)
-        self.channel_idx.setGeometry(QtCore.QRect(530, 270, 100, 27))
-        self.channel_idx.setObjectName(_fromUtf8("channel_idx"))
+        #-------- Threshold selection --------#
+        self.threshold_spinBox = QtGui.QSpinBox(LiveAudio)
+        self.threshold_spinBox.setGeometry(QtCore.QRect(480, 300, 71, 27))
+        self.threshold_spinBox.setObjectName(_fromUtf8("threshold_spinBox"))
+        self.threshold_spinBox.setMaximum(100000)
+        self.threshold_label = QtGui.QLabel(LiveAudio)
+        self.threshold_label.setGeometry(QtCore.QRect(400, 300, 71, 20))
+        self.threshold_label.setObjectName(_fromUtf8("threshold_label"))
 
         #-------- Graphing Widgets --------#
         self.audio_plot = AudioPlotWidget(LiveAudio, self.recorder)
@@ -239,14 +258,16 @@ class Ui_LiveAudio(object):
 
         self.audio_manager = AudioManager(self)
         self.spec_manager = SpecManager(self)
-        
+
         #-------- Connections --------#
         self.start_recording_button.connect(self.start_recording_button, QtCore.SIGNAL("clicked()"), self.start_recording)
         self.stop_recording_button.connect(self.stop_recording_button, QtCore.SIGNAL("clicked()"), self.stop_recording)
         self.cancel_button.connect(self.cancel_button, QtCore.SIGNAL("clicked()"), self.quit_program)
-#        self.soundcard_idx.connect(self.soundcard_idx, QtCore.SIGNAL("valueChanged(int)"), self.update_selected_soundcard)
-        self.soundcard_idx.connect(self.soundcard_idx, QtCore.SIGNAL("valueChanged(const QString&)"), self.update_selected_soundcard)
-        self.channel_idx.connect(self.channel_idx, QtCore.SIGNAL("valueChanged(const QString&)"), self.update_selected_channel)
+
+        self.write_to_file.toggled.connect(self.write_to_file_clicked)
+
+        self.soundcard_idx.connect(self.soundcard_idx, QtCore.SIGNAL("valueChanged(int)"), self.update_selected_soundcard)
+        self.threshold_spinBox.connect(self.threshold_spinBox, QtCore.SIGNAL("valueChanged(int)"), self.update_threshold)
 
         self.retranslateUi(LiveAudio)
         QtCore.QMetaObject.connectSlotsByName(LiveAudio)
@@ -258,7 +279,8 @@ class Ui_LiveAudio(object):
         self.start_recording_button.setText(_translate("LiveAudio", "Start recording", None))
         self.stop_recording_button.setText(_translate("LiveAudio", "Stop recording", None))
         self.label.setText(_translate("LiveAudio", "Soundcard", None))
-        self.label.setText(_translate("LiveAudio", "Channel", None))
+        self.write_to_file.setText(_translate("LiveAudio", "Write to file", None))
+        self.threshold_label.setText(_translate("LiveAudio", "Threshold", None))
 
     def setup_audio_recorder(self):
         self.recorder = ar.AudioRecord()
@@ -281,6 +303,17 @@ class Ui_LiveAudio(object):
         self.audio_manager.stop()
         self.spec_manager.stop()
 
+    @QtCore.pyqtSlot(bool)  #<<== the missing link
+    def write_to_file_clicked(self, checked):
+        if checked:
+            if not self.audio_manager.writing:
+                print "start"
+                self.audio_manager.start_write_to_file()
+        else:
+            if self.audio_manager.writing:
+                print "stop"
+                self.audio_manager.stop_write_to_file()
+
     def updateUi(self):
         self.start_recording_button.setEnabled(True)
         self.cancel_button.setEnabled(True)
@@ -289,10 +322,9 @@ class Ui_LiveAudio(object):
         print i
         self.recorder.set_sound_card(i)
 
-    def update_selected_channel(self, i):
-        print "update", i
-        self.recorder.set_channel(i)
-    
+    def update_threshold(self, i):
+        self.recorder.params['threshold'] = i
+
     def quit_program(self):
         if self.audio_recording:
             self.stop_recording()

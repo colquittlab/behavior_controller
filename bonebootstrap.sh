@@ -55,8 +55,8 @@ done
 if $DOPACKAGES
 then
     # install existing packages
-    APTPACKAGES="python-scipy python-alsaaudio"
-    PIPPACKAGES="pyexecjs pyserial Adafruit-BBIO ipython"
+    APTPACKAGES="python-scipy python-alsaaudio ntp"
+    PIPPACKAGES="pyexecjs pyserial Adafruit-BBIO ipython schedule"
     apt-get update
     for PACK in $APTPACKAGES
     do
@@ -68,6 +68,19 @@ then
         sudo pip install $PACK --upgrade
     done
 fi
+
+while true; do
+    read -p "Do you wish to set the timezone? [Y/N] " yn
+    case $yn in
+        [Yy]* ) DOTZ=true;  break;;
+        [Nn]* ) DOTZ=false; break;;
+    esac
+done
+if $DOTZ
+then
+    dpkg-reconfigure tzdata
+fi
+
 
 while true; do
     read -p "Do you wish to install automatic screen invocation for root? [Y/N] " yn

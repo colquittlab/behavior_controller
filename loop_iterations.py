@@ -2,7 +2,7 @@ import time
 import datetime
 import numpy as np
 import scipy as sp
-
+import random
 
 ## iterations and generators
 
@@ -11,7 +11,7 @@ import scipy as sp
 iterations = {}
 def discrimination_iteration(controller, box, events_since_last):
     """ This function runs int the main loop in discrimination mode"""
-    # record any events that have happened on the box     
+    # record any events that have happened on the box
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
 
@@ -64,11 +64,11 @@ def discrimination_iteration(controller, box, events_since_last):
                 if  events_since_last[event_idx][2] == controller.current_trial['correct_answer']:
                     controller.current_trial['result'] = 'correct'
                     controller.task_state = 'reward'
-                     
-                    
+
+
                     events_since_last.append((box.current_time, 'reward_start'))
                     box.feeder_on()
-                ## otherwise anwser is incorrect 
+                ## otherwise anwser is incorrect
                 else:
                     controller.current_trial['result'] = 'incorrect'
                     controller.task_state = 'time_out'
@@ -83,7 +83,7 @@ def discrimination_iteration(controller, box, events_since_last):
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True
 
-    # if the box is in time_out state (after an incorrect trial) 
+    # if the box is in time_out state (after an incorrect trial)
     elif controller.task_state == 'time_out':
         if box.current_time > controller.current_trial['response_time'] + controller.params['timeout_period']:
             box.light_on()
@@ -104,7 +104,7 @@ iterations['discrimination'] = discrimination_iteration
 
 def discrimination_singleport_iteration(controller, box, events_since_last):
     """ This function runs int the main loop in discrimination mode"""
-    # record any events that have happened on the box     
+    # record any events that have happened on the box
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
 
@@ -148,9 +148,9 @@ def discrimination_singleport_iteration(controller, box, events_since_last):
                 controller.current_trial['result'] = 'correct'
                 controller.task_state = 'reward'
                 events_since_last.append((box.current_time, 'reward_start'))
-                 
+
                 box.feeder_on()
-            ## otherwise anwser is incorrect 
+            ## otherwise anwser is incorrect
             else:
                 controller.current_trial['result'] = 'incorrect'
                 controller.task_state = 'time_out'
@@ -159,15 +159,15 @@ def discrimination_singleport_iteration(controller, box, events_since_last):
                     box.light_off()
                     events_since_last.append((box.current_time, 'light_off'))
 
-        
-        
+
+
         # if no response and trial has timed out
         elif box.current_time > timeout_time:
             controller.current_trial['result'] = 'no_response'
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True
 
-    # if the box is in time_out state (after an incorrect trial) 
+    # if the box is in time_out state (after an incorrect trial)
     elif controller.task_state == 'time_out':
         if box.current_time > controller.current_trial['response_time'] + controller.params['timeout_period']:
             events_since_last.append((box.current_time, 'timout_end'))
@@ -187,7 +187,7 @@ iterations['discrimination_singleport'] = discrimination_singleport_iteration
 
 # def probes_iteration(controller, box, events_since_last):
 #     """ This function runs int the main loop in probes mode"""
-#     # record any events that have happened on the box     
+#     # record any events that have happened on the box
 #     events_since_last_names = [event[1] for event in events_since_last]
 #     trial_ended = False
 #     # examine what events have happened and trigger new ones, depending on box state
@@ -200,7 +200,7 @@ iterations['discrimination_singleport'] = discrimination_singleport_iteration
 #                 controller.task_state = 'playing_song'
 #             else:
 #                 controller.task_state = 'waiting_for_response'
-                
+
 #     # if song is playing and responses are ignored during song
 #     elif controller.task_state == 'playing_song':
 #         # if there is a response
@@ -234,20 +234,20 @@ iterations['discrimination_singleport'] = discrimination_singleport_iteration
 #                     controller.task_state = 'reward'
 #                     events_since_last.append((box.current_time, 'reward_start'))
 #                     box.feeder_on()
-#                 ## otherwise anwser is incorrect 
+#                 ## otherwise anwser is incorrect
 #                 else:
 #                     controller.current_trial['result'] = 'incorrect'
 #                     controller.task_state = 'time_out'
 #                     events_since_last.append((box.current_time, 'timeout_start'))
 
-       
+
 #         # if no response and trial has timed out
 #         elif box.current_time > timeout_time:
 #             controller.current_trial['result'] = 'no_response'
 #             events_since_last.append((box.current_time, 'no_response'))
 #             trial_ended = True
 
-#     # if the box is in time_out state (after an incorrect trial) 
+#     # if the box is in time_out state (after an incorrect trial)
 #     elif controller.task_state == 'time_out':
 #         if box.current_time > controller.current_trial['response_time'] + controller.params['timeout_period']:
 #             events_since_last.append((box.current_time, 'timout_end'))
@@ -263,7 +263,7 @@ iterations['discrimination_singleport'] = discrimination_singleport_iteration
 
 
 def tutoring_iteration(controller, box, events_since_last):
-    # record any events that have happened on the box     
+    # record any events that have happened on the box
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
     current_hour = datetime.datetime.now().hour
@@ -320,7 +320,7 @@ def tutoring_iteration(controller, box, events_since_last):
         if current_hour in controller.params['set_times']:
             if controller.rewards_per_session[current_hour] == 0:
                 controller.task_state = "waiting_for_trial"
-        
+
         time.sleep(2)
 
     if current_hour == 0:
@@ -402,7 +402,7 @@ def sound_triggered_playback_iteration(controller, box, events_since_last):
 iterations['sound_triggered_playback'] = sound_triggered_playback_iteration
 
 def song_plus_food_iteration(controller, box, events_since_last):
-    # record any events that have happened on the box     
+    # record any events that have happened on the box
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
     # make any initial parameters
@@ -428,7 +428,7 @@ def song_plus_food_iteration(controller, box, events_since_last):
         if 'response_trigger' in events_since_last_names:
             controller.task_state = 'reward'
             events_since_last.append((box.current_time, 'reward_start'))
-            controller.current_trial['response_time'] = box.current_time             
+            controller.current_trial['response_time'] = box.current_time
             box.feeder_on()
     # if the reward period is over
     elif controller.task_state == 'reward':
@@ -440,7 +440,7 @@ def song_plus_food_iteration(controller, box, events_since_last):
 iterations['song_plus_food'] = song_plus_food_iteration
 
 def sequence_iteration(controller, box, events_since_last):
-    # record any events that have happened on the box     
+    # record any events that have happened on the box
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
         # make any initial parameters
@@ -481,9 +481,9 @@ def sequence_iteration(controller, box, events_since_last):
             controller.current_trial['result'] = 'correct'
             controller.task_state = 'reward'
             events_since_last.append((box.current_time, 'reward_start'))
-             
+
             box.feeder_on()
-            ## otherwise anwser is incorrect 
+            ## otherwise anwser is incorrect
         # if no response and trial has timed out
         elif box.current_time > timeout_time:
             controller.current_trial['result'] = 'no_response'
@@ -500,7 +500,7 @@ iterations['sequence'] = sequence_iteration
 
 
 def sequence_singleport_iteration(controller, box, events_since_last):
-    # record any events that have happened on the box     
+    # record any events that have happened on the box
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
     # make any initial parameters
@@ -541,9 +541,9 @@ def sequence_singleport_iteration(controller, box, events_since_last):
             controller.current_trial['result'] = 'correct'
             controller.task_state = 'reward'
             events_since_last.append((box.current_time, 'reward_start'))
-             
+
             box.feeder_on()
-            ## otherwise anwser is incorrect 
+            ## otherwise anwser is incorrect
         # if no response and trial has timed out
         elif box.current_time > timeout_time:
             controller.current_trial['result'] = 'no_response'
@@ -572,7 +572,7 @@ class DiscriminationStateMachine(object):
             else:
                 controller.task_state = 'waiting_for_response'
 
-    def playing_song(self): 
+    def playing_song(self):
     # if song is playing and responses are ignored during song
         # if there is a response
         if 'response_trigger' in events_since_last_names:
@@ -600,7 +600,7 @@ class DiscriminationStateMachine(object):
                 controller.task_state = 'reward'
                 events_since_last.append((box.current_time, 'reward_start'))
                 box.feeder_on()
-            ## otherwise anwser is incorrect 
+            ## otherwise anwser is incorrect
             else:
                 controller.current_trial['result'] = 'incorrect'
                 controller.task_state = 'time_out'
@@ -613,7 +613,7 @@ class DiscriminationStateMachine(object):
             controller.current_trial['result'] = 'no_response'
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True
-            # if the box is in time_out state (after an incorrect trial) 
+            # if the box is in time_out state (after an incorrect trial)
     def time_out(self):
         if box.current_time > controller.current_trial['response_time'] + controller.params['timeout_period']:
             box.light_on()
@@ -633,7 +633,7 @@ class DiscriminationStateMachine(object):
 
 def discrimination_laser_iteration(controller, box, events_since_last):
     """ This function runs int the main loop in discrimination mode"""
-    # record any events that have happened on the box     
+    # record any events that have happened on the box
     events_since_last_names = [event[1] for event in events_since_last]
     trial_ended = False
     # make any initial parameters
@@ -687,8 +687,8 @@ def discrimination_laser_iteration(controller, box, events_since_last):
                 controller.task_state = 'reward'
                 events_since_last.append((box.current_time, 'reward_start'))
                 box.feeder_on()
-                
-            ## otherwise anwser is incorrect 
+
+            ## otherwise anwser is incorrect
             else:
                 controller.current_trial['result'] = 'incorrect'
                 controller.task_state = 'time_out'
@@ -703,7 +703,7 @@ def discrimination_laser_iteration(controller, box, events_since_last):
             events_since_last.append((box.current_time, 'no_response'))
             trial_ended = True
 
-    # if the box is in time_out state (after an incorrect trial) 
+    # if the box is in time_out state (after an incorrect trial)
     elif controller.task_state == 'time_out':
         if box.current_time > controller.current_trial['response_time'] + controller.params['timeout_period']:
             box.light_on()
@@ -729,11 +729,11 @@ def playback_and_count_iteration(controller, box, events_since_last):
     if controller.task_state == 'prepare_trial':
         controller.task_state = 'waiting_for_trial'
     # if no trial has been initiatied
-    if controller.task_state == 'waiting_for_trial': 
+    if controller.task_state == 'waiting_for_trial':
         box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
         controller.task_state = 'delay_period'
         events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
-        # prepair trial 
+        # prepair trial
         controller.current_trial['start_time'] = box.current_time
         controller.current_trial['stimulus_start'] = box.current_time
         controller.current_trial['response_times'] = []
@@ -779,11 +779,480 @@ def playback_and_count_iteration(controller, box, events_since_last):
 iterations['playback_and_count'] = playback_and_count_iteration
 
 
-# def_triggered_playback(controller, box, events_since_last):
-#     events_since_last_names = [event[1] for event in events_since_last]
-#     trial_ended = False
+def unrewarded_sequence_preference_assay(controller, box, events_since_last):
+    # record any events that have happened on the box
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # make any initial parameters
+    if controller.task_state == 'prepare_trial':
+        controller.task_state = 'waiting_for_trial'
 
-#     if True in ['trigger' in event for event in events_since_last_names]:
-#         if controllor.current_trial['trigger_start_time'] + controller.current_trial['']
+    if controller.task_state == 'waiting_for_trial':
+        if 'song_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('song_trigger')
+            controller.current_trial['start_time'] = box.current_time
+            events_since_last.append((box.current_time, 'trial_initiated', controller.current_trial['stimulus']))
+            controller.task_state = 'waiting_for_response'
+    # examine what events have happened and trigger new ones, depending on box state
+    elif controller.task_state == 'waiting_for_response':
+        timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']
+        if 'response_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('response_trigger')
+            controller.current_trial['response_time'] = box.current_time
+            if events_since_last[event_idx][2] in controller.expected_responses:
+                resp_idx = controller.expected_responses.index(events_since_last[event_idx][2])
+            else:
+                resp_idx = 100
+            if resp_idx < len(controller.stimsets):
+                stimset_idx = resp_idx
+                stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
+                # pick the stimset and the stimulus
+                idx = random.randint(0, len(stim_list)-1)
+                controller.current_trial['response_time'] = box.current_time
+                controller.current_trial['response_idx'] = stimset_idx
+                controller.current_trial['stimset'] = controller.stimset_names[stimset_idx]
+                controller.current_trial['stimset_idx'] = stimset_idx
+                controller.current_trial['stimulus'] = stim_list[idx][2]
+                controller.current_trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
+                box.play_stim(controller.stimsets[stimset_idx], controller.current_trial['stimulus'])
+                events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+                controller.task_state = 'playing_song'
+        elif box.current_time > timeout_time:
+            controller.current_trial['result'] = 'no_response'
+            events_since_last.append((box.current_time, 'no_response'))
+            trial_ended = True
 
-# iterations['triggered_playback'] = triggered_playback_iteration
+    elif controller.task_state == 'playing_song':
+        if box.current_time > controller.current_trial['response_time'] + controller.current_trial['stim_length']:
+            events_since_last.append((box.current_time,'playback_ended'))
+            trial_ended = True
+    return events_since_last, trial_ended
+iterations['unrewarded_preference_sequence'] = unrewarded_sequence_preference_assay
+
+
+def rewarded_sequence_preference_assay(controller, box, events_since_last):
+    # record any events that have happened on the box
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+    # make any initial parameters
+    if controller.task_state == 'prepare_trial':
+        controller.task_state = 'waiting_for_trial'
+
+    if controller.task_state == 'waiting_for_trial':
+        if 'song_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('song_trigger')
+            controller.current_trial['start_time'] = box.current_time
+            events_since_last.append((box.current_time, 'trial_initiated', controller.current_trial['stimulus']))
+            controller.task_state = 'waiting_for_response'
+    # examine what events have happened and trigger new ones, depending on box state
+    elif controller.task_state == 'waiting_for_response':
+        timeout_time = controller.current_trial['start_time'] + controller.params['max_trial_length']
+        if 'response_trigger' in events_since_last_names:
+            event_idx = events_since_last_names.index('response_trigger')
+            controller.current_trial['response_time'] = box.current_time
+            if events_since_last[event_idx][2] in controller.expected_responses:
+                resp_idx = controller.expected_responses.index(events_since_last[event_idx][2])
+            else:
+                resp_idx = 100
+            if resp_idx < len(controller.stimsets):
+                stimset_idx = resp_idx
+                stim_list = controller.list_stimuli(stimset_idxs = [stimset_idx])
+                # pick the stimset and the stimulus
+                idx = random.randint(0, len(stim_list)-1)
+                controller.current_trial['response_time'] = box.current_time
+                controller.current_trial['response_idx'] = stimset_idx
+                controller.current_trial['stimset'] = controller.stimset_names[stimset_idx]
+                controller.current_trial['stimulus'] = stim_list[idx][2]
+                controller.current_trial['stim_length'] = float(controller.stimsets[stim_list[idx][0]]['stims'][stim_list[idx][1]]['length'])/controller.stimsets[stim_list[idx][0]]['samprate']
+                controller.current_trial['stimset_idx'] = stimset_idx
+                box.play_stim(controller.stimsets[stimset_idx], controller.current_trial['stimulus'])
+                events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
+
+                # decide whether to do reward
+                rand_value = random.uniform(0,1)
+                if rand_value <= controller.current_trial['reward_p'][stimset_idx]:
+                    controller.task_state = 'reward'
+                    box.feeder_on()
+                    controller.current_trial['rewarded'] = True
+                    events_since_last.append((box.current_time, 'reward_start'))
+                else:
+                    controller.task_state = 'playing_song'
+                    controller.current_trial['rewarded'] = False
+                    events_since_last.append((box.current_time, 'no_reward'))
+                print controller.current_trial
+        elif box.current_time > timeout_time:
+            controller.current_trial['result'] = 'no_response'
+            events_since_last.append((box.current_time, 'no_response'))
+            trial_ended = True
+
+    elif controller.task_state == "reward":
+        if box.current_time > controller.current_trial['response_time'] + controller.params['feed_time']:
+            #box.feeder_off()
+            box.feeder_off(controller.params['warn_feeder_off']) # GK
+            events_since_last.append((box.current_time, 'reward_end'))
+            trial_ended = True
+
+    elif controller.task_state == 'playing_song':
+        if box.current_time > controller.current_trial['response_time'] + controller.current_trial['stim_length']:
+            events_since_last.append((box.current_time,'playback_ended'))
+            trial_ended = True
+
+    return events_since_last, trial_ended
+iterations['rewarded_preference_sequence'] = rewarded_sequence_preference_assay
+
+
+
+def video_preference_assay(controller, box, events_since_last):
+    center_bin_time = 30
+    interstimulus_interval = 10
+    nplaybacks_per_side = 10
+    intertrial_interval = 300
+    # record any events that have happened on the box
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+
+    for event_idx,name in enumerate(events_since_last_names):
+        if name == 'pos':
+            if events_since_last[2] is not None:
+                controller.current_trial['track'].append((events_since_last[event_idx][0], events_since_last[event_idx][2]))
+                controller.current_trial['current_bin'] = events_since_last[event_idx][3]
+        if name == 'enter_bin':
+            controller.current_trial['current_bin'] = events_since_last[event_idx][2]
+            controller.current_trial['bin_entries'].append(events_since_last[event_idx])
+
+
+    if controller.task_state == 'prepare_trial':
+        controller.current_trial['start_time']=box.current_time
+        controller.task_state = 'waiting_to_start_playback'
+        events_since_last.append((box.current_time, 'trial_started'))
+    elif controller.task_state == 'waiting_to_start_playback':
+        if controller.current_trial['current_bin'] ==1:
+            if controller.current_trial['last_center_bin_entry_time'] is None:
+                controller.current_trial['last_center_bin_entry_time']=box.current_time
+            elif box.current_time > controller.current_trial['last_center_bin_entry_time'] + center_bin_time:
+                controller.current_trial['playback_start_time'] = box.current_time
+                controller.task_state = 'playback'
+                events_since_last.append((box.current_time, 'started_playback'))
+            else:
+                pass
+        else:
+            controller.current_trial['last_center_bin_entry_time']=None
+        pass
+    elif controller.task_state == 'playback':
+        if len(controller.current_trial['playbacks'])==0:
+            box.stop_sounds()
+            side_idx = controller.current_trial['start_side']
+            stimset_idx = controller.current_trial['stimset_idxs'][side_idx]
+            stim_idx = random.randint(0, len(controller.stimsets[stimset_idx]['stims'])-1)
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx))
+        elif box.current_time >= controller.current_trial['playbacks'][-1][0] + interstimulus_interval:
+            box.stop_sounds()
+            side_idx = int(not controller.current_trial['playbacks'][-1][1])
+            stimset_idx = controller.current_trial['stimset_idxs'][side_idx]
+            stim_idx = random.randint(0, len(controller.stimsets[stimset_idx]['stims'])-1)
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx))
+
+        if len(controller.current_trial['playbacks']) >= 2*nplaybacks_per_side:
+            controller.current_trial['end_time'] = box.current_time
+            controller.task_state = 'intertrial'
+            events_since_last.append((box.current_time, 'end_of_trial'))
+
+    elif controller.task_state == 'intertrial':
+        if box.current_time >= controller.current_trial['end_time'] + intertrial_interval:
+            trial_ended = True
+        pass
+
+    return events_since_last, trial_ended
+iterations['video_preference_assay'] = video_preference_assay
+
+
+
+def interleaved_video_preference_assay(controller, box, events_since_last):
+    center_bin_time = controller.params['center_bin_time']
+    interstimulus_interval = controller.params['interstimulus_interval']
+    nplaybacks_per_side = controller.params['nplaybacks_per_side']
+    intertrial_interval = controller.params['intertrial_interval']
+    # record any events that have happened on the box
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+
+    for event_idx,name in enumerate(events_since_last_names):
+        if name == 'pos':
+            controller.current_trial['track'].append((events_since_last[event_idx][0], events_since_last[event_idx][2]))
+            controller.current_trial['current_bin'] = events_since_last[event_idx][3]
+        if name == 'enter_bin':
+            controller.current_trial['current_bin'] = events_since_last[event_idx][2]
+            controller.current_trial['bin_entries'].append(events_since_last[event_idx])
+
+
+    if controller.task_state == 'prepare_trial':
+        controller.current_trial['start_time']=box.current_time
+        controller.task_state = 'waiting_to_start_playback'
+        events_since_last.append((box.current_time, 'trial_started'))
+    elif controller.task_state == 'waiting_to_start_playback':
+        if controller.current_trial['current_bin'] ==1:
+            if controller.current_trial['last_center_bin_entry_time'] is None:
+                controller.current_trial['last_center_bin_entry_time']=box.current_time
+            elif box.current_time > controller.current_trial['last_center_bin_entry_time'] + center_bin_time:
+                controller.current_trial['playback_start_time'] = box.current_time
+                controller.task_state = 'playback'
+                events_since_last.append((box.current_time, 'started_playback'))
+                box.start_video_recording()
+                box.start_forced_audio_recording()
+            else:
+                pass
+        else:
+            controller.current_trial['last_center_bin_entry_time']=None
+        pass
+    elif controller.task_state == 'playback':
+        if len(controller.current_trial['playbacks'])==0:
+            box.stop_sounds()
+            side_idx = controller.current_trial['start_side']
+            stimset_idx = 0
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx,'stim_%d' % stim_idx,controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+        elif box.current_time >= controller.current_trial['playbacks'][-1][0] + interstimulus_interval:
+            box.stop_sounds()
+            side_idx = int(not controller.current_trial['playbacks'][-1][1])
+            stimset_idx = 0
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx, 'stim_%d' % stim_idx, controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+
+        if len(controller.current_trial['playbacks']) >= 2*nplaybacks_per_side:
+            controller.current_trial['end_time'] = box.current_time
+            controller.task_state = 'intertrial'
+            events_since_last.append((box.current_time, 'end_of_trial'))
+
+
+    elif controller.task_state == 'intertrial':
+        if box.current_time >= controller.current_trial['end_time'] + intertrial_interval:
+            trial_ended = True
+            box.stop_video_recording()
+            box.stop_forced_audio_recording()
+        pass
+
+    return events_since_last, trial_ended
+iterations['interleaved_video_preference_assay'] = interleaved_video_preference_assay
+
+
+# alternate stims from multiple different stimsets
+def interleaved_video_preference_assay_by_stimset(controller, box, events_since_last):
+    center_bin_time = controller.params['center_bin_time']
+    interstimulus_interval = controller.params['interstimulus_interval']
+    nplaybacks_per_side = controller.params['nplaybacks_per_side']
+    intertrial_interval = controller.params['intertrial_interval']
+    # record any events that have happened on the box
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+
+    for event_idx,name in enumerate(events_since_last_names):
+        if name == 'pos':
+            controller.current_trial['track'].append((events_since_last[event_idx][0], events_since_last[event_idx][2]))
+            controller.current_trial['current_bin'] = events_since_last[event_idx][3]
+        if name == 'enter_bin':
+            controller.current_trial['current_bin'] = events_since_last[event_idx][2]
+            controller.current_trial['bin_entries'].append(events_since_last[event_idx])
+
+
+    if controller.task_state == 'prepare_trial':
+        controller.current_trial['start_time']=box.current_time
+        controller.task_state = 'waiting_to_start_playback'
+        events_since_last.append((box.current_time, 'trial_started'))
+    elif controller.task_state == 'waiting_to_start_playback':
+        if controller.current_trial['current_bin'] ==1:
+            if controller.current_trial['last_center_bin_entry_time'] is None:
+                controller.current_trial['last_center_bin_entry_time']=box.current_time
+            elif box.current_time > controller.current_trial['last_center_bin_entry_time'] + center_bin_time:
+                controller.current_trial['playback_start_time'] = box.current_time
+                controller.task_state = 'playback'
+                events_since_last.append((box.current_time, 'started_playback'))
+                box.start_video_recording()
+                box.start_forced_audio_recording()
+            else:
+                pass
+        else:
+            controller.current_trial['last_center_bin_entry_time']=None
+        pass
+    elif controller.task_state == 'playback':
+        if len(controller.current_trial['playbacks'])==0:
+            box.stop_sounds()
+            side_idx = controller.current_trial['start_side']
+            stimset_idx = controller.current_trial['stimset_idxs'][side_idx]
+            # stimset_idx= controller.current_trial['stimset_idxs']
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx,'stim_%d' % stim_idx,controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+        elif box.current_time >= controller.current_trial['playbacks'][-1][0] + interstimulus_interval:
+            box.stop_sounds()
+            side_idx = int(not controller.current_trial['playbacks'][-1][1])
+            stimset_idx = controller.current_trial['stimset_idxs'][side_idx]
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx, 'stim_%d' % stim_idx, controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+
+        if len(controller.current_trial['playbacks']) >= 2*nplaybacks_per_side:
+            controller.current_trial['end_time'] = box.current_time
+            controller.task_state = 'intertrial'
+            events_since_last.append((box.current_time, 'end_of_trial'))
+
+
+    elif controller.task_state == 'intertrial':
+        if box.current_time >= controller.current_trial['end_time'] + intertrial_interval:
+            trial_ended = True
+            box.stop_video_recording()
+            box.stop_forced_audio_recording()
+        pass
+
+    return events_since_last, trial_ended
+iterations['interleaved_video_preference_assay_by_stimset'] = interleaved_video_preference_assay_by_stimset
+
+
+def interleaved_video_preference_assay_triggered(controller, box, events_since_last):
+    center_bin_time = 30
+    interstimulus_interval = 10
+    nplaybacks_per_side = 10
+    intertrial_interval = 500
+    # record any events that have happened on the box
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+
+    for event_idx,name in enumerate(events_since_last_names):
+        if name == 'pos':
+            controller.current_trial['track'].append((events_since_last[event_idx][0], events_since_last[event_idx][2]))
+            controller.current_trial['current_bin'] = events_since_last[event_idx][3]
+        if name == 'enter_bin':
+            controller.current_trial['current_bin'] = events_since_last[event_idx][2]
+            controller.current_trial['bin_entries'].append(events_since_last[event_idx])
+
+
+    if controller.task_state == 'prepare_trial':
+        controller.current_trial['start_time']=box.current_time
+        controller.task_state = 'waiting_to_start_playback'
+        events_since_last.append((box.current_time, 'trial_started'))
+    elif controller.task_state == 'waiting_to_start_playback':
+        if controller.current_trial['current_bin'] ==1:
+            if controller.current_trial['last_center_bin_entry_time'] is None:
+                controller.current_trial['last_center_bin_entry_time']=box.current_time
+            elif box.current_time > controller.current_trial['last_center_bin_entry_time'] + center_bin_time:
+                if 'trial_trigger' in events_since_last_names:
+                    controller.current_trial['playback_start_time'] = box.current_time
+                    controller.task_state = 'playback'
+                    events_since_last.append((box.current_time, 'started_playback'))
+            else:
+                pass
+        else:
+            controller.current_trial['last_center_bin_entry_time']=None
+        pass
+    elif controller.task_state == 'playback':
+        if len(controller.current_trial['playbacks'])==0:
+            box.stop_sounds()
+            side_idx = controller.current_trial['start_side']
+            stimset_idx = 0
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx,'stim_%d' % stim_idx,controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+        elif box.current_time >= controller.current_trial['playbacks'][-1][0] + interstimulus_interval:
+            box.stop_sounds()
+            side_idx = int(not controller.current_trial['playbacks'][-1][1])
+            stimset_idx = 0
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx, 'stim_%d' % stim_idx, controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+
+        if len(controller.current_trial['playbacks']) >= 2*nplaybacks_per_side:
+            controller.current_trial['end_time'] = box.current_time
+            controller.task_state = 'intertrial'
+            events_since_last.append((box.current_time, 'end_of_trial'))
+
+    elif controller.task_state == 'intertrial':
+        if box.current_time >= controller.current_trial['end_time'] + intertrial_interval:
+            trial_ended = True
+        pass
+
+    return events_since_last, trial_ended
+iterations['interleaved_video_preference_assay_triggered'] = interleaved_video_preference_assay_triggered
+
+
+
+
+def interleaved_video_preference_assay_videoplayback(controller, box, events_since_last):
+    center_bin_time = 30
+    interstimulus_interval = 10
+    nplaybacks_per_side = 10
+    intertrial_interval = 500
+    # record any events that have happened on the box
+    events_since_last_names = [event[1] for event in events_since_last]
+    trial_ended = False
+
+    for event_idx,name in enumerate(events_since_last_names):
+        if name == 'pos':
+            controller.current_trial['track'].append((events_since_last[event_idx][0], events_since_last[event_idx][2]))
+            controller.current_trial['current_bin'] = events_since_last[event_idx][3]
+        if name == 'enter_bin':
+            controller.current_trial['current_bin'] = events_since_last[event_idx][2]
+            controller.current_trial['bin_entries'].append(events_since_last[event_idx])
+
+
+    if controller.task_state == 'prepare_trial':
+        controller.current_trial['start_time']=box.current_time
+        controller.task_state = 'waiting_to_start_playback'
+        events_since_last.append((box.current_time, 'trial_started'))
+    elif controller.task_state == 'waiting_to_start_playback':
+        if controller.current_trial['current_bin'] ==1:
+            if controller.current_trial['last_center_bin_entry_time'] is None:
+                controller.current_trial['last_center_bin_entry_time']=box.current_time
+            elif box.current_time > controller.current_trial['last_center_bin_entry_time'] + center_bin_time:
+                controller.current_trial['playback_start_time'] = box.current_time
+                controller.task_state = 'playback'
+                events_since_last.append((box.current_time, 'started_playback'))
+            else:
+                pass
+        else:
+            controller.current_trial['last_center_bin_entry_time']=None
+        pass
+    elif controller.task_state == 'playback':
+        if len(controller.current_trial['playbacks'])==0:
+            box.stop_sounds()
+            side_idx = controller.current_trial['start_side']
+            stimset_idx = 0
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            box.select_screen(side_idx)
+            box.play_video('video/Singing4_vertical.mp4')
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx,'stim_%d' % stim_idx,controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+        elif box.current_time >= controller.current_trial['playbacks'][-1][0] + interstimulus_interval:
+            box.stop_sounds()
+            side_idx = int(not controller.current_trial['playbacks'][-1][1])
+            stimset_idx = 0
+            stim_idx = controller.current_trial['stim_idxs'][side_idx]
+            box.play_stim(controller.stimsets[stimset_idx], controller.stimsets[stimset_idx]['stims'][stim_idx]['name'],side_idx)
+            box.select_screen(side_idx)
+            box.play_video('video/Singing4_vertical.mp4')
+            controller.current_trial['playbacks'].append((box.current_time, side_idx, stimset_idx, stim_idx))
+            events_since_last.append((box.current_time, 'playback', 'side_%d' % side_idx, 'stimset_%d' % stimset_idx, 'stim_%d' % stim_idx, controller.stimsets[stimset_idx]['stims'][stim_idx]['name']))
+
+        if len(controller.current_trial['playbacks']) >= 2*nplaybacks_per_side:
+            controller.current_trial['end_time'] = box.current_time
+            controller.task_state = 'intertrial'
+            events_since_last.append((box.current_time, 'end_of_trial'))
+
+    elif controller.task_state == 'intertrial':
+        if box.current_time >= controller.current_trial['end_time'] + intertrial_interval:
+            trial_ended = True
+        pass
+
+    return events_since_last, trial_ended
+iterations['interleaved_video_preference_assay_videoplayback'] = interleaved_video_preference_assay_videoplayback
