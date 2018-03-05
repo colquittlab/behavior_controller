@@ -132,7 +132,8 @@ class BehaviorController(object):
         self.Aocc = 0.5
         self.Bocc = 1.0 - self.Aocc
 
-        self.probe
+        self.prob_probe_trial = 0.2
+
         # generic playback files
         self.white_noise = 'sounds/wn.wav'
 

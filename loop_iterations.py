@@ -342,29 +342,38 @@ def sound_triggered_playback_iteration(controller, box, events_since_last):
             controller.task_state = 'waiting_for_trial'
     # examine what events have happened and trigger new ones, depending on box state
     if controller.task_state == 'waiting_for_trial':
-        #---------- Playback on, waiting for trigger ----------#
-        if 'playback_trigger' in events_since_last_names and controller.playbacks_per_session[current_hour] < controller.params['allowed_playbacks_per_session']:
-            controller.playbacks_per_session[current_hour] += 1
-            #---- stop recorder ----#
-            box.recorder.stop()
-            events_since_last.append((box.current_time,'recording_stopped'))
+        #---------- Intitiate playback, waiting for trigger ----------#
+        if 'Audio Recording Started' in events_since_last_names:
+            if not controller.current_trial['trial_type'] == 'probe':
+                #controller.playbacks_per_session[current_hour] += 1
+                #---- stop recorder ----#
+                #box.recorder.stop()
+                #events_since_last.append((box.current_time,'recording_stopped'))
 
-            #---- play stimulus ----#
-            #box.play_sound(controller.white_noise)
+                #---- play stimulus ----#
+                #box.play_sound(controller.white_noise)
+                box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
+                controller.current_trial['start_time'] = box.current_time
+                events_since_last.append((box.current_time, 'sound_playback', controller.current_trial['stimulus']))
+                controller.task_state = 'playing_sound'
+            else:
+                events_since_last.append((box.current_time, 'sound_playback_probe'))
+
+        # if controller.rewards_per_session[current_hour] >= controller.params['allowed_sounds_per_session']:
+        #     #--------- Session finished. Pause playback until next session ---------#
+        #     controller.task_state = 'playback_pause'
+        #     events_since_last.append((box.current_time, 'playback_paused'))
+
+    elif controller.task_state == 'playing_sound':
+        #-------- Sound currently being played ---------#
+        if 'audio_threshold_crossing' in events_since_last_names:
             box.play_stim(controller.stimsets[controller.current_trial['stimset_idx']], controller.current_trial['stimulus'])
-            controller.current_trial['start_time'] = box.current_time
-            events_since_last.append((box.current_time, 'song_playback', controller.current_trial['stimulus']))
-            controller.task_state = 'playing_song'
-        if controller.rewards_per_session[current_hour] >= controller.params['allowed_songs_per_session']:
-            #--------- Session finished. Pause playback until next session ---------#
-            controller.task_state = 'playback_pause'
-            events_since_last.append((box.current_time, 'playback_paused'))
+            events_since_last.append((box.current_time, 'sound_playback', controller.current_trial['stimulus']))
 
-    elif controller.task_state == 'playing_song':
-        #-------- Song currently being played ---------#
-        if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
+        if 'stop_saving_audio' in events_since_last_name:
+        #if box.current_time > controller.current_trial['start_time'] + controller.current_trial['stim_length']:
             events_since_last.append((box.current_time,'playback_ended'))
-            #trial_ended = True
+            trial_ended = True
 
             #---- begin timeout period ----#
             controller.task_state = "time_out"
@@ -372,8 +381,8 @@ def sound_triggered_playback_iteration(controller, box, events_since_last):
             events_since_last.append((box.current_time,'begin_timeout'))
 
             #---- start recorder ----#
-            box.recorder.start()
-            events_since_last.append((box.current_time,'recording_started'))
+            #box.recorder.start()
+            #events_since_last.append((box.current_time,'recording_started'))
 
     elif controller.task_state == "time_out":
         #-------- In timeout, switch deactivated --------#
@@ -382,21 +391,21 @@ def sound_triggered_playback_iteration(controller, box, events_since_last):
                 controller.task_state = 'waiting_for_trial'
                 events_since_last.append((box.current_time,'end_timeout'))
 
-    elif controller.task_state == "playback_pause":
-        #-------- Session is finished. Waiting for next session ---------#
-#        print current_hour
-        if not box.recorder.running:
-            box.recorder.start()
-        if current_hour in controller.params['set_times']:
-            if controller.rewards_per_session[current_hour] == 0:
-                controller.task_state = "waiting_for_trial"
+#     elif controller.task_state == "playback_pause":
+#         #-------- Session is finished. Waiting for next session ---------#
+# #        print current_hour
+#         if not box.recorder.running:
+#             box.recorder.start()
+#         if current_hour in controller.params['set_times']:
+#             if controller.rewards_per_session[current_hour] == 0:
+#                 controller.task_state = "waiting_for_trial"
 
-        time.sleep(2)
+#         time.sleep(2)
 
-    if current_hour == 0:
-        #-------- New day, reset reward counts --------#
-        for key in controller.rewards_per_session.iterkeys():
-            controller.rewards_per_session[key] = 0
+    # if current_hour == 0:
+    #     #-------- New day, reset reward counts --------#
+    #     for key in controller.rewards_per_session.iterkeys():
+    #         controller.rewards_per_session[key] = 0
 
     return events_since_last, trial_ended
 iterations['sound_triggered_playback'] = sound_triggered_playback_iteration
