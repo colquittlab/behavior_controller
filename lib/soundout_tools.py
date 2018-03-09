@@ -42,6 +42,7 @@ def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, channel=0,
                 else:
                         nchannels=2
 
+                #print(pulse)
                 length=song.getnframes()
                 pcm.setperiodsize(frame_size)
                 # 8bit is unsigned in wav files
@@ -63,6 +64,7 @@ def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, channel=0,
                 else:
                         raise ValueError('Unsupported format')
                 data=song.readframes(frame_size)
+                
                 while data and stopsig.value==0:
                         if pulse:
                                 # x = np.fromstring(data, np.int16)
@@ -79,7 +81,8 @@ def playwf(stopsig, cardidx, filename, filetype, rate, pulse = False, channel=0,
                                 else:
                                         x = np.concatenate((np.zeros(x.shape),x), axis=1)
                                 data = x.flatten().astype(np_dtype).tostring()
-
+                                
+                                
                                 pcm.write(data)
                         data=song.readframes(frame_size)
 

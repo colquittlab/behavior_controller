@@ -1,6 +1,7 @@
 import scipy as sp
 import numpy as np 
 import random 
+import pdb
 """
 task specific generators are defined here and loaded into the library generators.  This is hand spun and the convention is genorators['name']=name_generator
 """
@@ -34,20 +35,25 @@ generators['standard'] = standard_generator
 def standard_one_stimulus_generator(controller, trials_per_block=1):
         """Generates trial by trial with no pruning"""
         trial_block = []
+        #pdb.set_trace()
         for k in range(0, trials_per_block):
                 trial = {}
-                if random.uniform(0,1) < float(controller.params['probe_occurance']) / 100:
+                if random.uniform(0,1) < float(controller.params['probe_occurance']):
                         trial['trial_type'] = 'probe'
-                        stim_list = controller.list_stimuli(stimset_idxs = [1])
+                        #stim_list = controller.list_stimuli(stimset_idxs = [1])
+                        trial['stimulus'] = None
+                        trial['stimset_idx'] = None
+                        trial['stimset'] = None
+                        trial['stim_length'] = 0.0
                 else:
                         trial['trial_type'] = 'playback'
                         stim_list = controller.list_stimuli(stimset_idxs = [0])
-                # pick the stimset and the stimulus
-                #idx = random.randint(0, len(stim_list)-1)
-                trial['stimulus'] = stim_list[0][2]
-                trial['stimset_idx'] = stim_list[0][0]
-                trial['stimset'] = controller.stimset_names[trial['stimset_idx']]
-                trial['stim_length'] = float(controller.stimsets[stim_list[0][0]]['stims'][stim_list[0][1]]['length'])/controller.stimsets[stim_list[0][0]]['samprate']
+                        # pick the stimset and the stimulus
+                        #idx = random.randint(0, len(stim_list)-1)
+                        trial['stimulus'] = stim_list[0][2]
+                        trial['stimset_idx'] = stim_list[0][0]
+                        trial['stimset'] = controller.stimset_names[trial['stimset_idx']]
+                        trial['stim_length'] = float(controller.stimsets[stim_list[0][0]]['stims'][stim_list[0][1]]['length'])/controller.stimsets[stim_list[0][0]]['samprate']
                 trial_block.append(trial)
         return trial_block
 generators['standard_one'] = standard_one_stimulus_generator

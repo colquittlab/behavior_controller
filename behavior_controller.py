@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 
+import scipy as sp
+import numpy as np
+from scipy import io as spio
 import os
 import serial
 from serial.tools import list_ports
@@ -11,7 +14,7 @@ import ConfigParser
 import sys
 import Queue
 import warnings
-
+import pdb
 import lib.soundout_tools as so
 import lib.serial_tools as st
 import lib.arduino_tools as at
@@ -35,8 +38,6 @@ try:
 except:
     warnings.warn('lib.videoplayback_tools import failed.  videoplayback functionality disabled',UserWarning)
     vpt = None
-
-
 
 # from pyfirmata import Arduino, util
 baud_rate = 19200
@@ -121,18 +122,20 @@ class BehaviorController(object):
         self.params['pulse_width'] = 50
         self.params['pulse_period'] = 100
         self.params['allowed_songs_per_session'] = 10
-
+    
         # parameters for playback mode
         self.params['delay_time'] = 5
         self.params['isi_distribution'] = 'exponential'
         self.params['isi_parameter'] = 10
         self.params['set_times'] = 0
-
+        self.params['trigger_window'] = 0
+        self.params['min_trigger_duration'] = 0
+        self.params['max_trigger_entropy'] = 0
+        self.params['max_stim_limit'] = 0
+        
         # stimset occurance
         self.Aocc = 0.5
         self.Bocc = 1.0 - self.Aocc
-
-        self.prob_probe_trial = 0.2
 
         # generic playback files
         self.white_noise = 'sounds/wn.wav'
@@ -189,11 +192,13 @@ class BehaviorController(object):
         return stimuli
 
     def que_next_trial(self):
+        print self.current_trial
         if self.current_trial != None:
             self.store_current_trial()
         if len(self.trial_block) < 1:
             self.trial_block = trial.generators[self.params['trial_generator']](self)
         self.current_trial = self.trial_block.pop(0)
+        print self.current_trial
         pass
 
     def store_current_trial(self):
@@ -239,6 +244,8 @@ class BehaviorController(object):
     def save_events_to_log_file(self,  events_since_last):
         fid = self.return_log_fid()
         for event in events_since_last:
+            if event[1] == 'audio_threshold_crossing':
+                continue
             # tally counts from events
             self.event_count += 1
             if event[1] == "reward_start":
@@ -249,7 +256,7 @@ class BehaviorController(object):
             fid.write("%d:%s\n"%(self.event_count, str(event)))
             if debug:
                 #print "%s: %d %s"%(box.box_name, self.event_count, str(event))
-                print "%s events:%d, trials:%d, rewards:%d, tos:%d, %s"%(box.box_name, self.event_count, self.n_trials, self.reward_count, self.timeout_count, str(event)) #GK
+                print "%s events:%d, trials:%d, rewards:%d, tos:%d, %s"%(self.box.box_name, self.event_count, self.n_trials, self.reward_count, self.timeout_count, str(event)) #GK
                 if beep:
                     so.beep()
         fid.flush()
@@ -324,6 +331,8 @@ class BehaviorBox(object):
         self.stimuli_dir = None
         self.serial_buffer = ""
         self.box_name = None
+        self.sc_out_idx = None
+        self.pcm_out = None
         self.so_workers = []
         self.pulse_state = 0
         self.force_feed_up = False
@@ -343,8 +352,9 @@ class BehaviorBox(object):
         self.serial_io = None
         self.arduino_model = "uno"
         self.trigger_value = True
-        self.recorder = None
+        self.recorder = None #ar.AudioRecord()
         self.media_outdir = None
+        self.last_stim = 0
         # bt.PWM.start(pindef.output_definitions['pwm_pin'], 15, 1000)
 
     def ready_to_run(self):
@@ -510,9 +520,8 @@ class BehaviorBox(object):
     def return_list_of_sound_cards(self):
         return so.list_sound_cards()
 
-    def select_sound_card(self, cardname = None):
+    def select_sound_card(self, cardname = None, playback=False):
         list_of_cards = self.return_list_of_sound_cards()
-
         if cardname == None:
             print 'Select desired card from list below:'
             for k,card in enumerate(list_of_cards):
@@ -523,7 +532,13 @@ class BehaviorBox(object):
             idx = cardname
         else:
             idx = list_of_cards.index(cardname)
-        self.sc_idx = idx
+            
+        if not playback:
+            self.sc_idx = idx
+        else:
+            
+            self.sc_out_idx = idx
+            self.pcm_out = list_of_cards[idx]
         print idx
 
     def feeder_on(self):
@@ -573,7 +588,14 @@ class BehaviorBox(object):
                 worker[0].join()
 
         filetype = filename[-4:]
-        p = so.sendwf(self.sc_idx, filename, filetype, 44100, channel=channel)
+        idx = self.sc_idx
+        if not self.sc_out_idx is None:
+           idx = self.sc_out_idx
+        
+        #if not self.pcm_out is None:
+        #    p = so.sendwf2(self.pcm_out, filename, filetype, 44100, channel=channel)
+        #else:
+        p = so.sendwf(idx, filename, filetype, 44100, channel=channel)
         self.so_workers.append(p)
         pass
 
@@ -698,6 +720,7 @@ def main_loop(controller, box):
     controller.task_state = 'prepare_trial'
     controller.has_run = True
     # enter the loop
+   # pdb.set_trace(a)
     last_time = box.current_time
     while controller.box_state == 'go':
         current_time = box.current_time
@@ -705,13 +728,17 @@ def main_loop(controller, box):
         last_time = current_time
         # query serial events since the last itteration
         events_since_last = box.query_events()
+        
         # save loop times greator than tollerance as events
         if loop_time > time_tollerance:
             events_since_last.append((current_time, 'loop time was %e, exceeding tollerance of %e' % (loop_time, time_tollerance)))
+
         # run throgh loop itteration state machine
         events_since_last, trial_ended = loop.iterations[controller.params['mode']](controller, box, events_since_last)
+
         # save all the events that have happened in this loop to file
         controller.save_events_to_log_file(events_since_last)
+
         # if a trial eneded in this loop then store event, save events, generate new trial
         if trial_ended:
             controller.task_state = 'prepare_trial'
@@ -785,13 +812,7 @@ def load_and_verify_stimset(stimuli_dir, stim_name):
         raise e
     return stimset_out
 
-if __name__=='__main__':
-    ## Settings (temporary as these will be queried from GUI)
-    import sys
-    if len(sys.argv) <= 1:
-        raise(Exception('No configuration file passed'))
-    else:
-        cfpath = sys.argv[1]
+
 
 def parse_config(cfpath):
     config = ConfigParser.ConfigParser()
@@ -831,7 +852,7 @@ def parse_config(cfpath):
             controller.params[param] = config.getboolean('run_params', param)
 
     # set (overwrite) float parameters
-    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance','isi_parameter', 'delay_time', 'center_bin_time', 'interstimulus_interval', 'nplaybacks_per_side', 'intertrial_interval']:
+    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance','isi_parameter', 'delay_time', 'center_bin_time', 'interstimulus_interval', 'nplaybacks_per_side', 'intertrial_interval', 'trigger_window', 'min_trigger_duration', 'max_trigger_entropy', 'max_stim_limit']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
@@ -873,12 +894,21 @@ def parse_config(cfpath):
                 elif option == "soundcard" or option=="sound_card":
                     attr = config.get('record_params', option)
                     box.recorder.set_sound_card(attr)
+                elif option == "sound_card_out":
+                    attr = config.get('record_params', option)
+                    box.recorder.set_sound_card_out(attr)
                 elif option in ["outdir", "birdname"]:
                     attr = config.get('record_params', option)
                     box.recorder.params[option] = attr
-                elif option == "chunk":
+                elif option in ["chunk", "channel"]:
                     attr = config.getint('record_params', option)
                     box.recorder.params[option] = attr
+                elif option == "audio_server":
+                    attr = config.get('record_params', option)
+                    if not attr in ['jack', 'alsa']:
+                        raise(Exception('Error: %s is not a supported audio server' % attr))
+                    #pdb.set_trace()
+                    box.recorder.audio_server = attr
                 else:
                     attr = config.getfloat('record_params', option)
                     box.recorder.params[option] = attr
@@ -944,6 +974,9 @@ def parse_config(cfpath):
             box.select_sound_card()
             # box.select_serial_port()
 
+        if config.has_option('run_params', 'sound_card_out'):
+            attr = config.get('run_params', 'sound_card_out')
+            box.select_sound_card(attr, playback=True) 
         if config.has_option('run_params','arduino_port'):
             arduino_port = config.get('run_params','arduino_port')
             box.select_serial_port(port=arduino_port)
@@ -952,8 +985,6 @@ def parse_config(cfpath):
         else:
             pass
 
-
-
     # set any box params
     for param in ['trigger_value']:
         if config.has_option('run_params', param):
@@ -961,23 +992,7 @@ def parse_config(cfpath):
             setattr(box,param,attr)
 
 
-    if controller.params['mode'] == "tutoring":
-        # set recording params
-        for option in config.options('record_params'):
-            if option == "sound_card":
-                attr = config.get('record_params', option)
-                box.recorder.set_sound_card(attr)
-            elif option in ["outdir"]:
-                box.recorder.params[option] = config.get('record_params',option)
-            elif option == "chunk":
-                box.recorder.params[option] = config.getint('record_params',option)
-            else:
-                box.recorder.params[option] = config.getfloat('record_params',option)
-        box.recorder.params['birdname'] = controller.birdname
-        box.recorder.params['outdir'] = "/".join([controller.params['data_dir'], "recordings"])
-        if not os.path.exists(box.recorder.params['outdir']):
-            os.makedirs(box.recorder.params['outdir'])
-
+   
     # run the box
     run_box(controller, box)
 
@@ -985,3 +1000,13 @@ def parse_config(cfpath):
 #    import cProfile
 #    command = """run_box(controller,box)"""
 #    cProfile.runctx(command, globals(), locals(), filename = 'test.profile')
+
+if __name__=='__main__':
+    ## Settings (temporary as these will be queried from GUI)
+    import sys
+    if len(sys.argv) <= 1:
+        raise(Exception('No configuration file passed'))
+    else:
+        cfpath = sys.argv[1]
+
+    parse_config(cfpath)

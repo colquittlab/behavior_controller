@@ -100,9 +100,9 @@ class SerialError(Exception):
 
 
 if __name__=='__main__':
-<<<<<<< HEAD
-    print return_list_of_named_arduinos()
-=======
+# <<<<<<< HEAD
+#     print return_list_of_named_arduinos()
+# =======
     print return_list_of_usb_serial_ports()
     print return_list_of_named_arduinos()
->>>>>>> 41fc98045440759a7b56910c5370cb502c79c71f
+#>>>>>>> 41fc98045440759a7b56910c5370cb502c79c71f
