@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# A simple script to facilitate the use of the OSS compatibility library.
+# Usage:
+# aoss <command> <command options and arguments>
+INPUT=$@
+CBSINPUT=" "
+USBDEVNUM=0
+VOL=100
+python lib/name_usb_port.py $INPUT
