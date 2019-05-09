@@ -100,7 +100,7 @@ class AudioRecord:
                 if not attr in ['jack', 'alsa']:
                     raise(Exception('Error: %s is not a supported audio server' % attr))
                 self.audio_server = attr
-            elif option == "soundcard":
+            elif option == "sound_card":
                 attr = config.get('record_params', option)
                 self.set_sound_card(attr)
             elif option in ["record_audio"]:
@@ -251,6 +251,10 @@ class AudioRecord:
 
         self.proc.start()
 
+        print_process = mp.Process(target = print_event_queue, args = (self.event_queue,))
+        print_process.start()
+        
+
 
     def start_return_data(self):
         self.event_queue = mp.Queue()
@@ -260,7 +264,7 @@ class AudioRecord:
         self.proc = mp.Process(target = start_recording_return_data, args= (self.event_queue,
                                                                 self.recording_queue,
                                                                             error_queue,
-                                                                            self.audio_server,
+                                                                            #self.audio_server,
                                                                 self.pcm,
                                                                 self.params['channels'],
                                                                 self.params['rate'],
@@ -423,6 +427,7 @@ def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rat
     audio2send = []
     rel = rate/chunk
     slid_win = deque(maxlen=silence_limit * rel) #amplitude threshold running buffer
+    slid_win_short = Ringbuffer(0.5 * rate) #freq calc running buffer
     prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
 
     started = False
@@ -441,6 +446,7 @@ def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rat
     
     
     slid_win.append(get_audio_power_jack(cur_data[0,:]))
+    slid_win_short.extend(cur_data[0,:])
     while True:
         ## check whether any events are in queue and if so change control_force_record accordingly
         command = None
@@ -474,14 +480,16 @@ def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rat
             
         try:
             slid_win.append(get_audio_power_jack(cur_data[0,:]))
+            slid_win_short.extend(cur_data[0,:])
         except audioop.error:
             print "invalid number of blocks for threshold calculation, but continuing"
 
         if(sum([x > threshold for x in slid_win]) > 0) and control_force_record:
            
             if(not started):
-                event_queue.put((time.time(), "Audio Recording Started", cur_data[0,:]))
-                prev_audio_time_emperical = float(len(prev_audio)) / rel
+                #event_queue.put((time.time(), "Audio Recording Started", slid_win_short.get()))
+                event_queue.put((time.time(), "Audio Recording Started"))
+                prev_audio_time_emperical = float(len(prev_audio)) / rate
                 recording_start_time = time.time() - prev_audio_time_emperical
                 sys.stdout.flush()
                 started = True
@@ -489,7 +497,8 @@ def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rat
 
             else:
                 audio2send = np.append(audio2send, cur_data[0,:])
-                event_queue.put((time.time(), 'audio_threshold_crossing', cur_data[0,:]))
+                #event_queue.put((time.time(), 'audio_threshold_crossing', slid_win_short.get()))
+                #event_queue.put((time.time(), 'audio_threshold_crossing'))
             #audio2send.append(cur_data)
             
 
@@ -531,6 +540,8 @@ def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rat
         return
 
 def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, channels, rate, format, chunk):
+    #start_recording_alsa(event_queue, control_queue, pcm, birdname, channels, rate, format, chunk,
+    #                silence_limit, prev_audio_time, min_dur, max_dur, threshold, outdir):
     stream = None
     if uname == "Linux":
         # try:
@@ -575,25 +586,25 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
 #            if len(slid_win)>0:
 #                print max(slid_win) #uncomment if you want to print intensity values
         if uname == "Linux":
-            if self.audio_server == 'jack':
-                try:
-                    jack.process(dummy, cur_data)
-                    tmp = get_audio_power(cur_data[0,:])
-                    recording_queue.put(tmp)
-                except jack.InputSyncError:
-                    print "InputSyncError"
-            else:
-                cur_data=stream.read()[1]
-                recording_queue.put(cur_data)
+            #if self.audio_server == 'jack':
+            #    try:
+            #        jack.process(dummy, cur_data)
+            #        tmp = get_audio_power(cur_data[0,:])
+            #        recording_queue.put(tmp)
+            #    except jack.InputSyncError:
+            #        print "InputSyncError"
+            #else:
+            cur_data=stream.read()[1]
+            recording_queue.put(cur_data)
         else:
             pass
             #cur_data=self.stream.read(self.params['chunk'])
     else:
-        if self.audio_server == 'jack':
-            jack.deactivate()
-            jack.detach()
-        else:
-            stream.close()
+        #if self.audio_server == 'jack':
+        #    jack.deactivate()
+        #    jack.detach()
+        #else:
+        stream.close()
         return
 
 def save_audio_alsa(data, recording_start_time, outdir, rate, birdname = '', channels=1):

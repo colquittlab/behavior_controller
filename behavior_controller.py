@@ -131,7 +131,9 @@ class BehaviorController(object):
         self.params['trigger_window'] = 0
         self.params['min_trigger_duration'] = 0
         self.params['max_trigger_entropy'] = 0
+        self.params['min_trigger_power'] = 0
         self.params['max_stim_limit'] = 0
+        
         
         # stimset occurance
         self.Aocc = 0.5
@@ -852,7 +854,7 @@ def parse_config(cfpath):
             controller.params[param] = config.getboolean('run_params', param)
 
     # set (overwrite) float parameters
-    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance','isi_parameter', 'delay_time', 'center_bin_time', 'interstimulus_interval', 'nplaybacks_per_side', 'intertrial_interval', 'trigger_window', 'min_trigger_duration', 'max_trigger_entropy', 'max_stim_limit']:
+    for param in ['feed_time', 'max_trial_length', 'timeout_period', 'pulse_width', 'pulse_period', 'laser_occurance', 'probe_occurance','isi_parameter', 'delay_time', 'center_bin_time', 'interstimulus_interval', 'nplaybacks_per_side', 'intertrial_interval', 'trigger_window', 'min_trigger_duration', 'max_trigger_entropy', 'max_stim_limit', 'min_trigger_power']:
         if config.has_option('run_params', param):
             controller.params[param] = config.getfloat('run_params', param)
 
