@@ -1,5 +1,7 @@
 #! /bin/sh
 
+SRCDIR=$HOME/repos/behavior_controller
+
 # Start mainserver
 procs=`ps aux | grep /usr/bin/jackd`| grep -v "grep"
 if [ -z "$procs" ]
@@ -24,6 +26,6 @@ do
     else 
 	echo "${sc} already started."
     fi
-done < $HOME/src/behavior_controller/usb_soundcards.txt
+done < $SRCDIR/usb_soundcards.txt
 
 echo "Here2"

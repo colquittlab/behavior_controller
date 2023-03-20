@@ -7,4 +7,4 @@ INPUT=$@
 CBSINPUT=" "
 USBDEVNUM=0
 VOL=100
-python lib/name_usb_port.py $INPUT
+python3 lib/name_usb_port.py $INPUT
