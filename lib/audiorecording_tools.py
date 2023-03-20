@@ -9,9 +9,10 @@ import time
 import math
 import pdb
 import datetime
-import ConfigParser
+import configparser
 import numpy as np
 import multiprocessing as mp
+import subprocess
 import re
 # sys.path.append(os.path.expanduser("~") + "/src/behavior_controller")
 # import soundout_tools as so
@@ -61,6 +62,7 @@ class AudioRecord:
         self.running = False
         self.params = {}
         self.proc = None
+        self.jack = None
         self.params['birdname'] = None
         self.params['chunk'] = 1024
         self.params['format'] = aa.PCM_FORMAT_S16_LE
@@ -91,7 +93,7 @@ class AudioRecord:
         if config_file is None:
             self.test_config()
             return
-        config = ConfigParser.ConfigParser() 
+        config = configparser.ConfigParser() 
         config.read(config_file)
         #pdb.set_trace()
         for option in config.options('record_params'):
@@ -128,7 +130,7 @@ class AudioRecord:
             os.makedirs(self.params['outdir'])
 
     def set_sound_card(self, attr):
-        if isinstance(attr, basestring):
+        if isinstance(attr, str):
             attr = attr.strip("\"")
         # self.pcm = "hw:CARD=%s,DEV=0" % attr
         #self.pcm = "plughw:%s,0" % attr
@@ -139,7 +141,7 @@ class AudioRecord:
         self.channel = str(idx)
         
     def set_sound_card_out(self, attr):
-        if isinstance(attr, basestring):
+        if isinstance(attr, str):
             attr = attr.strip("\"")
         # self.pcm = "hw:CARD=%s,DEV=0" % attr
         self.pcm_out = "plughw:%s,0" % attr
@@ -151,7 +153,7 @@ class AudioRecord:
     def audio_int(self, num_samples=64):
         """ Gets max audio intensity for a bunch of chunks of data. Useful for setting threshold.
         """
-        print "Getting intensity values from mic."
+        print("Getting intensity values from mic.")
         values = None
         if uname == "Linux":
         #stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, INPUT)
@@ -162,7 +164,7 @@ class AudioRecord:
             stream.setperiodsize(self.params['chunk'])
             values = [math.sqrt(abs(audioop.max(stream.read()[1], 4)))for x in range(num_samples)]
         else:
-            print self.params['format'], self.params['chunk']
+            print(self.params['format'], self.params['chunk'])
             p = pa.PyAudio()
             stream = p.open(rate=self.params['rate'],
                              format=self.params['format'],
@@ -173,39 +175,43 @@ class AudioRecord:
 
         #values = sorted(values, reverse=True)
         r = sum(values[:int(num_samples * 0.2)]) / int(num_samples * 0.2)
-        print "Finished"
-        print "max audio intensity is", values
+        print("Finished")
+        print("max audio intensity is", values)
         stream.close()
         return r
 
     def set_threshold(self):
         values = self.audio_int()
         values_thresh = np.max(values) * 1.1
-        print "threshold set to: " + str(values_thresh)
+        print("threshold set to: " + str(values_thresh))
         self.threshold = values_thresh
         return values_thresh
 
     def attach_to_jack(self):
+        #self.jack = jack.Client("client")
+        #self.jack.inports.register("main1")
+        #self.jack.activate()
         jack.attach("mainserver")
 
     def check_if_jack_subclient_running(self):
-        
         self.attach_to_jack() # this is probably not the best spot for this...
+        #myname = self.jack.name
+        #ports = self.jack.inports
         myname = jack.get_client_name()
         ports = jack.get_ports()
-        
+        #pdb.set_trace()
         res = [re.search(self.pcm, p) for p in ports]
         return any(res)
 
     def start_jack_subclient(self):
-        print "Starting jack subclient..."
+        print("Starting jack subclient...")
         cmd = ['alsa_in',
            '-j', self.pcm,
            '-d', self.pcm,
                '-c', str(self.params['channels']),
                '-r', str(self.params['rate']),
                '-q', str(1)]
-        self.jack_client_process = Popen(cmd)
+        self.jack_client_process = subprocess.Popen(cmd)
         time.sleep(2)
 
     def start(self):
@@ -214,8 +220,9 @@ class AudioRecord:
             #pdb.set_trace()
             jack_running = self.check_if_jack_subclient_running()
             if (not jack_running):
-                print "Please start jack servers first. Exiting..."
-                sys.exit()
+                self.start_jack_subclient()
+                #print("Please start jack servers first. Exiting...")
+                #sys.exit()
 
         if self.audio_server == 'alsa':
             self.proc = mp.Process(target = start_recording_alsa, args= (self.event_queue,
@@ -295,26 +302,26 @@ def establish_connection(pcm, channel):
     port_name = "in_" + channel
     connection_name = myname+":"+port_name
 
-    print capture_name, port_name, connection_name
-    print "Jack ports (before):", jack.get_ports()
+    print(capture_name, port_name, connection_name)
+    print("Jack ports (before):", jack.get_ports())
     jack.register_port(port_name, jack.IsInput)
     jack.activate()
-    print "Jack ports (after):", jack.get_ports()
+    print("Jack ports (after):", jack.get_ports())
     jack.connect(capture_name, connection_name)
-    print jack.get_connections(connection_name)
+    print(jack.get_connections(connection_name))
 
 
 def start_recording_alsa(event_queue, control_queue, pcm, birdname, channels, rate, format, chunk,
                     silence_limit, prev_audio_time, min_dur, max_dur, threshold, outdir):
     stream = None
-    print birdname
+    print(birdname)
     if uname == "Linux":
         stream = aa.PCM(aa.PCM_CAPTURE,aa.PCM_NORMAL, card=pcm)
-        print format
-        print stream.setchannels(int(channels))
-        print stream.setformat(format)
-        print stream.setperiodsize(chunk)
-        print stream.dumpinfo()
+        print(format)
+        print(stream.setchannels(int(channels)))
+        print(stream.setformat(format))
+        print(stream.setperiodsize(chunk))
+        print(stream.dumpinfo())
     else:
         pass
         # p = pa.PyAudio()
@@ -324,7 +331,7 @@ def start_recording_alsa(event_queue, control_queue, pcm, birdname, channels, ra
         #                  frames_per_buffer=self.params['chunk'],
         #                  input=True)
 
-    print "AudioRecorder started (listening...)"
+    print("AudioRecorder started (listening...)")
     audio2send = []
     cur_data = '' # current chunk of audio data
     rel = rate/chunk
@@ -362,7 +369,7 @@ def start_recording_alsa(event_queue, control_queue, pcm, birdname, channels, ra
                 pass
 
         #if len(slid_win)>0:
-        #    print max(slid_win) #uncomment if you want to print intensity values
+        #    print(max(slid_win)) #uncomment if you want to print intensity values
         if uname == "Linux":
             cur_data=stream.read()[1]
         else:
@@ -372,7 +379,7 @@ def start_recording_alsa(event_queue, control_queue, pcm, birdname, channels, ra
         try:
             slid_win.append(math.sqrt(abs(audioop.max(cur_data, 4))))
         except audioop.error:
-            print "invalid number of blocks for threshold calculation, but continuing"
+            print("invalid number of blocks for threshold calculation, but continuing")
 
         if(sum([x > threshold for x in slid_win]) > 0) or control_force_record:
             if(not started):
@@ -405,30 +412,30 @@ def start_recording_alsa(event_queue, control_queue, pcm, birdname, channels, ra
         else:
             prev_audio.append(cur_data)
     else:
-        #print "done recording"
+        #print("done recording")
         stream.close()
         return
 
 def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rate, format, chunk,
                     silence_limit, prev_audio_time, min_dur, max_dur, threshold, outdir):
     stream = None
-    print birdname
+    print(birdname)
     if uname == "Linux":
         channel = str(channel)
         establish_connection(pcm, channel)
         chunk = jack.get_buffer_size()
-        print "Buffer Size:", chunk, "Sample Rate:", rate
+        print("Buffer Size:", chunk, "Sample Rate:", rate)
         cur_data = np.zeros((1,chunk), 'f')
         dummy = np.zeros((1,0), 'f')
     else:
         pass
 
-    print "AudioRecorder started (listening...)"
+    print("AudioRecorder started (listening...)")
     audio2send = []
     rel = rate/chunk
-    slid_win = deque(maxlen=silence_limit * rel) #amplitude threshold running buffer
-    slid_win_short = Ringbuffer(0.5 * rate) #freq calc running buffer
-    prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
+    slid_win = deque(maxlen=int(silence_limit * rel)) #amplitude threshold running buffer
+    slid_win_short = Ringbuffer(int(0.5 * rate)) #freq calc running buffer
+    prev_audio = Ringbuffer(int(prev_audio_time * rate)) #prepend audio running buffer
 
     started = False
     control_force_record = True
@@ -469,7 +476,7 @@ def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rat
                 pass
 
         #if len(slid_win)>0:
-        #    print max(slid_win) #uncomment if you want to print intensity values
+        #    print(max(slid_win)) #uncomment if you want to print intensity values
         if uname == "Linux":
             try:
                 jack.process(dummy, cur_data)
@@ -482,7 +489,7 @@ def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rat
             slid_win.append(get_audio_power_jack(cur_data[0,:]))
             slid_win_short.extend(cur_data[0,:])
         except audioop.error:
-            print "invalid number of blocks for threshold calculation, but continuing"
+            print("invalid number of blocks for threshold calculation, but continuing")
 
         if(sum([x > threshold for x in slid_win]) > 0) and control_force_record:
            
@@ -511,9 +518,9 @@ def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rat
             event_queue.put((time.time(), "stop_triggered_audio"))
             event_queue.put((time.time(), "audio_saved"))
             started = False
-            slid_win = deque(maxlen=silence_limit * rel)
+            slid_win = deque(maxlen=int(silence_limit * rel))
             #prev_audio = deque(maxlen=prev_audio_time * rel)
-            prev_audio = Ringbuffer(prev_audio_time * rate) #prepend audio running buffer
+            prev_audio = Ringbuffer(int(prev_audio_time * rate)) #prepend audio running buffer
             prev_audio.extend(audio2send)
 
             event_queue.put((time.time(), "Listening"))
@@ -534,7 +541,7 @@ def start_recording_jack(event_queue, control_queue, pcm, birdname, channel, rat
             prev_audio.extend(cur_data[0,:])
             #prev_audio.append(cur_data)
     else:
-        #print "done recording"
+        #print("done recording")
         jack.deactivate()
         jack.detach()
         return
@@ -569,7 +576,7 @@ def start_recording_return_data(event_queue, recording_queue, error_queue, pcm, 
         #                  frames_per_buffer=self.params['chunk'],
         #                  input=True)
 
-    print "listening..."
+    print("listening...")
     audio2send = []
     cur_data = '' # current chunk of audio data
     rel = rate/chunk
@@ -612,7 +619,7 @@ def save_audio_alsa(data, recording_start_time, outdir, rate, birdname = '', cha
     # filname = "/".join([str(outdir), 'output_'+str(int(time.time()))])
     filname = "/".join([str(outdir), 'output_'+ str(recording_start_time).replace(".","p")])
     filname = filname.replace("//","/")
-    #print filname
+    #print(filname)
     # writes data to WAV file
     data = ''.join(data)
     wavout = wave.open(filname + '.wav', 'wb')
@@ -628,8 +635,9 @@ def save_audio_jack(data, recording_start_time, outdir, rate):
     #filename = "/".join([str(outdir), 'output_'+str(int(time.time()))]) + ".wav"
     filename = "/".join([str(outdir), 'output_'+ str(recording_start_time).replace(".","p")])
     filename = filename.replace("//","/")
-    scale_factor = (-.1, .1) # this is hand set for a 24-bit presonus amp. will need to make dynamic later
-    wavio.write(filename + '.wav', data, rate, sampwidth=3, scale=scale_factor)
+    #scale_factor = (-.1, .1) # this is hand set for a 24-bit presonus amp. will need to make dynamic later
+    #wavio.write(filename + '.wav', data, rate, sampwidth=3, scale=scale_factor)
+    wavio.write(filename + '.wav', data, rate, sampwidth=3)
     return filename + '.wav'
 
 def get_audio_power(data):
@@ -641,7 +649,7 @@ def get_audio_power_jack(data):
 
 def print_event_queue(event_queue):
     while True:
-        print event_queue.get(block=True)
+        print(event_queue.get(block=True))
 
 
 if(__name__ == '__main__'):

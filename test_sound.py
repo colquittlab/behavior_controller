@@ -1,6 +1,6 @@
 import sys
-from PyQt4.QtGui import QApplication,QDialog
-from PyQt4 import QtCore, QtGui
+from PyQt5.QtWidgets import QApplication,QDialog,QMainWindow
+from PyQt5 import QtCore, QtGui
 from qt.liveaudio import Ui_LiveAudio
 
 # def MainWindow(QtGui.QMainWindow):
@@ -10,7 +10,7 @@ from qt.liveaudio import Ui_LiveAudio
 
 def main(argv):
     app = QApplication(sys.argv)
-    window = QtGui.QMainWindow()
+    window = QMainWindow()
 #    window = MainWindow()
     if len(argv) > 1:
         ui = Ui_LiveAudio(argv[1])

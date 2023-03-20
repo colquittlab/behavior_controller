@@ -1,1 +1,1 @@
-usbaudio_1	8
+usbaudio_1	10
